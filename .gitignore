@@ -1,0 +1,16 @@
+bin/
+
+*.pdf
+*.png
+*.mp4
+
+*.dat
+*.log
+*.bin
+
+*.gro
+*.trr
+
+Report/TikZ-figures/
+
+*.synctex.gz
