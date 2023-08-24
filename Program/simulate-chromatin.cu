@@ -43,6 +43,12 @@ inline void cuda_check( cudaError_t result)
   }
 }
 
+inline void print_time( FILE *f)
+{
+  time_t rt = time(NULL); struct tm *rti = localtime(&rt);
+  fprintf(f,"%02d:%02d:%02d ",rti->tm_hour,rti->tm_min,rti->tm_sec);
+}
+
 void read_parameters( sim_params *sp, FILE *f)
 {
   if( fscanf(f,"T\t%f\n",&(sp->T))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
@@ -163,21 +169,21 @@ void write_trajectory_positions( int N, float *r, float t, int i_f, FILE *f)
   fwrite(r,sizeof(float),3*N,f);
 }
 
-void save_checkpoint( int N, float *r, float *t, int n_threads, PRNGstate *state, int *f_idx, FILE *f)
+void save_checkpoint( int N, float *r, float *t, int n_threads, PRNGstate *state, int *tpf_idx, FILE *f)
 {
-  fwrite(f_idx,sizeof(int),1,f);
+  fwrite(tpf_idx,sizeof(int),1,f);
   fwrite(t,sizeof(float),1,f);
   fwrite(r,sizeof(float),3*N,f);
   fwrite(state,sizeof(PRNGstate),n_threads,f);
 }
 
-void load_checkpoint( int N, float *r, float *t, int n_threads, PRNGstate *state, int *f_idx, FILE *f)
+void load_checkpoint( int N, float *r, float *t, int n_threads, PRNGstate *state, int *tpf_idx, FILE *f)
 {
-  fread(f_idx,sizeof(int),1,f);
+  fread(tpf_idx,sizeof(int),1,f);
   fread(t,sizeof(float),1,f);
   fread(r,sizeof(float),3*N,f);
   fread(state,sizeof(PRNGstate),n_threads,f);
-  *f_idx+=1;
+  *tpf_idx+=1;
 }
 
 //Kernels
@@ -380,6 +386,10 @@ int main( int argc, char const *argv[])
 
   char filename[256];
 
+  snprintf(filename,sizeof(filename),"%s/current-progress.log",sim_dir);
+  logfile = fopen(filename,"wt");
+  if( logfile==NULL){ fprintf(stderr,"Error opening the current progress file.\n"); exit(-1);}
+
   //Simulation parameters and variables
 
   sim_params sp;
@@ -391,6 +401,9 @@ int main( int argc, char const *argv[])
   fclose(file_i1);
 
   //-----------------------check if confinement isn't too extreme
+
+  print_time(logfile); fprintf(logfile,"Adjustable parameters file read.\n");
+  fprintf(logfile,"T=%05.1f N=%04d R=%05.1f F=%04d\n",sp.T,sp.N,sp.R,sp.F); fflush(logfile);
 
   size_t threads_block = 256;
   size_t n_blocks = (sp.N+threads_block-1)/threads_block;
@@ -459,7 +472,7 @@ int main( int argc, char const *argv[])
   cuda_check( cudaDeviceSynchronize());
 
   int sim_idx = 0;
-  int f_idx = 0;
+  int tpf_idx = 0;
   float t = 0.0;
 
   if( argc==3)
@@ -469,10 +482,13 @@ int main( int argc, char const *argv[])
     snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
     file_i1 = fopen(filename,"rb");
     if( file_i1==NULL){ fprintf(stderr,"Error opening the simulation checkpoint file.\n"); exit(-1);}
-    load_checkpoint(sp.N,r_2,&t,n_threads,state,&f_idx,file_i1);
+    load_checkpoint(sp.N,r_2,&t,n_threads,state,&tpf_idx,file_i1);
     fclose(file_i1);
 
-    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,f_idx);
+    print_time(logfile); fprintf(logfile,"Simulation checkpoint file loaded.\n");
+    fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); fflush(logfile);
+
+    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
     file_o1 = fopen(filename,"wb");
     if( file_o1==NULL){ fprintf(stderr,"Error opening the trajectory positions file.\n"); exit(-1);}
   }
@@ -486,7 +502,12 @@ int main( int argc, char const *argv[])
     }
     globfree(&prev_sims);
 
+    print_time(logfile); fprintf(logfile,"New simulation started.\n");
+    fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); fflush(logfile);
+
     generate_initial_configuration(sp.N,sp.T,r_2);
+
+    print_time(logfile); fprintf(logfile,"Initial configuration generated.\n"); fflush(logfile);
 
     float R = sp.N*l_0;
     float rcv = 32*sqrt(2.0*k_B*sp.T*dt/xi);
@@ -514,11 +535,11 @@ int main( int argc, char const *argv[])
       RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
 
       R += -rcv*dt;
-
-      fprintf(stdout,"R = %f\n",R);
     }
 
     cuda_check( cudaDeviceSynchronize());
+
+    print_time(logfile); fprintf(logfile,"Radial contraction finished.\n"); fflush(logfile);
 
     snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
     file_o1 = fopen(filename,"wt");
@@ -526,17 +547,12 @@ int main( int argc, char const *argv[])
     write_initial_configuration(sp.N,r_2,file_o1);
     fclose(file_o1);
 
-    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,f_idx);
+    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
     file_o1 = fopen(filename,"wb");
     if( file_o1==NULL){ fprintf(stderr,"Error opening the trajectory positions file.\n"); exit(-1);}
   }
 
   //Simulation
-
-  snprintf(filename,sizeof(filename),"%s/current-progress-%03d.log",sim_dir,sim_idx);
-  logfile = fopen(filename,"wt");
-  if( logfile==NULL){ fprintf(stderr,"Error opening the current progress file.\n"); exit(-1);}
-  fprintf(logfile,"T=%05.1f N=%04d R=%05.1f F=%04d f_idx=%03d\n",sp.T,sp.N,sp.R,sp.F,f_idx);
 
   for( int i_f = 0; i_f < sp.F; i_f++)
   {
@@ -575,16 +591,17 @@ int main( int argc, char const *argv[])
 
   fclose(file_o1);
 
-  fclose(logfile);
-
-  snprintf(filename,sizeof(filename),"%s/current-progress-%03d.log",sim_dir,sim_idx);
-  remove(filename);
+  print_time(logfile); fprintf(logfile,"Simulation finished.\n"); fflush(logfile);
 
   snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
   file_o1 = fopen(filename,"wb");
   if( file_o1==NULL){ fprintf(stderr,"Error opening the simulation checkpoint file.\n"); exit(-1);}
-  save_checkpoint(sp.N,r_2,&t,n_threads,state,&f_idx,file_o1);
+  save_checkpoint(sp.N,r_2,&t,n_threads,state,&tpf_idx,file_o1);
   fclose(file_o1);
+
+  print_time(logfile); fprintf(logfile,"Simulation checkpoint file saved.\n"); fflush(logfile);
+
+  fclose(logfile);
 
   //Memory deallocation
 
