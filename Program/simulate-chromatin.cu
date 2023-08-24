@@ -9,18 +9,15 @@
 
 //Defines
 
-#define xi  1.00
-#define l_0 0.591
-#define q_e 0.0521
-#define k_e 550.0
-#define k_b 6.66
+#define xi  1.000
+#define l_0 1.000
+#define k_e 100.0
+#define k_b 2.000
 #define k_B 0.00112
 #define r_c 1.1224620
 
 #define dt  1.0/2048.0
 #define n_s 10*2048
-
-#define rct 1000
 
 //Structs
 
@@ -48,14 +45,14 @@ inline void cuda_check( cudaError_t result)
 
 void read_parameters( sim_params *sp, FILE *f)
 {
-  if( fscanf(f,"T\t%f\n",&(sp->T))!=1){ printf("Error reading parameters file.\n"); exit(-1);}
-  if( fscanf(f,"N\t%d\n",&(sp->N))!=1){ printf("Error reading parameters file.\n"); exit(-1);}
-  if( fscanf(f,"R\t%f\n",&(sp->R))!=1){ printf("Error reading parameters file.\n"); exit(-1);}
-  if( fscanf(f,"F\t%d\n",&(sp->F))!=1){ printf("Error reading parameters file.\n"); exit(-1);}
-  if( (sp->T)<__FLT_MIN__){ printf("T must be positive.\n"); exit(-1);}
-  if( (sp->N)<__FLT_MIN__){ printf("N must be positive.\n"); exit(-1);}
-  if( (sp->R)<__FLT_MIN__){ printf("R must be positive.\n"); exit(-1);}
-  if( (sp->F)<__FLT_MIN__){ printf("F must be positive.\n"); exit(-1);}
+  if( fscanf(f,"T\t%f\n",&(sp->T))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( fscanf(f,"N\t%d\n",&(sp->N))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( fscanf(f,"R\t%f\n",&(sp->R))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( fscanf(f,"F\t%d\n",&(sp->F))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( (sp->T)<__FLT_MIN__){ fprintf(stderr,"T must be positive.\n"); exit(-1);}
+  if( (sp->N)<__FLT_MIN__){ fprintf(stderr,"N must be positive.\n"); exit(-1);}
+  if( (sp->R)<__FLT_MIN__){ fprintf(stderr,"R must be positive.\n"); exit(-1);}
+  if( (sp->F)<__FLT_MIN__){ fprintf(stderr,"F must be positive.\n"); exit(-1);}
 }
 
 void generate_initial_configuration( int N, float T, float *r)
@@ -369,17 +366,17 @@ int main( int argc, char const *argv[])
 {
   if( argc<2)
   {
-    printf("You forgot the input.\n");
+    fprintf(stderr,"You forgot the input.\n");
     exit(-1);
   }
-  if( sizeof(argv[1])>128){ printf("Directory name too long.\n"); exit(-1);}
+  if( sizeof(argv[1])>128){ fprintf(stderr,"Directory name too long.\n"); exit(-1);}
 
   char sim_dir[128];
   snprintf(sim_dir,sizeof(sim_dir),"%s",argv[1]);
 
   FILE *file_i1;
   FILE *file_o1;
-  FILE *file_o2;
+  FILE *logfile;
 
   char filename[256];
 
@@ -389,7 +386,7 @@ int main( int argc, char const *argv[])
 
   snprintf(filename,sizeof(filename),"%s/adjustable-parameters.dat",sim_dir);
   file_i1 = fopen(filename,"rt");
-  if( file_i1==NULL){ printf("Error opening the adjustable parameters file.\n"); exit(-1);}
+  if( file_i1==NULL){ fprintf(stderr,"Error opening the adjustable parameters file.\n"); exit(-1);}
   read_parameters(&sp,file_i1);
   fclose(file_i1);
 
@@ -400,8 +397,6 @@ int main( int argc, char const *argv[])
   size_t n_threads = n_blocks*threads_block;
 
   float c_rn = sqrt(2.0*xi*k_B*sp.T*dt);
-
-  float R = sp.N*l_0;
 
   float *r_2;
   float *r_1;
@@ -471,15 +466,15 @@ int main( int argc, char const *argv[])
   {
     sim_idx = atoi(argv[2]);
 
-    snprintf(filename,sizeof(filename),"%s/checkpoint-%03d.bin",sim_dir,sim_idx);
+    snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
     file_i1 = fopen(filename,"rb");
-    if( file_i1==NULL){ printf("Error opening the checkpoint file.\n"); exit(-1);}
+    if( file_i1==NULL){ fprintf(stderr,"Error opening the simulation checkpoint file.\n"); exit(-1);}
     load_checkpoint(sp.N,r_2,&t,n_threads,state,&f_idx,file_i1);
     fclose(file_i1);
 
     snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,f_idx);
     file_o1 = fopen(filename,"wb");
-    if( file_o1==NULL){ printf("Error opening the trajectory positions file.\n"); exit(-1);}
+    if( file_o1==NULL){ fprintf(stderr,"Error opening the trajectory positions file.\n"); exit(-1);}
   }
   else
   {
@@ -493,30 +488,10 @@ int main( int argc, char const *argv[])
 
     generate_initial_configuration(sp.N,sp.T,r_2);
 
-    snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
-    file_o1 = fopen(filename,"wt");
-    if( file_o1==NULL){ printf("Error opening the initial configuration file.\n"); exit(-1);}
-    write_initial_configuration(sp.N,r_2,file_o1);
-    fclose(file_o1);
+    float R = sp.N*l_0;
+    float rcv = 32*sqrt(2.0*k_B*sp.T*dt/xi);
 
-    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,f_idx);
-    file_o1 = fopen(filename,"wb");
-    if( file_o1==NULL){ printf("Error opening the trajectory positions file.\n"); exit(-1);}
-  }
-
-  //Simulation
-
-  snprintf(filename,sizeof(filename),"%s/current-progress-%03d.log",sim_dir,sim_idx);
-  file_o2 = fopen(filename,"wt");
-  if( file_o2==NULL){ printf("Error opening the log file.\n"); exit(-1);}
-  fprintf(file_o2,"T=%05.1f N=%04d R=%05.1f F=%04d f_idx=%03d\n",sp.T,sp.N,sp.R,sp.F,f_idx);
-
-  for( int i_f = 0; i_f < sp.F; i_f++)
-  {
-    fprintf(file_o2,"Progress:%05.1lf%%",(100.0*i_f)/(1.0*sp.F));
-    fseek(file_o2,-15,SEEK_CUR);
-
-    for( int i_s = 0; i_s<n_s; i_s++)
+    while( R>sp.R)
     {
       call_PRNG<<<n_blocks,threads_block>>>(c_rn,nrn,state);
 
@@ -538,7 +513,57 @@ int main( int argc, char const *argv[])
 
       RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
 
-      if( R>sp.R){R += -(sp.N*l_0/rct)*dt;}
+      R += -rcv*dt;
+
+      fprintf(stdout,"R = %f\n",R);
+    }
+
+    cuda_check( cudaDeviceSynchronize());
+
+    snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
+    file_o1 = fopen(filename,"wt");
+    if( file_o1==NULL){ fprintf(stderr,"Error opening the initial configuration file.\n"); exit(-1);}
+    write_initial_configuration(sp.N,r_2,file_o1);
+    fclose(file_o1);
+
+    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,f_idx);
+    file_o1 = fopen(filename,"wb");
+    if( file_o1==NULL){ fprintf(stderr,"Error opening the trajectory positions file.\n"); exit(-1);}
+  }
+
+  //Simulation
+
+  snprintf(filename,sizeof(filename),"%s/current-progress-%03d.log",sim_dir,sim_idx);
+  logfile = fopen(filename,"wt");
+  if( logfile==NULL){ fprintf(stderr,"Error opening the current progress file.\n"); exit(-1);}
+  fprintf(logfile,"T=%05.1f N=%04d R=%05.1f F=%04d f_idx=%03d\n",sp.T,sp.N,sp.R,sp.F,f_idx);
+
+  for( int i_f = 0; i_f < sp.F; i_f++)
+  {
+    fprintf(logfile,"Progress:%05.1lf%%",(100.0*i_f)/(1.0*sp.F));
+    fseek(logfile,-15,SEEK_CUR);
+
+    for( int i_s = 0; i_s<n_s; i_s++)
+    {
+      call_PRNG<<<n_blocks,threads_block>>>(c_rn,nrn,state);
+
+      calc_extern_f<<<n_blocks,threads_block>>>(sp.N,f_c,f_2);
+      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,r_2,f_2);
+      calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_2,b,invlen);
+      calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
+      calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_2);
+      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,r_2,f_2);
+
+      RK_stage_1<<<n_blocks,threads_block>>>(sp.N,r_1,r_2,f_2,nrn);
+
+      calc_extern_f<<<n_blocks,threads_block>>>(sp.N,f_c,f_1);
+      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,r_1,f_1);
+      calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_1,b,invlen);
+      calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
+      calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_1);
+      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,r_1,f_1);
+
+      RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
     }
 
     cuda_check( cudaDeviceSynchronize());
@@ -550,14 +575,14 @@ int main( int argc, char const *argv[])
 
   fclose(file_o1);
 
-  fclose(file_o2);
+  fclose(logfile);
 
   snprintf(filename,sizeof(filename),"%s/current-progress-%03d.log",sim_dir,sim_idx);
   remove(filename);
 
-  snprintf(filename,sizeof(filename),"%s/checkpoint-%03d.bin",sim_dir,sim_idx);
+  snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
   file_o1 = fopen(filename,"wb");
-  if( file_o1==NULL){ printf("Error opening the checkpoint file.\n"); exit(-1);}
+  if( file_o1==NULL){ fprintf(stderr,"Error opening the simulation checkpoint file.\n"); exit(-1);}
   save_checkpoint(sp.N,r_2,&t,n_threads,state,&f_idx,file_o1);
   fclose(file_o1);
 
