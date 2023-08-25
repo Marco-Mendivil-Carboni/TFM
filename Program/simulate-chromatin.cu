@@ -61,7 +61,7 @@ void read_parameters( sim_params *sp, FILE *f)
   if( (sp->F)<__FLT_MIN__){ fprintf(stderr,"F must be positive.\n"); exit(-1);}
 }
 
-void generate_initial_configuration( int N, float T, float *r)
+void generate_initial_configuration( int N, float T, float R, float sig, float *r)
 {
   curandGenerator_t gen;
   curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
@@ -106,8 +106,15 @@ void generate_initial_configuration( int N, float T, float *r)
       dist += (r[3*j_p+1]-r[3*i_p+1])*(r[3*j_p+1]-r[3*i_p+1]);
       dist += (r[3*j_p+2]-r[3*i_p+2])*(r[3*j_p+2]-r[3*i_p+2]);
       dist = sqrt(dist);
-      if( dist<r_c){ accept = 0; break;}
+      if( dist<(r_c*sig)){ accept = 0; break;}
     }
+    float d_r = 0.0;
+    for( int i_c = 0; i_c<3; i_c++)
+    {
+      d_r += r[3*i_p+i_c]*r[3*i_p+i_c];
+    }
+    d_r = sqrt(d_r);
+    if( (R-d_r)<(r_c*sig)){ accept = 0;}
     if( accept)
     {
       dir_old[0] = dir_new[0];
@@ -118,7 +125,7 @@ void generate_initial_configuration( int N, float T, float *r)
     else
     {
       n_failures++;
-      if( n_failures>8){ i_p = 0;}
+      if( n_failures>1024){ i_p = 0;}
       else{ i_p--;}
     }
   }
@@ -219,9 +226,10 @@ void calc_extern_f( int N, float *f_c, float *f)
 }
 
 __global__
-void calc_sphere_f( int N, float R, float *r, float *f)
+void calc_sphere_f( int N, float R, float sig, float *r, float *f)
 {
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
+  float s2 = sig*sig;
   if( i_p<N)
   {
     float k_LJ;
@@ -233,9 +241,9 @@ void calc_sphere_f( int N, float R, float *r, float *f)
     d_r = sqrt(d_r);
     float dsp = (R-d_r);
     float d2 = dsp*dsp;
-    if( d2<r_c*r_c)
+    if( d2<(r_c*r_c*s2))
     {
-      k_LJ = 48.0/(d2*d2*d2*d2*d2*d2*d2)-24.0/(d2*d2*d2*d2);
+      k_LJ = 48.0*(s2*s2*s2*s2*s2*s2)/(d2*d2*d2*d2*d2*d2*d2)-24.0*(s2*s2*s2)/(d2*d2*d2*d2);
       for( int i_c = 0; i_c<3; i_c++)
       {
         f[3*i_p+i_c] += k_LJ*(-dsp/d_r)*r[3*i_p+i_c];
@@ -301,17 +309,18 @@ void calc_intern_f( int N, float *b, float *invlen, float *cosine, float *f)
 }
 
 __device__
-int calc_LJ_f( int N, float *r, int i_p, int j_p, float *f)
+int calc_LJ_f( int N, float sig, float *r, int i_p, int j_p, float *f)
 {
   float k_LJ;
   float d2 = 0.0;
+  float s2 = sig*sig;
   for( int i_c = 0; i_c<3; i_c++)
   {
     d2 += (r[3*i_p+i_c]-r[3*j_p+i_c])*(r[3*i_p+i_c]-r[3*j_p+i_c]);
   }
-  if( d2<r_c*r_c)
+  if( d2<(r_c*r_c*s2))
   {
-    k_LJ = 48.0/(d2*d2*d2*d2*d2*d2*d2)-24.0/(d2*d2*d2*d2);
+    k_LJ = 48.0*(s2*s2*s2*s2*s2*s2)/(d2*d2*d2*d2*d2*d2*d2)-24.0*(s2*s2*s2)/(d2*d2*d2*d2);
     for( int i_c = 0; i_c<3; i_c++)
     {
       f[3*i_p+i_c] += k_LJ*(r[3*i_p+i_c]-r[3*j_p+i_c]);
@@ -320,24 +329,24 @@ int calc_LJ_f( int N, float *r, int i_p, int j_p, float *f)
   }
   else
   {
-    return ((sqrt(d2)-r_c)/(1.25*l_0));
+    return ((sqrt(d2)-r_c*sig)/(1.25*l_0));
   }
 }
 
 __global__
-void calc_exclvol_f( int N, float *r, float *f)
+void calc_exclvol_f( int N, float sig, float *r, float *f)
 {
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
   if( i_p<N)
   {
     int skip;
-    for( int j_p = i_p-3; j_p>=0; j_p -= 1+skip)
+    for( int j_p = i_p-2; j_p>=0; j_p -= 1+skip)
     {
-      skip = calc_LJ_f(N,r,i_p,j_p,f);
+      skip = calc_LJ_f(N,sig,r,i_p,j_p,f);
     }
-    for( int j_p = i_p+3; j_p<N; j_p += 1+skip)
+    for( int j_p = i_p+2; j_p<N; j_p += 1+skip)
     {
-      skip = calc_LJ_f(N,r,i_p,j_p,f);
+      skip = calc_LJ_f(N,sig,r,i_p,j_p,f);
     }
   }
 }
@@ -505,41 +514,40 @@ int main( int argc, char const *argv[])
     print_time(logfile); fprintf(logfile,"New simulation started.\n");
     fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); fflush(logfile);
 
-    generate_initial_configuration(sp.N,sp.T,r_2);
+    float sig = 1.0/2.0;
+
+    generate_initial_configuration(sp.N,sp.T,sp.R,sig,r_2);
 
     print_time(logfile); fprintf(logfile,"Initial configuration generated.\n"); fflush(logfile);
 
-    float R = sp.N*l_0;
-    float rcv = 32*sqrt(2.0*k_B*sp.T*dt/xi);
-
-    while( R>sp.R)
+    while( sig<1.0)
     {
       call_PRNG<<<n_blocks,threads_block>>>(c_rn,nrn,state);
 
       calc_extern_f<<<n_blocks,threads_block>>>(sp.N,f_c,f_2);
-      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,R,r_2,f_2);
+      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,sig,r_2,f_2);
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_2,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_2);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,r_2,f_2);
+      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_2,f_2);
 
       RK_stage_1<<<n_blocks,threads_block>>>(sp.N,r_1,r_2,f_2,nrn);
 
       calc_extern_f<<<n_blocks,threads_block>>>(sp.N,f_c,f_1);
-      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,R,r_1,f_1);
+      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,sig,r_1,f_1);
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_1,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_1);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,r_1,f_1);
+      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_1,f_1);
 
       RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
 
-      R += -rcv*dt;
+      sig *= 1.0+1.0/8192.0;
     }
 
     cuda_check( cudaDeviceSynchronize());
 
-    print_time(logfile); fprintf(logfile,"Radial contraction finished.\n"); fflush(logfile);
+    print_time(logfile); fprintf(logfile,"Bead expansion finished.\n"); fflush(logfile);
 
     snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
     file_o1 = fopen(filename,"wt");
@@ -554,6 +562,8 @@ int main( int argc, char const *argv[])
 
   //Simulation
 
+  float sig = 1.0;
+
   for( int i_f = 0; i_f < sp.F; i_f++)
   {
     fprintf(logfile,"Progress:%05.1lf%%",(100.0*i_f)/(1.0*sp.F));
@@ -564,20 +574,20 @@ int main( int argc, char const *argv[])
       call_PRNG<<<n_blocks,threads_block>>>(c_rn,nrn,state);
 
       calc_extern_f<<<n_blocks,threads_block>>>(sp.N,f_c,f_2);
-      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,r_2,f_2);
+      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,sig,r_2,f_2);
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_2,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_2);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,r_2,f_2);
+      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_2,f_2);
 
       RK_stage_1<<<n_blocks,threads_block>>>(sp.N,r_1,r_2,f_2,nrn);
 
       calc_extern_f<<<n_blocks,threads_block>>>(sp.N,f_c,f_1);
-      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,r_1,f_1);
+      calc_sphere_f<<<n_blocks,threads_block>>>(sp.N,sp.R,sig,r_1,f_1);
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_1,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_1);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,r_1,f_1);
+      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_1,f_1);
 
       RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
     }
