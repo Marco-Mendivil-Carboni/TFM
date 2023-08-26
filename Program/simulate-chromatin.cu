@@ -1,64 +1,62 @@
 //Libraries
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-#include <curand_kernel.h>
-#include <glob.h>
+#include <cstdio> //Standard Input and Output Library
+#include <cstdlib> //Standard General Utilities Library
+#include <cmath> //Numerics Library
+#include <ctime> //Time Library
 
-//Defines
+#include <curand_kernel.h> //cuRAND device functions
 
-#define xi  1.000
-#define l_0 1.000
-#define k_e 100.0
-#define k_b 2.000
-#define k_B 0.00112
-#define r_c 1.1224620
+#include <glob.h> //Pathname pattern matching types
 
-#define dt  1.0/2048.0
-#define n_s 10*2048
+//Constants
+
+constexpr float xi  {1.000000}; //damping coefficient
+constexpr float k_B {0.001120}; //Boltzmann constant
+constexpr float l_0 {1.000000}; //natural length of bonds
+constexpr float k_e {100.0000}; //elastic constant
+constexpr float k_b {2.000000}; //bending constant
+constexpr float r_c {1.122462}; //VdW cutoff radius
+constexpr float dt  {1.0/2048}; //timestep
+
+constexpr int n_s {1*2048}; //MD steps between frames
 
 //Structs
 
-struct sim_params
+struct sim_par //simulation parameters
 {
-  float T;
-  int N;
-  float R;
-  int F;
+  float T; //temperature
+  int N; //number of particles
+  float R; //radius of sphere
+  int F; //frames per file
 };
 
-typedef struct sim_params sim_params;
+typedef struct sim_par sim_par;
 typedef struct curandStatePhilox4_32_10 PRNGstate;
 
 //Functions
 
 inline void cuda_check( cudaError_t result)
 {
-  if( result!=cudaSuccess)
-  {
-    fprintf(stderr,"CUDA Error: %s\n",cudaGetErrorString(result));
-    exit(-1);
-  }
+  if( result!=cudaSuccess){ std::fprintf(stderr,"CUDA Error: %s\n",cudaGetErrorString(result)); exit(-1);}
 }
 
-inline void print_time( FILE *f)
+inline void print_time( FILE* f)
 {
   time_t rt = time(NULL); struct tm *rti = localtime(&rt);
-  fprintf(f,"%02d:%02d:%02d ",rti->tm_hour,rti->tm_min,rti->tm_sec);
+  std::fprintf(f,"%02d:%02d:%02d ",rti->tm_hour,rti->tm_min,rti->tm_sec);
 }
 
-void read_parameters( sim_params *sp, FILE *f)
+void read_parameters( sim_par& sp, FILE* f)
 {
-  if( fscanf(f,"T\t%f\n",&(sp->T))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
-  if( fscanf(f,"N\t%d\n",&(sp->N))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
-  if( fscanf(f,"R\t%f\n",&(sp->R))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
-  if( fscanf(f,"F\t%d\n",&(sp->F))!=1){ fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
-  if( (sp->T)<__FLT_MIN__){ fprintf(stderr,"T must be positive.\n"); exit(-1);}
-  if( (sp->N)<__FLT_MIN__){ fprintf(stderr,"N must be positive.\n"); exit(-1);}
-  if( (sp->R)<__FLT_MIN__){ fprintf(stderr,"R must be positive.\n"); exit(-1);}
-  if( (sp->F)<__FLT_MIN__){ fprintf(stderr,"F must be positive.\n"); exit(-1);}
+  if( std::fscanf(f,"T\t%f\n",&(sp.T))!=1){ std::fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( std::fscanf(f,"N\t%d\n",&(sp.N))!=1){ std::fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( std::fscanf(f,"R\t%f\n",&(sp.R))!=1){ std::fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( std::fscanf(f,"F\t%d\n",&(sp.F))!=1){ std::fprintf(stderr,"Error reading parameters file.\n"); exit(-1);}
+  if( (sp.T)<__FLT_MIN__){ std::fprintf(stderr,"T must be positive.\n"); exit(-1);}
+  if( (sp.N)<__FLT_MIN__){ std::fprintf(stderr,"N must be positive.\n"); exit(-1);}
+  if( (sp.R)<__FLT_MIN__){ std::fprintf(stderr,"R must be positive.\n"); exit(-1);}
+  if( (sp.F)<__FLT_MIN__){ std::fprintf(stderr,"F must be positive.\n"); exit(-1);}
 }
 
 void generate_initial_configuration( int N, float T, float R, float sig, float *r)
@@ -134,14 +132,14 @@ void generate_initial_configuration( int N, float T, float R, float sig, float *
 
 void write_initial_configuration( int N, float *r, FILE *f)
 {
-  fprintf(f,"Chromatin simulation, t=0.0\n");
-  fprintf(f,"%5d\n",N);
+  std::fprintf(f,"Chromatin simulation, t=0.0\n");
+  std::fprintf(f,"%5d\n",N);
   for( int i_p = 0; i_p<N; i_p++)
   {
-    fprintf(f,"%5d%-5s%5s%5d",i_p+1,"X","X",i_p+1);
-    fprintf(f,"%8.3f%8.3f%8.3f\n",r[3*i_p+0],r[3*i_p+1],r[3*i_p+2]);
+    std::fprintf(f,"%5d%-5s%5s%5d",i_p+1,"X","X",i_p+1);
+    std::fprintf(f,"%8.3f%8.3f%8.3f\n",r[3*i_p+0],r[3*i_p+1],r[3*i_p+2]);
   }
-  fprintf(f,"%10.5f%10.5f%10.5f\n",0.0,0.0,0.0);
+  std::fprintf(f,"%10.5f%10.5f%10.5f\n",0.0,0.0,0.0);
 }
 
 void write_trajectory_positions( int N, float *r, float t, int i_f, FILE *f)
@@ -377,42 +375,40 @@ void RK_stage_2( int N, float *r_2, float *f_1, float *f_2, float *nrn)
   }
 }
 
-int main( int argc, char const *argv[])
+int main( int argc, const char** argv)
 {
-  if( argc<2)
-  {
-    fprintf(stderr,"You forgot the input.\n");
-    exit(-1);
-  }
-  if( sizeof(argv[1])>128){ fprintf(stderr,"Directory name too long.\n"); exit(-1);}
+  if( argc<2){ std::fprintf(stderr,"Input missing.\n"); return EXIT_FAILURE;}
+  if( argc>3){ std::fprintf(stderr,"Too many arguments.\n"); return EXIT_FAILURE;}
+  if( sizeof(argv[1])>128){ std::fprintf(stderr,"Directory name too long.\n"); return EXIT_FAILURE;}
 
   char sim_dir[128];
-  snprintf(sim_dir,sizeof(sim_dir),"%s",argv[1]);
+  std::snprintf(sim_dir,sizeof(sim_dir),"%s",argv[1]);
 
-  FILE *file_i1;
-  FILE *file_o1;
-  FILE *logfile;
+  FILE* file_i1;
+  FILE* file_o1;
+  FILE* logfile;
 
   char filename[256];
 
-  snprintf(filename,sizeof(filename),"%s/current-progress.log",sim_dir);
-  logfile = fopen(filename,"wt");
-  if( logfile==NULL){ fprintf(stderr,"Error opening the current progress file.\n"); exit(-1);}
+  std::snprintf(filename,sizeof(filename),"%s/current-progress.log",sim_dir);
+  logfile = std::fopen(filename,"wt");
+  if( logfile==NULL){ std::fprintf(stderr,"Error opening the current progress file.\n"); return EXIT_FAILURE;}
 
   //Simulation parameters and variables
 
-  sim_params sp;
+  sim_par sp;
 
-  snprintf(filename,sizeof(filename),"%s/adjustable-parameters.dat",sim_dir);
-  file_i1 = fopen(filename,"rt");
-  if( file_i1==NULL){ fprintf(stderr,"Error opening the adjustable parameters file.\n"); exit(-1);}
-  read_parameters(&sp,file_i1);
-  fclose(file_i1);
+  std::snprintf(filename,sizeof(filename),"%s/adjustable-parameters.dat",sim_dir);
+  file_i1 = std::fopen(filename,"rt");
+  if( file_i1==NULL){ std::fprintf(stderr,"Error opening the adjustable parameters file.\n"); return EXIT_FAILURE;}
+  read_parameters(sp,file_i1);
+  std::fclose(file_i1);
 
-  //-----------------------check if confinement isn't too extreme
+  float cvf = sp.N*pow(0.5/(sp.R-0.5),3); //Calculate the chromatin volume fraction
+  if( cvf>0.5){ std::fprintf(stderr,"Chromatin volume fraction too high (above 0.5).\n"); return EXIT_FAILURE;}
 
-  print_time(logfile); fprintf(logfile,"Adjustable parameters file read.\n");
-  fprintf(logfile,"T=%05.1f N=%04d R=%05.1f F=%04d\n",sp.T,sp.N,sp.R,sp.F); fflush(logfile);
+  print_time(logfile); std::fprintf(logfile,"Adjustable parameters file read.\n");
+  std::fprintf(logfile,"T=%05.1f N=%04d R=%05.2f F=%04d\n",sp.T,sp.N,sp.R,sp.F); std::fflush(logfile);
 
   size_t threads_block = 256;
   size_t n_blocks = (sp.N+threads_block-1)/threads_block;
@@ -488,37 +484,37 @@ int main( int argc, char const *argv[])
   {
     sim_idx = atoi(argv[2]);
 
-    snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
-    file_i1 = fopen(filename,"rb");
-    if( file_i1==NULL){ fprintf(stderr,"Error opening the simulation checkpoint file.\n"); exit(-1);}
+    std::snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
+    file_i1 = std::fopen(filename,"rb");
+    if( file_i1==NULL){ std::fprintf(stderr,"Error opening the simulation checkpoint file.\n"); return EXIT_FAILURE;}
     load_checkpoint(sp.N,r_2,&t,n_threads,state,&tpf_idx,file_i1);
-    fclose(file_i1);
+    std::fclose(file_i1);
 
-    print_time(logfile); fprintf(logfile,"Simulation checkpoint file loaded.\n");
-    fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); fflush(logfile);
+    print_time(logfile); std::fprintf(logfile,"Simulation checkpoint file loaded.\n");
+    std::fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); std::fflush(logfile);
 
-    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
-    file_o1 = fopen(filename,"wb");
-    if( file_o1==NULL){ fprintf(stderr,"Error opening the trajectory positions file.\n"); exit(-1);}
+    std::snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
+    file_o1 = std::fopen(filename,"wb");
+    if( file_o1==NULL){ std::fprintf(stderr,"Error opening the trajectory positions file.\n"); return EXIT_FAILURE;}
   }
   else
   {
     glob_t prev_sims;
-    snprintf(filename,sizeof(filename),"%s/initial-configuration-*",sim_dir);
+    std::snprintf(filename,sizeof(filename),"%s/initial-configuration-*",sim_dir);
     if( glob(filename,0,NULL,&prev_sims)==0)
     {
       sim_idx = prev_sims.gl_pathc;
     }
     globfree(&prev_sims);
 
-    print_time(logfile); fprintf(logfile,"New simulation started.\n");
-    fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); fflush(logfile);
+    print_time(logfile); std::fprintf(logfile,"New simulation started.\n");
+    std::fprintf(logfile,"sim_idx=%03d tpf_idx=%03d\n",sim_idx,tpf_idx); std::fflush(logfile);
 
     float sig = 1.0/2.0;
 
     generate_initial_configuration(sp.N,sp.T,sp.R,sig,r_2);
 
-    print_time(logfile); fprintf(logfile,"Initial configuration generated.\n"); fflush(logfile);
+    print_time(logfile); std::fprintf(logfile,"Initial configuration generated.\n"); std::fflush(logfile);
 
     while( sig<1.0)
     {
@@ -547,17 +543,17 @@ int main( int argc, char const *argv[])
 
     cuda_check( cudaDeviceSynchronize());
 
-    print_time(logfile); fprintf(logfile,"Bead expansion finished.\n"); fflush(logfile);
+    print_time(logfile); std::fprintf(logfile,"Bead expansion finished.\n"); std::fflush(logfile);
 
-    snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
-    file_o1 = fopen(filename,"wt");
-    if( file_o1==NULL){ fprintf(stderr,"Error opening the initial configuration file.\n"); exit(-1);}
+    std::snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
+    file_o1 = std::fopen(filename,"wt");
+    if( file_o1==NULL){ std::fprintf(stderr,"Error opening the initial configuration file.\n"); return EXIT_FAILURE;}
     write_initial_configuration(sp.N,r_2,file_o1);
-    fclose(file_o1);
+    std::fclose(file_o1);
 
-    snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
-    file_o1 = fopen(filename,"wb");
-    if( file_o1==NULL){ fprintf(stderr,"Error opening the trajectory positions file.\n"); exit(-1);}
+    std::snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
+    file_o1 = std::fopen(filename,"wb");
+    if( file_o1==NULL){ std::fprintf(stderr,"Error opening the trajectory positions file.\n"); return EXIT_FAILURE;}
   }
 
   //Simulation
@@ -566,8 +562,8 @@ int main( int argc, char const *argv[])
 
   for( int i_f = 0; i_f < sp.F; i_f++)
   {
-    fprintf(logfile,"Progress:%05.1lf%%",(100.0*i_f)/(1.0*sp.F));
-    fseek(logfile,-15,SEEK_CUR);
+    std::fprintf(logfile,"Progress:%05.1lf%%",(100.0*i_f)/(1.0*sp.F));
+    std::fseek(logfile,-15,SEEK_CUR);
 
     for( int i_s = 0; i_s<n_s; i_s++)
     {
@@ -599,19 +595,19 @@ int main( int argc, char const *argv[])
     write_trajectory_positions(sp.N,r_2,t,i_f,file_o1);
   }
 
-  fclose(file_o1);
+  std::fclose(file_o1);
 
-  print_time(logfile); fprintf(logfile,"Simulation finished.\n"); fflush(logfile);
+  print_time(logfile); std::fprintf(logfile,"Simulation finished.\n"); std::fflush(logfile);
 
-  snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
-  file_o1 = fopen(filename,"wb");
-  if( file_o1==NULL){ fprintf(stderr,"Error opening the simulation checkpoint file.\n"); exit(-1);}
+  std::snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
+  file_o1 = std::fopen(filename,"wb");
+  if( file_o1==NULL){ std::fprintf(stderr,"Error opening the simulation checkpoint file.\n"); return EXIT_FAILURE;}
   save_checkpoint(sp.N,r_2,&t,n_threads,state,&tpf_idx,file_o1);
-  fclose(file_o1);
+  std::fclose(file_o1);
 
-  print_time(logfile); fprintf(logfile,"Simulation checkpoint file saved.\n"); fflush(logfile);
+  print_time(logfile); std::fprintf(logfile,"Simulation checkpoint file saved.\n"); std::fflush(logfile);
 
-  fclose(logfile);
+  std::fclose(logfile);
 
   //Memory deallocation
 
@@ -630,5 +626,5 @@ int main( int argc, char const *argv[])
 
   cudaFree(f_c);
 
-  return 0;
+  return EXIT_SUCCESS;
 }

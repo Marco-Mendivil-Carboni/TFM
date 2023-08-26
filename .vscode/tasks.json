@@ -34,7 +34,7 @@
                 "${fileDirname}/bin/${fileBasenameNoExtension}",
                 "-lm",
                 "-lcurand",
-                "-Wno-deprecated-gpu-targets",
+                "-Wno-deprecated-gpu-targets"
             ],
             "options": {
                 "cwd": "${fileDirname}"
