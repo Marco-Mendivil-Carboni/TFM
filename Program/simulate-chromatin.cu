@@ -1,13 +1,23 @@
 //Libraries
 
-#include <cstdio> //Standard Input and Output Library
-#include <cstdlib> //Standard General Utilities Library
-#include <cmath> //Numerics Library
-#include <ctime> //Time Library
+#include <cstdio> //standard input and output library
+#include <cstdlib> //standard general utilities library
+#include <cmath> //mathematical functions library
+#include <ctime> //time utilities library
+
+#include <glob.h> //pathname pattern matching types
 
 #include <curand_kernel.h> //cuRAND device functions
 
-#include <glob.h> //Pathname pattern matching types
+// namespace mmcc
+// { //Marco Mendívil Carboni code
+
+// class chromatin_simulation
+// {
+
+// };
+
+// } //namespace mmcc
 
 //Constants
 
@@ -30,9 +40,9 @@ struct sim_par //simulation parameters
   float R; //radius of sphere
   int F; //frames per file
 };
-
 typedef struct sim_par sim_par;
-typedef struct curandStatePhilox4_32_10 PRNGstate;
+
+using PRNGstate = curandStatePhilox4_32_10;
 
 //Functions
 
@@ -43,7 +53,7 @@ inline void cuda_check( cudaError_t result)
 
 inline void print_time( FILE* f)
 {
-  time_t rt = time(NULL); struct tm *rti = localtime(&rt);
+  time_t rt = time(nullptr); struct tm *rti = localtime(&rt);
   std::fprintf(f,"%02d:%02d:%02d ",rti->tm_hour,rti->tm_min,rti->tm_sec);
 }
 
@@ -63,7 +73,7 @@ void generate_initial_configuration( int N, float T, float R, float sig, float *
 {
   curandGenerator_t gen;
   curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
-  curandSetPseudoRandomGeneratorSeed(gen,time(NULL));
+  curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
   float random, theta, varphi, bondlen, bondangle;
   float dir_old[3], dir_new[3], perpdir[3], perpdirnorm;
   float beta = 1.0/(k_B*T);
@@ -74,7 +84,7 @@ void generate_initial_configuration( int N, float T, float R, float sig, float *
   dir_old[2]=cos(theta);
   r[0]=r[1]=r[2]=0.0;
   int n_failures = 0;
-  for( int i_p = 1; i_p<N; i_p++)
+  for( int i_p = 1; i_p<N; ++i_p)
   {
     curandGenerateUniform(gen,&random,1); theta = acos(1.0-2.0*random);
     curandGenerateUniform(gen,&random,1); varphi = 2.0*M_PI*random;
@@ -97,7 +107,7 @@ void generate_initial_configuration( int N, float T, float R, float sig, float *
     if( !isfinite(r[3*i_p+0])){ accept = 0;}
     if( !isfinite(r[3*i_p+1])){ accept = 0;}
     if( !isfinite(r[3*i_p+2])){ accept = 0;}
-    for( int j_p = 0; j_p<(i_p-1); j_p++)
+    for( int j_p = 0; j_p<(i_p-1); ++j_p)
     {
       float dist = 0.0;
       dist += (r[3*j_p+0]-r[3*i_p+0])*(r[3*j_p+0]-r[3*i_p+0]);
@@ -107,7 +117,7 @@ void generate_initial_configuration( int N, float T, float R, float sig, float *
       if( dist<(r_c*sig)){ accept = 0; break;}
     }
     float d_r = 0.0;
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       d_r += r[3*i_p+i_c]*r[3*i_p+i_c];
     }
@@ -122,7 +132,7 @@ void generate_initial_configuration( int N, float T, float R, float sig, float *
     }
     else
     {
-      n_failures++;
+      ++n_failures;
       if( n_failures>1024){ i_p = 0;}
       else{ i_p--;}
     }
@@ -134,7 +144,7 @@ void write_initial_configuration( int N, float *r, FILE *f)
 {
   std::fprintf(f,"Chromatin simulation, t=0.0\n");
   std::fprintf(f,"%5d\n",N);
-  for( int i_p = 0; i_p<N; i_p++)
+  for( int i_p = 0; i_p<N; ++i_p)
   {
     std::fprintf(f,"%5d%-5s%5s%5d",i_p+1,"X","X",i_p+1);
     std::fprintf(f,"%8.3f%8.3f%8.3f\n",r[3*i_p+0],r[3*i_p+1],r[3*i_p+2]);
@@ -153,7 +163,7 @@ void write_trajectory_positions( int N, float *r, float t, int i_f, FILE *f)
   fwrite(&len_s_b,sizeof(int),1,f);
   fwrite(trrversion,sizeof(char),sizeof(trrversion)-1,f);
   int zero = 0;
-  for( int i = 0; i<7; i++)
+  for( int i = 0; i<7; ++i)
   {
     fwrite(&zero,sizeof(int),1,f);
   }
@@ -204,7 +214,7 @@ __global__
 void call_PRNG( float c_rn, float *nrn, PRNGstate *state)
 {
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
-  for( int i_c = 0; i_c<3; i_c++)
+  for( int i_c = 0; i_c<3; ++i_c)
   {
     nrn[3*i_p+i_c] = c_rn*curand_normal(&state[i_p]);
   }
@@ -216,7 +226,7 @@ void calc_extern_f( int N, float *f_c, float *f)
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
   if( i_p<N)
   {
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       f[3*i_p+i_c] = f_c[3*i_p+i_c];
     }
@@ -232,7 +242,7 @@ void calc_sphere_f( int N, float R, float sig, float *r, float *f)
   {
     float k_LJ;
     float d_r = 0.0;
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       d_r += r[3*i_p+i_c]*r[3*i_p+i_c];
     }
@@ -242,7 +252,7 @@ void calc_sphere_f( int N, float R, float sig, float *r, float *f)
     if( d2<(r_c*r_c*s2))
     {
       k_LJ = 48.0*(s2*s2*s2*s2*s2*s2)/(d2*d2*d2*d2*d2*d2*d2)-24.0*(s2*s2*s2)/(d2*d2*d2*d2);
-      for( int i_c = 0; i_c<3; i_c++)
+      for( int i_c = 0; i_c<3; ++i_c)
       {
         f[3*i_p+i_c] += k_LJ*(-dsp/d_r)*r[3*i_p+i_c];
       }
@@ -257,7 +267,7 @@ void calc_bonds( int N, float *r, float *b, float *invlen)
   if( i_p<N-1)
   {
     invlen[i_p+2] = 0.0;
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       b[3*(i_p+2)+i_c] = r[3*(i_p+1)+i_c]-r[3*i_p+i_c];
       invlen[i_p+2] += b[3*(i_p+2)+i_c]*b[3*(i_p+2)+i_c];
@@ -273,7 +283,7 @@ void calc_cosines( int N, float *b, float *invlen, float *cosine)
   if( i_p<N-2)
   {
     cosine[i_p+3] = 0.0;
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       cosine[i_p+3] += b[3*(i_p+3)+i_c]*b[3*(i_p+2)+i_c];
     }
@@ -287,7 +297,7 @@ void calc_intern_f( int N, float *b, float *invlen, float *cosine, float *f)
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
   if( i_p<N)
   {
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       f[3*i_p+i_c] += k_e*(1.0-l_0*invlen[i_p+1])*(-b[3*(i_p+1)+i_c]);
 
@@ -312,14 +322,14 @@ int calc_LJ_f( int N, float sig, float *r, int i_p, int j_p, float *f)
   float k_LJ;
   float d2 = 0.0;
   float s2 = sig*sig;
-  for( int i_c = 0; i_c<3; i_c++)
+  for( int i_c = 0; i_c<3; ++i_c)
   {
     d2 += (r[3*i_p+i_c]-r[3*j_p+i_c])*(r[3*i_p+i_c]-r[3*j_p+i_c]);
   }
   if( d2<(r_c*r_c*s2))
   {
     k_LJ = 48.0*(s2*s2*s2*s2*s2*s2)/(d2*d2*d2*d2*d2*d2*d2)-24.0*(s2*s2*s2)/(d2*d2*d2*d2);
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       f[3*i_p+i_c] += k_LJ*(r[3*i_p+i_c]-r[3*j_p+i_c]);
     }
@@ -355,7 +365,7 @@ void RK_stage_1( int N, float *r_1, float *r_2, float *f_2, float *nrn)
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
   if( i_p<N)
   {
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       r_1[3*i_p+i_c] = r_2[3*i_p+i_c]+f_2[3*i_p+i_c]*dt/xi+nrn[3*i_p+i_c]/xi;
     }
@@ -368,7 +378,7 @@ void RK_stage_2( int N, float *r_2, float *f_1, float *f_2, float *nrn)
   int i_p = blockIdx.x * blockDim.x + threadIdx.x;
   if( i_p<N)
   {
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       r_2[3*i_p+i_c] = r_2[3*i_p+i_c]+0.5*(f_1[3*i_p+i_c]+f_2[3*i_p+i_c])*dt/xi+nrn[3*i_p+i_c]/xi;
     }
@@ -392,7 +402,7 @@ int main( int argc, const char** argv)
 
   std::snprintf(filename,sizeof(filename),"%s/current-progress.log",sim_dir);
   logfile = std::fopen(filename,"wt");
-  if( logfile==NULL){ std::fprintf(stderr,"Error opening the current progress file.\n"); return EXIT_FAILURE;}
+  if( logfile==nullptr){ std::fprintf(stderr,"Error opening the current progress file.\n"); return EXIT_FAILURE;}
 
   //Simulation parameters and variables
 
@@ -400,7 +410,7 @@ int main( int argc, const char** argv)
 
   std::snprintf(filename,sizeof(filename),"%s/adjustable-parameters.dat",sim_dir);
   file_i1 = std::fopen(filename,"rt");
-  if( file_i1==NULL){ std::fprintf(stderr,"Error opening the adjustable parameters file.\n"); return EXIT_FAILURE;}
+  if( file_i1==nullptr){ std::fprintf(stderr,"Error opening the adjustable parameters file.\n"); return EXIT_FAILURE;}
   read_parameters(sp,file_i1);
   std::fclose(file_i1);
 
@@ -463,9 +473,9 @@ int main( int argc, const char** argv)
 
   //Constant force
 
-  for( int i_p = 0; i_p<sp.N; i_p++)
+  for( int i_p = 0; i_p<sp.N; ++i_p)
   {
-    for( int i_c = 0; i_c<3; i_c++)
+    for( int i_c = 0; i_c<3; ++i_c)
     {
       f_c[3*i_p+i_c] = 0.0;
     }
@@ -473,7 +483,7 @@ int main( int argc, const char** argv)
 
   //Initialization
 
-  setup_PRNG<<<n_blocks,threads_block>>>(time(NULL),state);
+  setup_PRNG<<<n_blocks,threads_block>>>(time(nullptr),state);
   cuda_check( cudaDeviceSynchronize());
 
   int sim_idx = 0;
@@ -486,7 +496,7 @@ int main( int argc, const char** argv)
 
     std::snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
     file_i1 = std::fopen(filename,"rb");
-    if( file_i1==NULL){ std::fprintf(stderr,"Error opening the simulation checkpoint file.\n"); return EXIT_FAILURE;}
+    if( file_i1==nullptr){ std::fprintf(stderr,"Error opening the simulation checkpoint file.\n"); return EXIT_FAILURE;}
     load_checkpoint(sp.N,r_2,&t,n_threads,state,&tpf_idx,file_i1);
     std::fclose(file_i1);
 
@@ -495,13 +505,13 @@ int main( int argc, const char** argv)
 
     std::snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
     file_o1 = std::fopen(filename,"wb");
-    if( file_o1==NULL){ std::fprintf(stderr,"Error opening the trajectory positions file.\n"); return EXIT_FAILURE;}
+    if( file_o1==nullptr){ std::fprintf(stderr,"Error opening the trajectory positions file.\n"); return EXIT_FAILURE;}
   }
   else
   {
     glob_t prev_sims;
     std::snprintf(filename,sizeof(filename),"%s/initial-configuration-*",sim_dir);
-    if( glob(filename,0,NULL,&prev_sims)==0)
+    if( glob(filename,0,nullptr,&prev_sims)==0)
     {
       sim_idx = prev_sims.gl_pathc;
     }
@@ -547,25 +557,25 @@ int main( int argc, const char** argv)
 
     std::snprintf(filename,sizeof(filename),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
     file_o1 = std::fopen(filename,"wt");
-    if( file_o1==NULL){ std::fprintf(stderr,"Error opening the initial configuration file.\n"); return EXIT_FAILURE;}
+    if( file_o1==nullptr){ std::fprintf(stderr,"Error opening the initial configuration file.\n"); return EXIT_FAILURE;}
     write_initial_configuration(sp.N,r_2,file_o1);
     std::fclose(file_o1);
 
     std::snprintf(filename,sizeof(filename),"%s/trajectory-positions-%03d-%03d.trr",sim_dir,sim_idx,tpf_idx);
     file_o1 = std::fopen(filename,"wb");
-    if( file_o1==NULL){ std::fprintf(stderr,"Error opening the trajectory positions file.\n"); return EXIT_FAILURE;}
+    if( file_o1==nullptr){ std::fprintf(stderr,"Error opening the trajectory positions file.\n"); return EXIT_FAILURE;}
   }
 
   //Simulation
 
   float sig = 1.0;
 
-  for( int i_f = 0; i_f < sp.F; i_f++)
+  for( int i_f = 0; i_f<sp.F; ++i_f)
   {
     std::fprintf(logfile,"Progress:%05.1lf%%",(100.0*i_f)/(1.0*sp.F));
     std::fseek(logfile,-15,SEEK_CUR);
 
-    for( int i_s = 0; i_s<n_s; i_s++)
+    for( int i_s = 0; i_s<n_s; ++i_s)
     {
       call_PRNG<<<n_blocks,threads_block>>>(c_rn,nrn,state);
 
@@ -601,7 +611,7 @@ int main( int argc, const char** argv)
 
   std::snprintf(filename,sizeof(filename),"%s/simulation-checkpoint-%03d.bin",sim_dir,sim_idx);
   file_o1 = std::fopen(filename,"wb");
-  if( file_o1==NULL){ std::fprintf(stderr,"Error opening the simulation checkpoint file.\n"); return EXIT_FAILURE;}
+  if( file_o1==nullptr){ std::fprintf(stderr,"Error opening the simulation checkpoint file.\n"); return EXIT_FAILURE;}
   save_checkpoint(sp.N,r_2,&t,n_threads,state,&tpf_idx,file_o1);
   std::fclose(file_o1);
 
