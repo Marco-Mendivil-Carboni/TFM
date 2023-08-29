@@ -9,16 +9,6 @@
 
 #include <curand_kernel.h> //cuRAND device functions
 
-// namespace mmcc
-// { //Marco Mendívil Carboni code
-
-// class chromatin_simulation
-// {
-
-// };
-
-// } //namespace mmcc
-
 //Constants
 
 constexpr float xi  {1.000000}; //damping coefficient
@@ -535,7 +525,7 @@ int main( int argc, const char** argv)
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_2,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_2);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_2,f_2);
+      // calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_2,f_2);
 
       RK_stage_1<<<n_blocks,threads_block>>>(sp.N,r_1,r_2,f_2,nrn);
 
@@ -544,7 +534,7 @@ int main( int argc, const char** argv)
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_1,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_1);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_1,f_1);
+      // calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_1,f_1);
 
       RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
 
@@ -584,7 +574,7 @@ int main( int argc, const char** argv)
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_2,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_2);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_2,f_2);
+      // calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_2,f_2);
 
       RK_stage_1<<<n_blocks,threads_block>>>(sp.N,r_1,r_2,f_2,nrn);
 
@@ -593,7 +583,7 @@ int main( int argc, const char** argv)
       calc_bonds<<<n_blocks,threads_block>>>(sp.N,r_1,b,invlen);
       calc_cosines<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine);
       calc_intern_f<<<n_blocks,threads_block>>>(sp.N,b,invlen,cosine,f_1);
-      calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_1,f_1);
+      // calc_exclvol_f<<<n_blocks,threads_block>>>(sp.N,sig,r_1,f_1);
 
       RK_stage_2<<<n_blocks,threads_block>>>(sp.N,r_2,f_1,f_2,nrn);
     }
