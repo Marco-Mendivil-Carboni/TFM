@@ -4,7 +4,7 @@
 #include <cstdlib> //standard general utilities library
 #include <glob.h> //pathname pattern matching types
 
-#include "inc/utilities.cuh"
+#include "inc/cudautil.cuh"
 #include "inc/chrsim.cuh"
 
 //Main

@@ -3,7 +3,7 @@
 
 //Includes
 
-#include "utilities.cuh"
+#include "cudautil.cuh"
 
 #include <curand_kernel.h> //cuRAND device functions
 

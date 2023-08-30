@@ -1,5 +1,5 @@
-#ifndef MMCC_UTILITIES_H
-#define MMCC_UTILITIES_H
+#ifndef MMCC_CUDAUTIL_H
+#define MMCC_CUDAUTIL_H
 
 //Includes
 
@@ -39,4 +39,4 @@ FILE *fopen(const char *filename, const char *mode);
 
 } //namespace mmcc
 
-#endif //MMCC_UTILITIES_H
+#endif //MMCC_CUDAUTIL_H

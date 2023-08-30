@@ -4,7 +4,7 @@
 #include <cmath> //mathematical functions library
 #include <ctime> //time utilities library
 
-#include "../inc/utilities.cuh"
+#include "../inc/cudautil.cuh"
 #include "../inc/chrsim.cuh"
 
 #include <curand_kernel.h> //cuRAND device functions
@@ -93,6 +93,9 @@ void chrsim::generate_initial_configuration()
   olddir.y = sin(theta)*sin(varphi);
   olddir.z = cos(theta);
   r_2.x[0] = r_2.y[0] = r_2.z[0] = 0.0;
+
+  //set initial sigma value
+  sig = 1.0/2;
 
   //perform random walk
   int n_failures = 0;

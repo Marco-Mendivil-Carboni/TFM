@@ -4,7 +4,7 @@
 #include <ctime> //time utilities library
 #include <stdexcept> //standard exceptions classes
 
-#include "../inc/utilities.cuh"
+#include "../inc/cudautil.cuh"
 
 //Namespace
 
