@@ -9,15 +9,20 @@
 
 #include <curand_kernel.h> //cuRAND device functions
 
-//Namespaces
+//Namespace
 
 namespace mmcc //Marco Mendívil Carboni code
 {
 
-//Namespaces
+//utilities file
 
-namespace util //utilities
-{
+//Structures
+
+struct vecarr { //3D vector array structure
+  float *x; //1st component
+  float *y; //2nd component
+  float *z; //3rd component
+};
 
 //Classes
 
@@ -28,6 +33,30 @@ class error : public std::runtime_error
 };
 
 //Functions
+
+inline void cuda_check( cudaError_t result)
+{
+  if (result!=cudaSuccess)
+  {
+    char msg[512];
+    std::snprintf(msg,sizeof(msg),"CUDA: %s",cudaGetErrorString(result));
+    throw error(msg);
+  }
+}
+
+void allocate_vecarr(vecarr &vecarr_ref, int n_elements)
+{
+  cuda_check(cudaMallocManaged(&(vecarr_ref.x),n_elements*sizeof(float)));
+  cuda_check(cudaMallocManaged(&(vecarr_ref.y),n_elements*sizeof(float)));
+  cuda_check(cudaMallocManaged(&(vecarr_ref.z),n_elements*sizeof(float)));
+}
+
+void free_vecarr(vecarr &vecarr_ref)
+{
+  cudaFree(vecarr_ref.x);
+  cudaFree(vecarr_ref.y);
+  cudaFree(vecarr_ref.z);
+}
 
 FILE *fopen(const char *filename, const char *mode)
 {
@@ -41,19 +70,19 @@ FILE *fopen(const char *filename, const char *mode)
   return f_ptr;
 }
 
-} //namespace util
+//simulation file
 
-//Non-member Functions
+//Constants
 
-inline void cuda_check( cudaError_t result)
-{
-  if (result!=cudaSuccess)
-  {
-    char msg[512];
-    std::snprintf(msg,sizeof(msg),"CUDA: %s",cudaGetErrorString(result));
-    throw util::error(msg);
-  }
-}
+// static constexpr float xi  = 1.000000; //damping coefficient
+static constexpr float k_B = 0.001120; //Boltzmann constant
+static constexpr float l_0 = 1.000000; //bond natural length
+static constexpr float k_e = 100.0000; //elastic constant
+static constexpr float k_b = 2.000000; //bending constant
+static constexpr float r_c = 1.122462; //LJ cutoff radius
+// static constexpr float dt  = 1.0/2048; //timestep
+
+// static constexpr int n_s = 1*2048; //MD steps between frames
 
 //Classes
 
@@ -67,37 +96,7 @@ class simulation
 
   ~simulation();
 
-  //Host Functions
-
-  void generate_initial_configuration();
-
-  void write_initial_configuration(FILE *f_ptr);
-
-  private:
-
-  //Constants
-
-  static constexpr float xi  = 1.000000; //damping coefficient
-  static constexpr float k_B = 0.001120; //Boltzmann constant
-  static constexpr float l_0 = 1.000000; //bond natural length
-  static constexpr float k_e = 100.0000; //elastic constant
-  static constexpr float k_b = 2.000000; //bending constant
-  static constexpr float r_c = 1.122462; //LJ cutoff radius
-  static constexpr float dt  = 1.0/2048; //timestep
-
-  static constexpr int n_s = 1*2048; //MD steps between frames
-
-  //Aliases
-
-  using PRNGstate = curandStatePhilox4_32_10; //PRNG state type
-
-  //Structures and Variables
-
-  struct vecarr { //3D vector array structure
-    float *x; //1st component
-    float *y; //2nd component
-    float *z; //3rd component
-  };
+  //Parameters and Variables
 
   struct { //adjustable parameters
     float T; //temperature
@@ -112,32 +111,10 @@ class simulation
   vecarr f_2; //force vector array 2
   vecarr f_1; //force vector array 1
 
-//This structs are probably not neccessary if I declare the necessary variables local to the calc_bonded_f kernel
-
-  // struct { //bond vector arrays
-  //   vecarr p2; //two prior
-  //   vecarr p1; //one prior
-  //   vecarr n1; //one next
-  //   vecarr n2; //two next
-  // } b;
-
-  // struct { //bond inverse length arrays
-  //   float *p2; //two prior
-  //   float *p1; //one prior
-  //   float *n1; //one next
-  //   float *n2; //two next
-  // } invlen;
-
-  // struct { //bond angle cosine arrays
-  //   float *p; //prior
-  //   float *c; //current
-  //   float *n; //next
-  // } cosine;
-
-//---------------------------------------------------------------------------------------------------------------
-
   float c_rn; //random number constant
   vecarr nrn; //random number vector array
+
+  using PRNGstate = curandStatePhilox4_32_10; //PRNG state alias
   PRNGstate *state; //PRNG state array
 
   float sig; //LJ particle size
@@ -148,31 +125,21 @@ class simulation
 
   //Host Functions
 
+  void generate_initial_configuration();
+
+  void write_initial_configuration(FILE *f_ptr);
+
+  private:
+
+  //Host Functions
+
   void read_parameters(FILE *f_ptr_par);
-
-  void allocate_vecarr(vecarr &vecarr_ref, int n_elements)
-  {
-    cuda_check(cudaMallocManaged(&(vecarr_ref.x),n_elements*sizeof(float)));
-    cuda_check(cudaMallocManaged(&(vecarr_ref.y),n_elements*sizeof(float)));
-    cuda_check(cudaMallocManaged(&(vecarr_ref.z),n_elements*sizeof(float)));
-  }
-
-  void free_vecarr(vecarr &vecarr_ref)
-  {
-    cudaFree(vecarr_ref.x);
-    cudaFree(vecarr_ref.y);
-    cudaFree(vecarr_ref.z);
-  }
 
   //Device Functions
 
-  //Global Functions
-
 };
 
-//Member Functions
-
-//Constructor and Destructor
+//Host Functions
 
 simulation::simulation(FILE *f_ptr_par)
 {
@@ -188,20 +155,6 @@ simulation::simulation(FILE *f_ptr_par)
   allocate_vecarr(f_2,ap.N);
   allocate_vecarr(f_1,ap.N);
 
-  // allocate_vecarr(b.p2,ap.N);
-  // allocate_vecarr(b.p1,ap.N);
-  // allocate_vecarr(b.n1,ap.N);
-  // allocate_vecarr(b.n2,ap.N);
-
-  // cuda_check(cudaMallocManaged(&invlen.p2,ap.N*sizeof(float)));
-  // cuda_check(cudaMallocManaged(&invlen.p1,ap.N*sizeof(float)));
-  // cuda_check(cudaMallocManaged(&invlen.n1,ap.N*sizeof(float)));
-  // cuda_check(cudaMallocManaged(&invlen.n2,ap.N*sizeof(float)));
-
-  // cuda_check(cudaMallocManaged(&cosine.p,ap.N*sizeof(float)));
-  // cuda_check(cudaMallocManaged(&cosine.c,ap.N*sizeof(float)));
-  // cuda_check(cudaMallocManaged(&cosine.n,ap.N*sizeof(float)));
-
   allocate_vecarr(nrn,n_threads);
 
   cuda_check(cudaMallocManaged(&state,n_threads*sizeof(PRNGstate)));
@@ -215,26 +168,10 @@ simulation::~simulation()
   free_vecarr(f_2);
   free_vecarr(f_1);
 
-  // free_vecarr(b.p2);
-  // free_vecarr(b.p1);
-  // free_vecarr(b.n1);
-  // free_vecarr(b.n2);
-
-  // cudaFree(invlen.p2);
-  // cudaFree(invlen.p1);
-  // cudaFree(invlen.n1);
-  // cudaFree(invlen.n2);
-
-  // cudaFree(cosine.p);
-  // cudaFree(cosine.c);
-  // cudaFree(cosine.n);
-
   free_vecarr(nrn);
 
   cudaFree(state);
 }
-
-//Host Functions
 
 void simulation::read_parameters(FILE *f_ptr_par)
 {
@@ -243,12 +180,12 @@ void simulation::read_parameters(FILE *f_ptr_par)
     ||std::fscanf(f_ptr_par,"R\t%f\n",&(ap.R))!=1
     ||std::fscanf(f_ptr_par,"F\t%d\n",&(ap.F))!=1)
   {
-    throw util::error("unable to read parameters");
+    throw error("unable to read parameters");
   }
-  if ((ap.T)<__FLT_MIN__){ throw util::error("T must be positive");}
-  if ((ap.N)<__FLT_MIN__){ throw util::error("N must be positive");}
-  if ((ap.R)<__FLT_MIN__){ throw util::error("R must be positive");}
-  if ((ap.F)<__FLT_MIN__){ throw util::error("F must be positive");}
+  if ((ap.T)<__FLT_MIN__){ throw error("T must be positive");}
+  if ((ap.N)<__FLT_MIN__){ throw error("N must be positive");}
+  if ((ap.R)<__FLT_MIN__){ throw error("R must be positive");}
+  if ((ap.F)<__FLT_MIN__){ throw error("F must be positive");}
 }
 
 void simulation::generate_initial_configuration()
@@ -351,12 +288,22 @@ void simulation::write_initial_configuration(FILE *f_ptr)
   std::fprintf(f_ptr,"%10.5f%10.5f%10.5f\n",0.0,0.0,0.0);
 }
 
+//Device Functions
+
+//Global Functions
+
+__global__ void calc_bonded_f(int N, vecarr &r)
+{
+  int i_p = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_p<N)
+  {
+    r.x[i_p] = 0.0;
+  }
+}
+
 } //namespace mmcc
 
 //Main
-
-//Host & Device functions can use pass by reference
-//Global functions cannot use pass by reference
 
 int main(int argc, const char **argv)
 {
@@ -380,11 +327,11 @@ int main(int argc, const char **argv)
   {
     //open log file
     std::snprintf(f_str,sizeof(f_str),"%s/current-progress.log",sim_dir);
-    f_ptr_log = mmcc::util::fopen(f_str,"wt");
+    f_ptr_log = mmcc::fopen(f_str,"wt");
 
     //read parameters and initialize simulation
     std::snprintf(f_str,sizeof(f_str),"%s/adjustable-parameters.dat",sim_dir);
-    f_ptr_par = mmcc::util::fopen(f_str,"rt");
+    f_ptr_par = mmcc::fopen(f_str,"rt");
     mmcc::simulation sim(f_ptr_par);
     std::fclose(f_ptr_par);
     // setup_PRNG<<<n_blocks,threads_block>>>(time(nullptr),state);
@@ -408,19 +355,18 @@ int main(int argc, const char **argv)
       sim.generate_initial_configuration();
 
       std::snprintf(f_str,sizeof(f_str),"%s/initial-configuration-%03d.gro",sim_dir,sim_idx);
-      f_ptr_out = mmcc::util::fopen(f_str,"wt");
+      f_ptr_out = mmcc::fopen(f_str,"wt");
       sim.write_initial_configuration(f_ptr_out);
       std::fclose(f_ptr_out);
     }
     else
     {
-
     }
 
     //close log file
     std::fclose(f_ptr_log);
   }
-  catch (const mmcc::util::error& error)
+  catch (const mmcc::error& error)
   {
     //do something
   }
