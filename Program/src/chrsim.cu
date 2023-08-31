@@ -179,6 +179,22 @@ void chrsim::read_parameters(FILE *f_ptr_par)
 
 //Device Functions
 
+// __device__ void example_function(float3 &r)
+// {
+//   r += ...;
+// }
+
 //Global Functions
+
+// __global__ void example_kernel(int N, float4 *r)
+// {
+//   int i_p = ...;
+//   if (i_p<N)
+//   {
+//     float3 r_int = make_float3(r[i_p]);
+//     use r_int by reference in device functions onward
+//     example_function(r_int);
+//   }
+// }
 
 } //namespace mmcc
