@@ -5,6 +5,7 @@
 #include <ctime> //time utilities library
 
 #include <curand_kernel.h> //cuRAND device functions
+#include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
 
 #include "../inc/util.hpp"
 #include "../inc/chrsim.cuh"
@@ -82,16 +83,15 @@ void chrsim::generate_initial_configuration()
 
   //declare auxiliary variables
   float beta = 1.0/(k_B*ap.T);
-  float rand, theta, varphi, bondlen, bondangle, perdirlen;
-  float3 olddir, newdir, perdir;
+  float rand, theta, phi, bondlen, bondangle;
+  float3 randdir, olddir, newdir, perdir;
 
   //place first particle
+  r_2[0] = make_float4(0.0);
   curandGenerateUniform(gen,&rand,1); theta = acos(1.0-2.0*rand);
-  curandGenerateUniform(gen,&rand,1); varphi = 2.0*M_PI*rand;
-  olddir.x = sin(theta)*cos(varphi);
-  olddir.y = sin(theta)*sin(varphi);
-  olddir.z = cos(theta);
-  r_2[0].x = r_2[0].y = r_2[0].z = 0.0;
+  curandGenerateUniform(gen,&rand,1); phi = 2.0*M_PI*rand;
+  randdir = make_float3(sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta));
+  olddir = randdir;
 
   //set initial sigma value
   sig = 1.0/2;
@@ -102,26 +102,20 @@ void chrsim::generate_initial_configuration()
   {
     //generate random direction perpendicular to old direction
     curandGenerateUniform(gen,&rand,1); theta = acos(1.0-2.0*rand);
-    curandGenerateUniform(gen,&rand,1); varphi = 2.0*M_PI*rand;
-    perdir.x = olddir.y*cos(theta)-olddir.z*sin(theta)*sin(varphi);
-    perdir.y = olddir.z*sin(theta)*cos(varphi)-olddir.x*cos(theta);
-    perdir.z = olddir.x*sin(theta)*sin(varphi)-olddir.y*sin(theta)*cos(varphi);
-    perdirlen = sqrt(perdir.x*perdir.x+perdir.y*perdir.y+perdir.z*perdir.z);
-    perdir.x /= perdirlen; perdir.y /= perdirlen; perdir.z /= perdirlen;
+    curandGenerateUniform(gen,&rand,1); phi = 2.0*M_PI*rand;
+    randdir = make_float3(sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta));
+    perdir = cross(olddir,randdir);
+    perdir = normalize(perdir);
 
     //generate random bond angle and calculate new direction
     curandGenerateUniform(gen,&rand,1);
     bondangle = acos(1.0+log(1.0-(1.0-exp(-2.0*(k_b*beta)))*rand)/(k_b*beta));
-    newdir.x = olddir.x*cos(bondangle)+perdir.x*sin(bondangle);
-    newdir.y = olddir.y*cos(bondangle)+perdir.y*sin(bondangle);
-    newdir.z = olddir.z*cos(bondangle)+perdir.z*sin(bondangle);
+    newdir = cos(bondangle)*olddir+sin(bondangle)*perdir;
 
     //calculate position of next particle
     curandGenerateUniform(gen,&rand,1);
     bondlen = l_0+sqrt(2.0/(k_e*beta))*erfinv(2.0*rand-1.0);
-    r_2[i_p].x = bondlen*newdir.x+r_2[i_p-1].x;
-    r_2[i_p].y = bondlen*newdir.y+r_2[i_p-1].y;
-    r_2[i_p].z = bondlen*newdir.z+r_2[i_p-1].z;
+    r_2[i_p] = make_float4(bondlen*newdir)+r_2[i_p-1];
 
     //check if new position is acceptable
     int accept = 1;
@@ -130,26 +124,16 @@ void chrsim::generate_initial_configuration()
     if (!isfinite(r_2[i_p].z)){ accept = 0;}
     for (int j_p = 0; j_p<(i_p-1); ++j_p)
     {
-      float dist = 0.0;
-      dist += (r_2[j_p].x-r_2[i_p].x)*(r_2[j_p].x-r_2[i_p].x);
-      dist += (r_2[j_p].y-r_2[i_p].y)*(r_2[j_p].y-r_2[i_p].y);
-      dist += (r_2[j_p].z-r_2[i_p].z)*(r_2[j_p].z-r_2[i_p].z);
-      dist = sqrt(dist);
+      float dist = length(make_float3(r_2[j_p]-r_2[i_p]));
       if (dist<(r_c*sig)){ accept = 0; break;}
     }
-    float d_r = 0.0;
-    d_r += r_2[i_p].x*r_2[i_p].x;
-    d_r += r_2[i_p].y*r_2[i_p].y;
-    d_r += r_2[i_p].z*r_2[i_p].z;
-    d_r = sqrt(d_r);
+    float d_r = length(make_float3(r_2[i_p]));
     if ((ap.R-d_r)<(r_c*sig)){ accept = 0;}
 
     //continue if it is accepted
     if (accept)
     {
-      olddir.x = newdir.x;
-      olddir.y = newdir.y;
-      olddir.z = newdir.z;
+      olddir = newdir;
       n_failures = 0;
     }
     else
