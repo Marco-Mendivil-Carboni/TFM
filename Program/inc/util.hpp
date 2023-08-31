@@ -1,5 +1,5 @@
-#ifndef MMCC_CUDAUTIL_H
-#define MMCC_CUDAUTIL_H
+#ifndef MMCC_UTIL_H
+#define MMCC_UTIL_H
 
 //Includes
 
@@ -10,33 +10,23 @@
 namespace mmcc //Marco Mendívil Carboni code
 {
 
-//Structures
-
-struct soa3 //structure of (3) arrays
-{
-  float *x; //1st component
-  float *y; //2nd component
-  float *z; //3rd component
-};
-
 //Classes
 
 class error : public std::runtime_error //generic exception type
 {
   public:
+    //error constructor
     error(const std::string &msg);
 };
 
 //Functions
 
-void cuda_check(cudaError_t result);
-
-void allocate_soa3(soa3 &soa3_ref, int n_elements);
-
-void free_soa3(soa3 &soa3_ref);
-
+//open file and throw error if it fails
 FILE *fopen(const char *filename, const char *mode);
+
+//write message to log file with timestamp
+void log_message(FILE *f_ptr, const char *msg);
 
 } //namespace mmcc
 
-#endif //MMCC_CUDAUTIL_H
+#endif //MMCC_UTIL_H

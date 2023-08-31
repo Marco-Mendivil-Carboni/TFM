@@ -4,7 +4,7 @@
 #include <cstdlib> //standard general utilities library
 #include <glob.h> //pathname pattern matching types
 
-#include "inc/cudautil.cuh"
+#include "inc/util.hpp"
 #include "inc/chrsim.cuh"
 
 //Main
@@ -29,7 +29,7 @@ int main(int argc, const char **argv)
 
   try
   {
-    //open log file
+    //open log file this should be outside!!!!!!!!
     std::snprintf(f_str,sizeof(f_str),"%s/current-progress.log",sim_dir);
     f_ptr_log = mmcc::fopen(f_str,"wt");
 
@@ -38,7 +38,8 @@ int main(int argc, const char **argv)
     f_ptr_par = mmcc::fopen(f_str,"rt");
     mmcc::chrsim sim(f_ptr_par);
     std::fclose(f_ptr_par);
-    // setup_PRNG<<<n_blocks,threads_block>>>(time(nullptr),state); //put this inside initial configuration?
+
+    // setup_PRNG<<<n_blocks,threads_block>>>(time(nullptr),state); //put this inside constructor!
     // cuda_check( cudaDeviceSynchronize());
 
     // begin new simulation or continue a previous one
@@ -74,7 +75,8 @@ int main(int argc, const char **argv)
   }
   catch (const mmcc::error& error)
   {
-    //do something
+    mmcc::log_message(f_ptr_log,error.what());
+    return EXIT_FAILURE;
   }
 
   //exit program successfully

@@ -3,8 +3,6 @@
 
 //Includes
 
-#include "cudautil.cuh"
-
 #include <curand_kernel.h> //cuRAND device functions
 
 //Namespace
@@ -20,8 +18,10 @@ class chrsim //chromatin simulation
 
   //Constructor and Destructor
 
+  //chrsim constructor
   chrsim(FILE *f_ptr_par);
 
+  //chrsim destructor
   ~chrsim();
 
   //Parameters and Variables
@@ -34,14 +34,14 @@ class chrsim //chromatin simulation
     int F; //frames per file
   } ap;
 
-  soa3 r_2; //positions 2
-  soa3 r_1; //positions 1
+  float4 *r_2; //positions 2
+  float4 *r_1; //positions 1
 
-  soa3 f_2; //forces 2
-  soa3 f_1; //forces 1
+  float4 *f_2; //forces 2
+  float4 *f_1; //forces 1
 
   float c_rn; //random number constant
-  soa3 nrn; //random numbers
+  float4 *nrn; //normal random numbers
 
   using PRNGstate = curandStatePhilox4_32_10; //PRNG state alias
   PRNGstate *state; //PRNG state array
@@ -52,20 +52,26 @@ class chrsim //chromatin simulation
   size_t n_blocks; //number of blocks
   size_t n_threads; //nuumber of threads
 
-  //Host Functions
+  //Functions
 
+  //generate a random initial configuration of chromatin
   void generate_initial_configuration();
 
+  //write initial configuration to file in gro format
   void write_initial_configuration(FILE *f_ptr);
 
   private:
 
-  //Host Functions
+  //Functions
 
+  //read adjustable parameters from file
   void read_parameters(FILE *f_ptr_par);
-
-  //Device Functions
 };
+
+//Functions
+
+//check for errors in cuda runtime API call
+void cuda_check(cudaError_t result);
 
 } //namespace mmcc
 
