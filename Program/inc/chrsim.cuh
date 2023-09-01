@@ -3,6 +3,8 @@
 
 //Includes
 
+#include <fstream> //file stream classes
+
 #include <curand_kernel.h> //cuRAND device functions
 
 //Namespace
@@ -15,14 +17,6 @@ namespace mmcc //Marco Mendívil Carboni code
 class chrsim //chromatin simulation
 {
   public:
-
-  //Constructor and Destructor
-
-  //chrsim constructor
-  chrsim(FILE *f_ptr_par);
-
-  //chrsim destructor
-  ~chrsim();
 
   //Parameters and Variables
 
@@ -53,6 +47,12 @@ class chrsim //chromatin simulation
   size_t n_threads; //nuumber of threads
 
   //Functions
+
+  //chrsim constructor
+  chrsim(FILE *f_ptr_par);
+
+  //chrsim destructor
+  ~chrsim();
 
   //generate a random initial configuration of chromatin
   void generate_initial_configuration();

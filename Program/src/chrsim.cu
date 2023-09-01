@@ -1,14 +1,11 @@
 //Includes
 
-#include <cstdio> //standard input and output library
-#include <cmath> //mathematical functions library
+#include "../inc/chrsim.cuh"
+#include "../inc/util.hpp"
+
 #include <ctime> //time utilities library
 
-#include <curand_kernel.h> //cuRAND device functions
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
-
-#include "../inc/util.hpp"
-#include "../inc/chrsim.cuh"
 
 //Namespace
 
@@ -43,20 +40,26 @@ void cuda_check(cudaError_t result)
 //chrsim constructor
 chrsim::chrsim(FILE *f_ptr_par)
 {
+  //set simulation parameters
   read_parameters(f_ptr_par);
-
+  // log: "adjustable parameters file read"
+  // log: T N R F ?
   n_blocks = (ap.N+threads_block-1)/threads_block;
   n_threads = n_blocks*threads_block;
+  // float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
+  // log: "chromatin volume fraction too high" ?
 
+  //allocate unified memory
   cuda_check(cudaMallocManaged(&r_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&r_1,ap.N*sizeof(float4)));
-
   cuda_check(cudaMallocManaged(&f_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_1,ap.N*sizeof(float4)));
-
   cuda_check(cudaMallocManaged(&nrn,n_threads*sizeof(float4)));
-
   cuda_check(cudaMallocManaged(&state,n_threads*sizeof(PRNGstate)));
+
+  //initialize PRNG
+  //setup_PRNG<<<n_blocks,threads_block>>>(time(nullptr),state);
+  // cuda_check(cudaDeviceSynchronize());
 }
 
 //chrsim destructor
@@ -64,12 +67,9 @@ chrsim::~chrsim()
 {
   cudaFree(r_2);
   cudaFree(r_1);
-
   cudaFree(f_2);
   cudaFree(f_1);
-
   cudaFree(nrn);
-
   cudaFree(state);
 }
 
