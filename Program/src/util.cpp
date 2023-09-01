@@ -18,16 +18,18 @@ void logger::set_file(const std::string &path)
   logger &sinlog = get_instance(); //singleton instance
   if (sinlog.file.is_open()){ sinlog.file.close();}
   sinlog.file.open(path,std::ios::app);
-  if (!sinlog.file.is_open()){ std::cout<<"unable to open"<<path<<std::endl;}
+  if (!sinlog.file.is_open()){ std::cout<<"unable to open "<<path<<std::endl;}
 }
 
 //log message with timestamp
 void logger::record(const std::string &msg)
 {
   logger &sinlog = get_instance(); //singleton instance
-  std::time_t timestamp = time(nullptr);
-  sinlog.file<<std::ctime(&timestamp)<<msg<<std::endl;
-  std::cout<<std::ctime(&timestamp)<<msg<<std::endl;
+  std::time_t now = time(nullptr);
+  std::tm *now_info = localtime(&now);
+  char timestamp[22]; strftime(timestamp,22,"[%d/%m/%y %H:%M:%S] ",now_info);
+  sinlog.file<<timestamp<<msg<<std::endl;
+  std::cout<<timestamp<<msg<<std::endl;
 }
 
 //logger constructor
@@ -48,5 +50,15 @@ logger &logger::get_instance()
 
 //error constructor
 error::error(const std::string &msg) : std::runtime_error{msg} {}
+
+//convert integer to fixed length string
+std::string cits(int num, int len)
+{
+  std::string num_str = std::to_string(num);
+  int num_len = num_str.length();
+  if (num_len>=len){ return num_str;}
+  std::string zeros(len-num_len,'0');
+  return zeros+num_str;
+}
 
 } //namespace mmcc

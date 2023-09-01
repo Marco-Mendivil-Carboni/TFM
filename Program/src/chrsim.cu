@@ -44,6 +44,9 @@ chrsim::chrsim(FILE *f_ptr_par)
   read_parameters(f_ptr_par);
   // log: "adjustable parameters file read"
   // log: T N R F ?
+
+  //set variables?
+  //c_rn = sqrt(2.0*xi*k_B*ap.T*dt);
   n_blocks = (ap.N+threads_block-1)/threads_block;
   n_threads = n_blocks*threads_block;
   // float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction

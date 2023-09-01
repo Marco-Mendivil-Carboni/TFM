@@ -5,6 +5,7 @@
 
 #include <fstream> //file stream classes
 #include <stdexcept> //standard exceptions classes
+#include <string> //string types and functions
 
 //Namespace
 
@@ -52,6 +53,23 @@ class error : public std::runtime_error //generic exception type
     //error constructor
     error(const std::string &msg);
 };
+
+//Functions
+
+//convert integer to fixed length string
+std::string cits(int num, int len);
+
+//Templates
+
+//check file is open or else throw
+template <typename T>
+void check_file(T &file, std::string &path)
+{
+  if (!file.is_open())
+  {
+    throw error("unable to open "+path);
+  }
+}
 
 } //namespace mmcc
 

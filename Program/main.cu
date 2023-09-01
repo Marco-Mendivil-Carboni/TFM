@@ -19,23 +19,26 @@ int main(const int argc, const char **argv)
   const std::string sim_dir = argv[1]; //simulation directory
   std::ifstream f_par; //parameter file
   std::ofstream f_out; //output file
+  std::string f_path; //file path string
+  int sim_idx = 0; //simulation index
+  int tpf_idx = 0; //trajectory positions file index
+  float t = 0.0; //simulation time ---------------- move to simulation class member variable ---------------------------
 
-  //open log file in simulation directory
-  mmcc::logger::set_file(sim_dir+"/history.log");
+  //open log file inside sim_dir
+  f_path = sim_dir+"/complete-history.log";
+  mmcc::logger::set_file(f_path);
 
   try
   {
     //read parameters and initialize simulation
-    f_par.open(sim_dir+"/adjustable-parameters.dat");
+    f_path = sim_dir+"/adjustable-parameters.dat";
+    f_par.open(f_path);
+    mmcc::check_file<std::ifstream>(f_par,f_path);
     // mmcc::chrsim sim(f_ptr_par);
+    mmcc::logger::record("adjustable parameters file read");
     f_par.close();
 
-    // begin new simulation or continue a previous one
-    int sim_idx = 0; //simulation index
-    int tpf_idx = 0; //trajectory positions file index
-    float t = 0.0; //simulation time
-
-    if (argc==2)
+    if (argc==2) //begin new simulation
     {
       glob_t prev_sims;
       std::string pattern = sim_dir+"/initial-configuration-*";
@@ -43,22 +46,30 @@ int main(const int argc, const char **argv)
       {
         sim_idx = prev_sims.gl_pathc;
       }
-      globfree(&prev_sims);
-      // log: "new simulation started"
-      // log: sim_idx tpf_idx ?
+      globfree(&prev_sims); // move all this to some function
+      mmcc::logger::record("new simulation started");
 
       // sim.generate_initial_configuration();
-      //write some kind of int_to_string utility function
-      // f_out.open(sim_dir+"/initial-condition-");//finish...
-      //sim.write_initial_configuration(f_ptr_out);
-      // f_out.close();
-    }
-    else
-    {
-    }
 
-    // f_out.open(sim_dir+"/trajectory-");//finish...
-    // f_out.close();
+      f_path = sim_dir+"/initial-configuration-"+mmcc::cits(sim_idx,3)+".gro";
+      f_out.open(f_path);
+      mmcc::check_file<std::ofstream>(f_out,f_path);
+      //sim.write_initial_configuration(f_ptr_out);
+      f_out.close();
+    }
+    else //continue previous simulation
+    {
+      sim_idx = std::stoi(argv[2]);
+    }
+    // log: sim_idx tpf_idx ?
+
+    //perform simulation
+    f_path = sim_dir+"/trajectory-positions-";
+    f_path += mmcc::cits(sim_idx,3)+"-"+mmcc::cits(tpf_idx,3)+".trr";
+    f_out.open(f_path,std::ios::binary);
+    mmcc::check_file<std::ofstream>(f_out,f_path);
+    //simulation
+    f_out.close();
   }
   catch (const mmcc::error& error)
   {
