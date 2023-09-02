@@ -47,12 +47,12 @@ int main(const int argc, const char **argv)
       globfree(&prev_sims); // move all this to some function
       mmcc::logger::record("new simulation started");
 
-      // sim.generate_initial_configuration();
+      sim.generate_initial_configuration();
 
       f_path = sim_dir+"/initial-configuration-";
       f_path += mmcc::cnfs(sim_idx,3)+".gro";
       f_out.open(f_path); mmcc::check_file(f_out,f_path);
-      //sim.write_initial_configuration(f_ptr_out);
+      sim.write_initial_configuration(f_out);
       f_out.close();
     }
     else //continue previous simulation

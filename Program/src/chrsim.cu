@@ -140,7 +140,7 @@ void chrsim::generate_initial_configuration()
     else
     {
       ++n_failures;
-      if( n_failures>1024){ i_p = 0;}
+      if( n_failures>1024){ i_p = 1;}
       else{ i_p--;}
     }
   }
@@ -152,14 +152,21 @@ void chrsim::generate_initial_configuration()
 //write initial configuration to file in gro format
 void chrsim::write_initial_configuration(std::ofstream &f_out)
 {
-  // std::fprintf(f_ptr,"Chromatin chrsim, t=0.0\n");
-  // std::fprintf(f_ptr,"%5d\n",ap.N);
-  // for( int i_p = 0; i_p<ap.N; ++i_p)
-  // {
-  //   std::fprintf(f_ptr,"%5d%-5s%5s%5d",i_p+1,"X","X",i_p+1);
-  //   std::fprintf(f_ptr,"%8.3f%8.3f%8.3f\n",r_2[i_p].x,r_2[i_p].y,r_2[i_p].z);
-  // }
-  // std::fprintf(f_ptr,"%10.5f%10.5f%10.5f\n",0.0,0.0,0.0);
+  f_out<<"Chromatin chrsim, t=0.0\n";
+  f_out<<mmcc::cnfs(ap.N,5,false)<<"\n";
+  for( int i_p = 0; i_p<ap.N; ++i_p)
+  {
+    f_out<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
+    f_out<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
+    f_out<<mmcc::cnfs(r_2[i_p].x,8,false,3);
+    f_out<<mmcc::cnfs(r_2[i_p].y,8,false,3);
+    f_out<<mmcc::cnfs(r_2[i_p].z,8,false,3);
+    f_out<<"\n";
+  }
+  f_out<<mmcc::cnfs(0.0,10,false,5);
+  f_out<<mmcc::cnfs(0.0,10,false,5);
+  f_out<<mmcc::cnfs(0.0,10,false,5);
+  f_out<<"\n";
 }
 
 //read adjustable parameters from file
@@ -172,9 +179,9 @@ void chrsim::read_parameters(std::ifstream &f_par)
   f_par>>key>>(ap.F); if (key!="F"||ap.F<1){ throw error("error reading F");}
   std::string msg = "parameters:";
   msg += " T = "+mmcc::cnfs(ap.T,6,false,2);
-  msg += " N = "+mmcc::cnfs(ap.N,6);
+  msg += " N = "+mmcc::cnfs(ap.N,5);
   msg += " R = "+mmcc::cnfs(ap.R,6,false,2);
-  msg += " F = "+mmcc::cnfs(ap.F,6);
+  msg += " F = "+mmcc::cnfs(ap.F,5);
   mmcc::logger::record(msg);
 }
 

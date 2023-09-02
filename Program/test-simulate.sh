@@ -1,70 +1,66 @@
 #!/bin/bash
 
-mkdir tmp
+testdir="Simulations/bash-script-tests"
+testidx=1
 
-cp Simulations/test/adjustable-parameters.dat tmp
+check () {
+    if [[ $1 -eq 0 ]]
+    then
+        echo "Test $testidx: ✅"
+    else
+        echo "Test $testidx: ❌"
+    fi
+    ((testidx=testidx+1))
+    echo "---"
+}
 
-#test 1
+rm -rf $testdir
+mkdir $testdir
 
-if ./Program/bin/simulate | grep -q 'no arguments';
-then
-    echo "test 1: ✅"
-else
-    echo "test 1: ❌"
-fi
+echo "---"
 
-#test 2
+./Program/bin/simulate | grep "no arguments"
+check $?
 
-if ./Program/bin/simulate 1 2 3 | grep -q 'extra arguments';
-then
-    echo "test 2: ✅"
-else
-    echo "test 2: ❌"
-fi
+./Program/bin/simulate 1 2 3 | grep "extra arguments"
+check $?
 
-#test 3
+./Program/bin/simulate wrong-dir | grep "unable to open wrong-dir"
+check $?
 
-if ./Program/bin/simulate wrong-dir | grep -q 'unable to open wrong-dir';
-then
-    echo "test 3: ✅"
-else
-    echo "test 3: ❌"
-fi
+echo -n > "${testdir}/adjustable-parameters.dat"
+echo "N   512" >> "${testdir}/adjustable-parameters.dat"
+echo "T   298.0" >> "${testdir}/adjustable-parameters.dat"
+./Program/bin/simulate $testdir | grep "error reading T"
+check $?
 
-#test 4
+echo -n > "${testdir}/adjustable-parameters.dat"
+echo "T   298.0" >> "${testdir}/adjustable-parameters.dat"
+echo "N   0" >> "${testdir}/adjustable-parameters.dat"
+./Program/bin/simulate $testdir | grep "error reading N"
+check $?
 
-./Program/bin/simulate tmp > /dev/null
+echo -n > "${testdir}/adjustable-parameters.dat"
+echo "T   298.0" >> "${testdir}/adjustable-parameters.dat"
+echo "N   512" >> "${testdir}/adjustable-parameters.dat"
+echo "R   10.00" >> "${testdir}/adjustable-parameters.dat"
+echo "F   100" >> "${testdir}/adjustable-parameters.dat"
 
-if ls tmp | grep -q -e 'complete-history.log' \
-                    -e 'initial-configration-000.gro' \
-                    -e 'trajectory-positions-000-000.trr';
-then
-    echo "test 4: ✅"
-else
-    echo "test 4: ❌"
-fi
+./Program/bin/simulate $testdir
+[[ $(ls $testdir | grep -c -e "complete-history.log" \
+    -e "initial-configuration-000.gro" \
+    -e "trajectory-positions-000-000.trr") -eq 3 ]]
+check $?
 
-#test 5
+./Program/bin/simulate $testdir
+[[ $(ls $testdir | grep -c -e "initial-configuration-001.gro" \
+    -e "trajectory-positions-001-000.trr") -eq 2 ]]
+check $?
 
-./Program/bin/simulate tmp > /dev/null
+./Program/bin/simulate $testdir 0
+[[ $(ls $testdir | grep -c "trajectory-positions-000-001.trr") -eq 1 ]]
+check $?
 
-if ls tmp | grep -q -e 'initial-configration-001.gro' \
-                    -e 'trajectory-positions-001-000.trr';
-then
-    echo "test 5: ✅"
-else
-    echo "test 5: ❌"
-fi
+# vmd -e ./Program/visualize-chromatin.tcl -args $testdir 0 > /dev/null
 
-#test 6
-
-./Program/bin/simulate tmp 0 > /dev/null
-
-if ls tmp | grep -q 'trajectory-positions-000-001.trr';
-then
-    echo "test 6: ✅"
-else
-    echo "test 6: ❌"
-fi
-
-rm -r tmp
+rm -rI $testdir
