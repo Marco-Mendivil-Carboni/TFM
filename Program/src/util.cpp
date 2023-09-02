@@ -51,14 +51,4 @@ logger &logger::get_instance()
 //error constructor
 error::error(const std::string &msg) : std::runtime_error{msg} {}
 
-//convert integer to fixed length string
-std::string cits(int num, int len)
-{
-  std::string num_str = std::to_string(num);
-  int num_len = num_str.length();
-  if (num_len>=len){ return num_str;}
-  std::string zeros(len-num_len,'0');
-  return zeros+num_str;
-}
-
 } //namespace mmcc

@@ -2,11 +2,11 @@
 
 mkdir tmp
 
-cp ../Simulations/test/adjustable-parameters.dat tmp
+cp Simulations/test/adjustable-parameters.dat tmp
 
 #test 1
 
-if ./bin/simulate | grep -q 'no arguments';
+if ./Program/bin/simulate | grep -q 'no arguments';
 then
     echo "test 1: ✅"
 else
@@ -15,7 +15,7 @@ fi
 
 #test 2
 
-if ./bin/simulate 1 2 3 | grep -q 'extra arguments';
+if ./Program/bin/simulate 1 2 3 | grep -q 'extra arguments';
 then
     echo "test 2: ✅"
 else
@@ -24,7 +24,7 @@ fi
 
 #test 3
 
-if ./bin/simulate wrong-dir | grep -q 'unable to open wrong-dir';
+if ./Program/bin/simulate wrong-dir | grep -q 'unable to open wrong-dir';
 then
     echo "test 3: ✅"
 else
@@ -33,7 +33,7 @@ fi
 
 #test 4
 
-./bin/simulate tmp > /dev/null
+./Program/bin/simulate tmp > /dev/null
 
 if ls tmp | grep -q -e 'complete-history.log' \
                     -e 'initial-configration-000.gro' \
@@ -46,7 +46,7 @@ fi
 
 #test 5
 
-./bin/simulate tmp > /dev/null
+./Program/bin/simulate tmp > /dev/null
 
 if ls tmp | grep -q -e 'initial-configration-001.gro' \
                     -e 'trajectory-positions-001-000.trr';
@@ -58,7 +58,7 @@ fi
 
 #test 6
 
-./bin/simulate tmp 0 > /dev/null
+./Program/bin/simulate tmp 0 > /dev/null
 
 if ls tmp | grep -q 'trajectory-positions-000-001.trr';
 then

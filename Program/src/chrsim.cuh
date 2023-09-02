@@ -49,7 +49,7 @@ class chrsim //chromatin simulation
   //Functions
 
   //chrsim constructor
-  chrsim(FILE *f_ptr_par);
+  chrsim(std::ifstream &f_par);
 
   //chrsim destructor
   ~chrsim();
@@ -58,14 +58,14 @@ class chrsim //chromatin simulation
   void generate_initial_configuration();
 
   //write initial configuration to file in gro format
-  void write_initial_configuration(FILE *f_ptr);
+  void write_initial_configuration(std::ofstream &f_out);
 
   private:
 
   //Functions
 
   //read adjustable parameters from file
-  void read_parameters(FILE *f_ptr_par);
+  void read_parameters(std::ifstream &f_par);
 };
 
 //Functions

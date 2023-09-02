@@ -38,15 +38,13 @@ void cuda_check(cudaError_t result)
 }
 
 //chrsim constructor
-chrsim::chrsim(FILE *f_ptr_par)
+chrsim::chrsim(std::ifstream &f_par)
 {
   //set simulation parameters
-  read_parameters(f_ptr_par);
-  // log: "adjustable parameters file read"
-  // log: T N R F ?
+  read_parameters(f_par);
 
   //set variables?
-  //c_rn = sqrt(2.0*xi*k_B*ap.T*dt);
+  c_rn = sqrt(2.0*xi*k_B*ap.T*dt);
   n_blocks = (ap.N+threads_block-1)/threads_block;
   n_threads = n_blocks*threads_block;
   // float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
@@ -152,32 +150,32 @@ void chrsim::generate_initial_configuration()
 }
 
 //write initial configuration to file in gro format
-void chrsim::write_initial_configuration(FILE *f_ptr)
+void chrsim::write_initial_configuration(std::ofstream &f_out)
 {
-  std::fprintf(f_ptr,"Chromatin chrsim, t=0.0\n");
-  std::fprintf(f_ptr,"%5d\n",ap.N);
-  for( int i_p = 0; i_p<ap.N; ++i_p)
-  {
-    std::fprintf(f_ptr,"%5d%-5s%5s%5d",i_p+1,"X","X",i_p+1);
-    std::fprintf(f_ptr,"%8.3f%8.3f%8.3f\n",r_2[i_p].x,r_2[i_p].y,r_2[i_p].z);
-  }
-  std::fprintf(f_ptr,"%10.5f%10.5f%10.5f\n",0.0,0.0,0.0);
+  // std::fprintf(f_ptr,"Chromatin chrsim, t=0.0\n");
+  // std::fprintf(f_ptr,"%5d\n",ap.N);
+  // for( int i_p = 0; i_p<ap.N; ++i_p)
+  // {
+  //   std::fprintf(f_ptr,"%5d%-5s%5s%5d",i_p+1,"X","X",i_p+1);
+  //   std::fprintf(f_ptr,"%8.3f%8.3f%8.3f\n",r_2[i_p].x,r_2[i_p].y,r_2[i_p].z);
+  // }
+  // std::fprintf(f_ptr,"%10.5f%10.5f%10.5f\n",0.0,0.0,0.0);
 }
 
 //read adjustable parameters from file
-void chrsim::read_parameters(FILE *f_ptr_par)
+void chrsim::read_parameters(std::ifstream &f_par)
 {
-  if (std::fscanf(f_ptr_par,"T\t%f\n",&(ap.T))!=1
-    ||std::fscanf(f_ptr_par,"N\t%d\n",&(ap.N))!=1
-    ||std::fscanf(f_ptr_par,"R\t%f\n",&(ap.R))!=1
-    ||std::fscanf(f_ptr_par,"F\t%d\n",&(ap.F))!=1)
-  {
-    throw error("unable to read parameters");
-  }
-  if ((ap.T)<__FLT_MIN__){ throw error("T must be positive");}
-  if ((ap.N)<__FLT_MIN__){ throw error("N must be positive");}
-  if ((ap.R)<__FLT_MIN__){ throw error("R must be positive");}
-  if ((ap.F)<__FLT_MIN__){ throw error("F must be positive");}
+  std::string key;
+  f_par>>key>>(ap.T); if (key!="T"||ap.T<0){ throw error("error reading T");}
+  f_par>>key>>(ap.N); if (key!="N"||ap.N<1){ throw error("error reading N");}
+  f_par>>key>>(ap.R); if (key!="R"||ap.R<0){ throw error("error reading R");}
+  f_par>>key>>(ap.F); if (key!="F"||ap.F<1){ throw error("error reading F");}
+  std::string msg = "parameters:";
+  msg += " T = "+mmcc::cnfs(ap.T,6,false,2);
+  msg += " N = "+mmcc::cnfs(ap.N,6);
+  msg += " R = "+mmcc::cnfs(ap.R,6,false,2);
+  msg += " F = "+mmcc::cnfs(ap.F,6);
+  mmcc::logger::record(msg);
 }
 
 //Device Functions

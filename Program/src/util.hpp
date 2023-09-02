@@ -5,7 +5,8 @@
 
 #include <fstream> //file stream classes
 #include <stdexcept> //standard exceptions classes
-#include <string> //string types and functions
+#include <sstream> //string stream classes
+#include <iomanip> //parametric manipulators
 
 //Namespace
 
@@ -54,12 +55,19 @@ class error : public std::runtime_error //generic exception type
     error(const std::string &msg);
 };
 
-//Functions
-
-//convert integer to fixed length string
-std::string cits(int num, int len);
-
 //Templates
+
+//convert number to formatted string
+template <typename T>
+std::string cnfs(T num, int len = 0, bool leadingzeros = true, int prc = 0)
+{
+  std::stringstream num_str;
+  if (len>0){ num_str<<std::setw(len);}
+  if (leadingzeros){ num_str<<std::setfill('0');}
+  if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
+  num_str<<num;
+  return num_str.str();
+}
 
 //check file is open or else throw
 template <typename T>

@@ -33,8 +33,7 @@ int main(const int argc, const char **argv)
     //read parameters and initialize simulation
     f_path = sim_dir+"/adjustable-parameters.dat";
     f_par.open(f_path); mmcc::check_file(f_par,f_path);
-    // mmcc::chrsim sim(f_ptr_par);
-    mmcc::logger::record("adjustable parameters file read");
+    mmcc::chrsim sim(f_par);
     f_par.close();
 
     if (argc==2) //begin new simulation
@@ -50,7 +49,8 @@ int main(const int argc, const char **argv)
 
       // sim.generate_initial_configuration();
 
-      f_path = sim_dir+"/initial-configuration-"+mmcc::cits(sim_idx,3)+".gro";
+      f_path = sim_dir+"/initial-configuration-";
+      f_path += mmcc::cnfs(sim_idx,3)+".gro";
       f_out.open(f_path); mmcc::check_file(f_out,f_path);
       //sim.write_initial_configuration(f_ptr_out);
       f_out.close();
@@ -63,7 +63,7 @@ int main(const int argc, const char **argv)
 
     //perform simulation
     f_path = sim_dir+"/trajectory-positions-";
-    f_path += mmcc::cits(sim_idx,3)+"-"+mmcc::cits(tpf_idx,3)+".trr";
+    f_path += mmcc::cnfs(sim_idx,3)+"-"+mmcc::cnfs(tpf_idx,3)+".trr";
     f_out.open(f_path,std::ios::binary); mmcc::check_file(f_out,f_path);
     //simulation
     f_out.close();
