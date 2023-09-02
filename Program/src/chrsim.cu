@@ -1,7 +1,7 @@
 //Includes
 
-#include "../inc/chrsim.cuh"
-#include "../inc/util.hpp"
+#include "chrsim.cuh"
+#include "util.hpp"
 
 #include <ctime> //time utilities library
 

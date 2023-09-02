@@ -9,13 +9,13 @@ NVCCLINKS = -lcurand
 bin/simulate: bin/main.o bin/chrsim.o bin/util.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
-bin/main.o: main.cu
+bin/main.o: src/main.cu
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/chrsim.o: src/chrsim.cu inc/chrsim.cuh
+bin/chrsim.o: src/chrsim.cu src/chrsim.cuh
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/util.o: src/util.cpp inc/util.hpp
+bin/util.o: src/util.cpp src/util.hpp
 	$(CC) $(CCFLAGS) -c $< -o $@
 
 clean:

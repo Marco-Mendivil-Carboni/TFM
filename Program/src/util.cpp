@@ -1,6 +1,6 @@
 //Includes
 
-#include "../inc/util.hpp"
+#include "util.hpp"
 
 #include <iostream> //standard input/output stream objects
 #include <ctime> //time utilities library
