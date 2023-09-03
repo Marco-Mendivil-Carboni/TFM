@@ -5,6 +5,10 @@
 
 //Functions
 
+//description here
+//put here function for simulation for loop--------------------------------------
+
+//main function
 int main(const int argc, const char **argv)
 {
   //check command-line arguments
@@ -19,7 +23,6 @@ int main(const int argc, const char **argv)
   std::string f_path; //file path string
   int sim_idx = 0; //simulation index
   int tpf_idx = 0; //trajectory positions file index
-  float t = 0.0; //simulation time ---------------- move to simulation class member variable ---------------------------
 
   //open log file inside simulation directory
   f_path = sim_dir+"/complete-history.log";
@@ -37,10 +40,7 @@ int main(const int argc, const char **argv)
     {
       std::string pattern = sim_dir+"/initial-configuration-*";
       sim_idx = mmcc::glob_count(pattern);
-
       sim.generate_initial_configuration();
-      mmcc::logger::record("initial configuration generated"); //inside function?
-
       f_path = sim_dir+"/initial-configuration-";
       f_path += mmcc::cnfs(sim_idx,3)+".gro";
       f_out.open(f_path); mmcc::check_file(f_out,f_path);

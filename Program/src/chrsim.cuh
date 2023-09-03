@@ -28,23 +28,25 @@ class chrsim //chromatin simulation
     int F; //frames per file
   } ap;
 
+  size_t thd_blk = 256; //threads per block
+  size_t n_p_blk; //number of particle blocks
+  size_t n_p_thd; //number of particle threads
+
+  float t = 0.0; //simulation time
+  float sig = 1.0; //LJ particle size
+
+  float c_rn; //random number constant
+  using PRNGstate = curandStatePhilox4_32_10; //PRNG state alias
+
   float4 *r_2; //positions 2
   float4 *r_1; //positions 1
 
   float4 *f_2; //forces 2
   float4 *f_1; //forces 1
 
-  float c_rn; //random number constant
   float4 *nrn; //normal random numbers
 
-  using PRNGstate = curandStatePhilox4_32_10; //PRNG state alias
   PRNGstate *state; //PRNG state array
-
-  float sig; //LJ particle size
-
-  size_t threads_block = 256; //threads per block
-  size_t n_blocks; //number of blocks
-  size_t n_threads; //number of threads
 
   //Functions
 

@@ -31,8 +31,8 @@ void cuda_check(cudaError_t result)
 {
   if (result!=cudaSuccess)
   {
-    char msg[512];
-    std::snprintf(msg,sizeof(msg),"CUDA: %s",cudaGetErrorString(result));
+    std::string msg = "cuda: ";
+    msg += cudaGetErrorString(result);
     throw error(msg);
   }
 }
@@ -40,26 +40,22 @@ void cuda_check(cudaError_t result)
 //chrsim constructor
 chrsim::chrsim(std::ifstream &f_par)
 {
-  //set simulation parameters
+  //initialize parameters and variables
   read_parameters(f_par);
-
-  //set variables?
+  n_p_blk = (ap.N+thd_blk-1)/thd_blk;
+  n_p_thd = n_p_blk*thd_blk;
   c_rn = sqrt(2.0*xi*k_B*ap.T*dt);
-  n_blocks = (ap.N+threads_block-1)/threads_block;
-  n_threads = n_blocks*threads_block;
-  // float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
-  // log: "chromatin volume fraction too high" ?
 
   //allocate unified memory
   cuda_check(cudaMallocManaged(&r_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&r_1,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_1,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&nrn,n_threads*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&state,n_threads*sizeof(PRNGstate)));
+  cuda_check(cudaMallocManaged(&nrn,n_p_thd*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&state,n_p_thd*sizeof(PRNGstate)));
 
   //initialize PRNG
-  //setup_PRNG<<<n_blocks,threads_block>>>(time(nullptr),state);
+  // setup_PRNG<<<n_p_blk,thd_blk>>>(time(nullptr),state);
   // cuda_check(cudaDeviceSynchronize());
 }
 
@@ -78,12 +74,12 @@ chrsim::~chrsim()
 void chrsim::generate_initial_configuration()
 {
   //initialize PRNG
-  curandGenerator_t gen;
+  curandGenerator_t gen; //host PRNG
   curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
 
   //declare auxiliary variables
-  float beta = 1.0/(k_B*ap.T);
+  float beta = 1.0/(k_B*ap.T); //inverse temperature
   float rand, theta, phi, bondlen, bondangle;
   float3 randdir, olddir, newdir, perdir;
 
@@ -119,25 +115,24 @@ void chrsim::generate_initial_configuration()
     r_2[i_p] = make_float4(bondlen*newdir)+r_2[i_p-1];
 
     //check if new position is acceptable
-    int accept = 1;
-    if (!isfinite(r_2[i_p].x)){ accept = 0;}
-    if (!isfinite(r_2[i_p].y)){ accept = 0;}
-    if (!isfinite(r_2[i_p].z)){ accept = 0;}
+    bool p_a = true; //position is acceptable
+    if (!isfinite(r_2[i_p].x)){ p_a = false;}
+    if (!isfinite(r_2[i_p].y)){ p_a = false;}
+    if (!isfinite(r_2[i_p].z)){ p_a = false;}
     for (int j_p = 0; j_p<(i_p-1); ++j_p)
     {
       float dist = length(make_float3(r_2[j_p]-r_2[i_p]));
-      if (dist<(r_c*sig)){ accept = 0; break;}
+      if (dist<(r_c*sig)){ p_a = false; break;}
     }
     float d_r = length(make_float3(r_2[i_p]));
-    if ((ap.R-d_r)<(r_c*sig)){ accept = 0;}
+    if ((ap.R-d_r)<(r_c*sig)){ p_a = false;}
 
-    //continue if it is accepted
-    if (accept)
+    if (p_a) //continue
     {
       olddir = newdir;
       n_failures = 0;
     }
-    else
+    else //go back
     {
       ++n_failures;
       if( n_failures>1024){ i_p = 1;}
@@ -145,27 +140,30 @@ void chrsim::generate_initial_configuration()
     }
   }
 
-  //free PRNG state
+  //free host PRNG
   curandDestroyGenerator(gen);
+
+  //record success message
+  logger::record("initial configuration generated");
 }
 
 //write initial configuration to file in gro format
 void chrsim::write_initial_configuration(std::ofstream &f_out)
 {
   f_out<<"Chromatin chrsim, t=0.0\n";
-  f_out<<mmcc::cnfs(ap.N,5,false)<<"\n";
+  f_out<<cnfs(ap.N,5,false)<<"\n";
   for( int i_p = 0; i_p<ap.N; ++i_p)
   {
     f_out<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
     f_out<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
-    f_out<<mmcc::cnfs(r_2[i_p].x,8,false,3);
-    f_out<<mmcc::cnfs(r_2[i_p].y,8,false,3);
-    f_out<<mmcc::cnfs(r_2[i_p].z,8,false,3);
+    f_out<<cnfs(r_2[i_p].x,8,false,3);
+    f_out<<cnfs(r_2[i_p].y,8,false,3);
+    f_out<<cnfs(r_2[i_p].z,8,false,3);
     f_out<<"\n";
   }
-  f_out<<mmcc::cnfs(0.0,10,false,5);
-  f_out<<mmcc::cnfs(0.0,10,false,5);
-  f_out<<mmcc::cnfs(0.0,10,false,5);
+  f_out<<cnfs(0.0,10,false,5);
+  f_out<<cnfs(0.0,10,false,5);
+  f_out<<cnfs(0.0,10,false,5);
   f_out<<"\n";
 }
 
@@ -178,11 +176,13 @@ void chrsim::read_parameters(std::ifstream &f_par)
   f_par>>key>>(ap.R); if (key!="R"||ap.R<0){ throw error("error reading R");}
   f_par>>key>>(ap.F); if (key!="F"||ap.F<1){ throw error("error reading F");}
   std::string msg = "parameters:";
-  msg += " T = "+mmcc::cnfs(ap.T,6,false,2);
-  msg += " N = "+mmcc::cnfs(ap.N,5);
-  msg += " R = "+mmcc::cnfs(ap.R,6,false,2);
-  msg += " F = "+mmcc::cnfs(ap.F,5);
-  mmcc::logger::record(msg);
+  msg += " T = "+cnfs(ap.T,6,false,2);
+  msg += " N = "+cnfs(ap.N,5);
+  msg += " R = "+cnfs(ap.R,6,false,2);
+  msg += " F = "+cnfs(ap.F,5);
+  logger::record(msg);
+  float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
+  if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
 }
 
 //Device Functions
