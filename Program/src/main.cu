@@ -3,10 +3,6 @@
 #include "chrsim.cuh"
 #include "util.hpp"
 
-#include <iostream> //standard input/output stream objects
-
-#include <glob.h> //pathname pattern matching types
-
 //Functions
 
 int main(const int argc, const char **argv)
@@ -17,6 +13,7 @@ int main(const int argc, const char **argv)
 
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory
+  bool new_sim = (argc==2) ? true : false; //make new simulation
   std::ifstream f_par; //parameter file
   std::ofstream f_out; //output file
   std::string f_path; //file path string
@@ -24,7 +21,7 @@ int main(const int argc, const char **argv)
   int tpf_idx = 0; //trajectory positions file index
   float t = 0.0; //simulation time ---------------- move to simulation class member variable ---------------------------
 
-  //open log file inside sim_dir
+  //open log file inside simulation directory
   f_path = sim_dir+"/complete-history.log";
   mmcc::logger::set_file(f_path);
 
@@ -36,18 +33,13 @@ int main(const int argc, const char **argv)
     mmcc::chrsim sim(f_par);
     f_par.close();
 
-    if (argc==2) //begin new simulation
+    if (new_sim) //begin new simulation
     {
-      glob_t prev_sims;
       std::string pattern = sim_dir+"/initial-configuration-*";
-      if (glob(pattern.c_str(),0,nullptr,&prev_sims)==0)
-      {
-        sim_idx = prev_sims.gl_pathc;
-      }
-      globfree(&prev_sims); // move all this to some function
-      mmcc::logger::record("new simulation started");
+      sim_idx = mmcc::glob_count(pattern);
 
       sim.generate_initial_configuration();
+      mmcc::logger::record("initial configuration generated"); //inside function?
 
       f_path = sim_dir+"/initial-configuration-";
       f_path += mmcc::cnfs(sim_idx,3)+".gro";

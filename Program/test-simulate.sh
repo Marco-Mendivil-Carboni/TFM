@@ -29,38 +29,40 @@ check $?
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-echo "N   512" >> "${testdir}/adjustable-parameters.dat"
-echo "T   298.0" >> "${testdir}/adjustable-parameters.dat"
+{ echo "N   512"; echo "T   298.0"; echo "R   10.00"; echo "F   100";
+} >> "${testdir}/adjustable-parameters.dat"
 ./Program/bin/simulate $testdir | grep "error reading T"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-echo "T   298.0" >> "${testdir}/adjustable-parameters.dat"
-echo "N   0" >> "${testdir}/adjustable-parameters.dat"
+{ echo "T   298.0"; echo "N   000"; echo "R   10.00"; echo "F   100";
+} >> "${testdir}/adjustable-parameters.dat"
 ./Program/bin/simulate $testdir | grep "error reading N"
 check $?
 
+#check chromatin volume fraction too high error
+
 echo -n > "${testdir}/adjustable-parameters.dat"
-echo "T   298.0" >> "${testdir}/adjustable-parameters.dat"
-echo "N   512" >> "${testdir}/adjustable-parameters.dat"
-echo "R   10.00" >> "${testdir}/adjustable-parameters.dat"
-echo "F   100" >> "${testdir}/adjustable-parameters.dat"
+{ echo "T   298.0"; echo "N   512"; echo "R   10.00"; echo "F   100";
+} >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir
-[[ $(ls $testdir | grep -c -e "complete-history.log" \
-    -e "initial-configuration-000.gro" \
-    -e "trajectory-positions-000-000.trr") -eq 3 ]]
+[[ -f "${testdir}/complete-history.log" && \
+-f "${testdir}/initial-configuration-000.gro" && \
+-f "${testdir}/trajectory-positions-000-000.trr" ]]
 check $?
 
 ./Program/bin/simulate $testdir
-[[ $(ls $testdir | grep -c -e "initial-configuration-001.gro" \
-    -e "trajectory-positions-001-000.trr") -eq 2 ]]
+[[ -f "${testdir}/initial-configuration-001.gro" && \
+-f "${testdir}/trajectory-positions-001-000.trr" ]]
 check $?
 
 ./Program/bin/simulate $testdir 0
-[[ $(ls $testdir | grep -c "trajectory-positions-000-001.trr") -eq 1 ]]
+[[ -f "${testdir}/trajectory-positions-000-001.trr" ]]
 check $?
 
 # vmd -e ./Program/visualize-chromatin.tcl -args $testdir 0 > /dev/null
+
+# vmd -e ./Program/visualize-chromatin.tcl -args $testdir 1 > /dev/null
 
 rm -rI $testdir

@@ -3,6 +3,7 @@
 
 //Includes
 
+#include <iostream> //standard input/output stream objects
 #include <fstream> //file stream classes
 #include <stdexcept> //standard exceptions classes
 #include <sstream> //string stream classes
@@ -54,6 +55,11 @@ class error : public std::runtime_error //generic exception type
     //error constructor
     error(const std::string &msg);
 };
+
+//Functions
+
+//count files matching pattern
+int glob_count(std::string &pattern);
 
 //Templates
 

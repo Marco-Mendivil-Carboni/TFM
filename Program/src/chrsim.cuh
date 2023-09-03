@@ -44,7 +44,7 @@ class chrsim //chromatin simulation
 
   size_t threads_block = 256; //threads per block
   size_t n_blocks; //number of blocks
-  size_t n_threads; //nuumber of threads
+  size_t n_threads; //number of threads
 
   //Functions
 
