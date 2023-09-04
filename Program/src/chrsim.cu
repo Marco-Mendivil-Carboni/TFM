@@ -70,8 +70,8 @@ chrsim::~chrsim()
   cudaFree(state);
 }
 
-//generate a random initial configuration of chromatin
-void chrsim::generate_initial_configuration()
+//generate a random initial condition
+void chrsim::generate_initial_condition()
 {
   //initialize PRNG
   curandGenerator_t gen; //host PRNG
@@ -144,27 +144,43 @@ void chrsim::generate_initial_configuration()
   curandDestroyGenerator(gen);
 
   //record success message
-  logger::record("initial configuration generated");
+  logger::record("initial condition generated");
 }
 
-//write initial configuration to file in gro format
-void chrsim::write_initial_configuration(std::ofstream &f_out)
+//write initial condition to file in gro format
+void chrsim::write_initial_condition(std::ofstream &f_i_c)
 {
-  f_out<<"Chromatin chrsim, t=0.0\n";
-  f_out<<cnfs(ap.N,5,false)<<"\n";
+  f_i_c<<"Chromatin simulation, t=0.0\n";
+  f_i_c<<cnfs(ap.N,5,false)<<"\n";
   for( int i_p = 0; i_p<ap.N; ++i_p)
   {
-    f_out<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
-    f_out<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
-    f_out<<cnfs(r_2[i_p].x,8,false,3);
-    f_out<<cnfs(r_2[i_p].y,8,false,3);
-    f_out<<cnfs(r_2[i_p].z,8,false,3);
-    f_out<<"\n";
+    f_i_c<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
+    f_i_c<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
+    f_i_c<<cnfs(r_2[i_p].x,8,false,3);
+    f_i_c<<cnfs(r_2[i_p].y,8,false,3);
+    f_i_c<<cnfs(r_2[i_p].z,8,false,3);
+    f_i_c<<"\n";
   }
-  f_out<<cnfs(0.0,10,false,5);
-  f_out<<cnfs(0.0,10,false,5);
-  f_out<<cnfs(0.0,10,false,5);
-  f_out<<"\n";
+  f_i_c<<cnfs(0.0,10,false,5);
+  f_i_c<<cnfs(0.0,10,false,5);
+  f_i_c<<cnfs(0.0,10,false,5);
+  f_i_c<<"\n";
+}
+
+//save simulation state to binary file
+void chrsim::save_checkpoint(std::ofstream &f_chkp)
+{
+  f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
+  f_chkp.write(reinterpret_cast<char *>(&r_2),sizeof(r_2));
+  f_chkp.write(reinterpret_cast<char *>(&state),sizeof(state));
+}
+
+//load simulation state from binary file
+void chrsim::load_checkpoint(std::ifstream &f_chkp)
+{
+  f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
+  f_chkp.read(reinterpret_cast<char *>(&r_2),sizeof(r_2));
+  f_chkp.read(reinterpret_cast<char *>(&state),sizeof(state));
 }
 
 //read adjustable parameters from file

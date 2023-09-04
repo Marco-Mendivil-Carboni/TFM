@@ -56,11 +56,17 @@ class chrsim //chromatin simulation
   //chrsim destructor
   ~chrsim();
 
-  //generate a random initial configuration of chromatin
-  void generate_initial_configuration();
+  //generate a random initial condition
+  void generate_initial_condition();
 
-  //write initial configuration to file in gro format
-  void write_initial_configuration(std::ofstream &f_out);
+  //write initial condition to file in gro format
+  void write_initial_condition(std::ofstream &f_i_c);
+
+  //save simulation state to binary file
+  void save_checkpoint(std::ofstream &f_chkp);
+
+  //load simulation state from binary file
+  void load_checkpoint(std::ifstream &f_chkp);
 
   private:
 

@@ -18,46 +18,80 @@ int main(const int argc, const char **argv)
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory
   bool new_sim = (argc==2) ? true : false; //make new simulation
-  std::ifstream f_par; //parameter file
+  std::ifstream f_inp; //input file
   std::ofstream f_out; //output file
   std::string f_path; //file path string
-  int sim_idx = 0; //simulation index
-  int tpf_idx = 0; //trajectory positions file index
+  std::string pattern; //file path pattern
+  int sim_idx; //simulation index
+  int tpf_idx; //trajectory positions file index
 
   //open log file inside simulation directory
-  f_path = sim_dir+"/complete-history.log";
+  f_path = sim_dir+"/.history.log";
   mmcc::logger::set_file(f_path);
 
   try
   {
     //read parameters and initialize simulation
     f_path = sim_dir+"/adjustable-parameters.dat";
-    f_par.open(f_path); mmcc::check_file(f_par,f_path);
-    mmcc::chrsim sim(f_par);
-    f_par.close();
+    f_inp.open(f_path);
+    mmcc::check_file(f_inp,f_path);
+    mmcc::chrsim sim(f_inp);
+    f_inp.close();
 
     if (new_sim) //begin new simulation
     {
-      std::string pattern = sim_dir+"/initial-configuration-*";
+      //set sim_idx and tpf_idx
+      pattern = sim_dir+"/initial-condition-*";
       sim_idx = mmcc::glob_count(pattern);
-      sim.generate_initial_configuration();
-      f_path = sim_dir+"/initial-configuration-";
+      tpf_idx = 0;
+
+      //generate and write initial condition
+      sim.generate_initial_condition();
+      f_path = sim_dir+"/initial-condition-";
       f_path += mmcc::cnfs(sim_idx,3)+".gro";
-      f_out.open(f_path); mmcc::check_file(f_out,f_path);
-      sim.write_initial_configuration(f_out);
+      f_out.open(f_path);
+      mmcc::check_file(f_out,f_path);
+      sim.write_initial_condition(f_out);
       f_out.close();
     }
     else //continue previous simulation
     {
+      //set sim_idx and tpf_idx
       sim_idx = std::stoi(argv[2]);
+      pattern = sim_dir+"/trajectory-";
+      pattern += mmcc::cnfs(sim_idx,3)+"*";
+      tpf_idx = mmcc::glob_count(pattern);
+
+      //load checkpoint
+      f_path = sim_dir+"/checkpoint-";
+      f_path += mmcc::cnfs(sim_idx,3)+".bin";
+      f_inp.open(f_path,std::ios::binary);
+      mmcc::check_file(f_inp,f_path);
+      sim.load_checkpoint(f_inp);
+      f_inp.close();
     }
-    // log: sim_idx tpf_idx ?
+
+    //record indexes
+    std::string msg = "indexes:";
+    msg += " sim_idx = "+mmcc::cnfs(sim_idx,3);
+    msg += " tpf_idx = "+mmcc::cnfs(tpf_idx,3);
+    mmcc::logger::record(msg);
 
     //perform simulation
-    f_path = sim_dir+"/trajectory-positions-";
-    f_path += mmcc::cnfs(sim_idx,3)+"-"+mmcc::cnfs(tpf_idx,3)+".trr";
-    f_out.open(f_path,std::ios::binary); mmcc::check_file(f_out,f_path);
+    f_path = sim_dir+"/trajectory-";
+    f_path += mmcc::cnfs(sim_idx,3)+"-";
+    f_path += mmcc::cnfs(tpf_idx,3)+".trr";
+    f_out.open(f_path,std::ios::binary);
+    mmcc::check_file(f_out,f_path);
     //simulation
+    f_out.close();
+
+    //save checkpoint
+    f_path = sim_dir+"/checkpoint-";
+    f_path += mmcc::cnfs(sim_idx,3)+".bin";
+    f_out.open(f_path,std::ios::binary);
+    mmcc::check_file(f_out,f_path);
+    sim.save_checkpoint(f_out);
     f_out.close();
   }
   catch (const mmcc::error& error)

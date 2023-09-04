@@ -39,6 +39,8 @@
         "%DOCFILE%.synctex.gz(busy)",
         "%DOCFILE%.nav",
         "%DOCFILE%.vrb",
-        "%DOCFILE%.auxlock"
+        "%DOCFILE%.auxlock",
+        "TikZ-figures/%DOCFILE%*.dpth",
+        "TikZ-figures/%DOCFILE%*.log"
     ]
 }

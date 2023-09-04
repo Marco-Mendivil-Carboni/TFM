@@ -47,18 +47,20 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir
-[[ -f "${testdir}/complete-history.log" && \
--f "${testdir}/initial-configuration-000.gro" && \
--f "${testdir}/trajectory-positions-000-000.trr" ]]
+[[ -f "${testdir}/.history.log" && \
+-f "${testdir}/initial-condition-000.gro" && \
+-f "${testdir}/trajectory-000-000.trr" && \
+-f "${testdir}/checkpoint-000.bin" ]]
 check $?
 
 ./Program/bin/simulate $testdir
-[[ -f "${testdir}/initial-configuration-001.gro" && \
--f "${testdir}/trajectory-positions-001-000.trr" ]]
+[[ -f "${testdir}/initial-condition-001.gro" && \
+-f "${testdir}/trajectory-001-000.trr" && \
+-f "${testdir}/checkpoint-001.bin" ]]
 check $?
 
 ./Program/bin/simulate $testdir 0
-[[ -f "${testdir}/trajectory-positions-000-001.trr" ]]
+[[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 
 # vmd -e ./Program/visualize-chromatin.tcl -args $testdir 0 > /dev/null
