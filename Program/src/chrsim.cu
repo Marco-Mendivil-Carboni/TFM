@@ -186,24 +186,11 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp)
 //write trajectory to binary file in trr format
 void chrsim::write_trajectory(std::ofstream &f_traj, int i_f)
 {
-  int array1[] = {1993, 13, 12};
-  f_traj.write(reinterpret_cast<char *>(array1),sizeof(array1));
-  char trr_version[] = "GMX_trn_file";
-  f_traj.write((trr_version),sizeof(trr_version)-1);
-  int array2[] = {0, 0, 0, 0, 0, 0, 0};
-  f_traj.write(reinterpret_cast<char *>(array2),sizeof(array2));
-  int r_size = (3*ap.N*sizeof(float));
-  f_traj.write(reinterpret_cast<char *>(&r_size),sizeof(r_size));
-  int array3[] = {0, 0};
-  f_traj.write(reinterpret_cast<char *>(array3),sizeof(array3));
-  int natoms = (ap.N);
-  f_traj.write(reinterpret_cast<char *>(&natoms),sizeof(natoms));
-  int frameidx = (i_f);
-  f_traj.write(reinterpret_cast<char *>(&frameidx),sizeof(frameidx));
-  int zero = 0;
-  f_traj.write(reinterpret_cast<char *>(&zero),sizeof(zero));
-  f_traj.write(reinterpret_cast<char *>(&t),sizeof(t));
-  f_traj.write(reinterpret_cast<char *>(&zero),sizeof(zero));
+  int32_t header[] = {1993, 13, 12, 
+    1599622471, 1601073780, 1701603686, 
+    0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
+    *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header (see chemfiles)
+  f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
   for (int i_p = 0; i_p<ap.N; ++i_p)
   {
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),sizeof(float));
