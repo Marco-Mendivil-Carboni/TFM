@@ -63,7 +63,7 @@ check $?
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 
-# vmd -e ./Program/visualize-chromatin.tcl -args $testdir 0 > /dev/null
+vmd -e ./Program/visualize.tcl -args $testdir 0
 
 # vmd -e ./Program/visualize-chromatin.tcl -args $testdir 1 > /dev/null
 

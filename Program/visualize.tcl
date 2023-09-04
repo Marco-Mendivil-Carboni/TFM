@@ -3,11 +3,11 @@ set res 32
 set r_LJ 5.0
 
 if {$argc==2} {
-    #load initial configuration
+    #load initial condition
     package require topotools
     set sim_dir [lindex $argv 0]
     set sim_idx [lindex $argv 1]
-    set gro_file [format "%s/initial-configuration-%03d.gro" $sim_dir $sim_idx]
+    set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
     color Display Background white
     display cuedensity 0.2
     mol new $gro_file autobonds off
@@ -26,8 +26,8 @@ if {$argc==2} {
     draw material Transparent
     draw sphere {0 0 0} radius $R resolution $res
 
-    #load trajectory positions files
-    set pattern [format "%s/trajectory-positions-%03d-*.trr" $sim_dir $sim_idx]
+    #load trajectory files
+    set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
     set trr_files [lsort [glob $pattern]]
     foreach trr_file $trr_files { mol addfile $trr_file}
 } else {

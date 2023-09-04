@@ -152,7 +152,7 @@ void chrsim::write_initial_condition(std::ofstream &f_i_c)
 {
   f_i_c<<"Chromatin simulation, t=0.0\n";
   f_i_c<<cnfs(ap.N,5,false)<<"\n";
-  for( int i_p = 0; i_p<ap.N; ++i_p)
+  for (int i_p = 0; i_p<ap.N; ++i_p)
   {
     f_i_c<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
     f_i_c<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
@@ -171,16 +171,45 @@ void chrsim::write_initial_condition(std::ofstream &f_i_c)
 void chrsim::save_checkpoint(std::ofstream &f_chkp)
 {
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
-  f_chkp.write(reinterpret_cast<char *>(&r_2),sizeof(r_2));
-  f_chkp.write(reinterpret_cast<char *>(&state),sizeof(state));
+  f_chkp.write(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
+  f_chkp.write(reinterpret_cast<char *>(state),n_p_thd*sizeof(PRNGstate));
 }
 
 //load simulation state from binary file
 void chrsim::load_checkpoint(std::ifstream &f_chkp)
 {
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
-  f_chkp.read(reinterpret_cast<char *>(&r_2),sizeof(r_2));
-  f_chkp.read(reinterpret_cast<char *>(&state),sizeof(state));
+  f_chkp.read(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
+  f_chkp.read(reinterpret_cast<char *>(state),n_p_thd*sizeof(PRNGstate));
+}
+
+//write trajectory to binary file in trr format
+void chrsim::write_trajectory(std::ofstream &f_traj, int i_f)
+{
+  int array1[] = {1993, 13, 12};
+  f_traj.write(reinterpret_cast<char *>(array1),sizeof(array1));
+  char trr_version[] = "GMX_trn_file";
+  f_traj.write((trr_version),sizeof(trr_version)-1);
+  int array2[] = {0, 0, 0, 0, 0, 0, 0};
+  f_traj.write(reinterpret_cast<char *>(array2),sizeof(array2));
+  int r_size = (3*ap.N*sizeof(float));
+  f_traj.write(reinterpret_cast<char *>(&r_size),sizeof(r_size));
+  int array3[] = {0, 0};
+  f_traj.write(reinterpret_cast<char *>(array3),sizeof(array3));
+  int natoms = (ap.N);
+  f_traj.write(reinterpret_cast<char *>(&natoms),sizeof(natoms));
+  int frameidx = (i_f);
+  f_traj.write(reinterpret_cast<char *>(&frameidx),sizeof(frameidx));
+  int zero = 0;
+  f_traj.write(reinterpret_cast<char *>(&zero),sizeof(zero));
+  f_traj.write(reinterpret_cast<char *>(&t),sizeof(t));
+  f_traj.write(reinterpret_cast<char *>(&zero),sizeof(zero));
+  for (int i_p = 0; i_p<ap.N; ++i_p)
+  {
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),sizeof(float));
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),sizeof(float));
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),sizeof(float));
+  } 
 }
 
 //read adjustable parameters from file

@@ -5,9 +5,6 @@
 
 //Functions
 
-//description here
-//put here function for simulation for loop--------------------------------------
-
 //main function
 int main(const int argc, const char **argv)
 {
@@ -35,7 +32,7 @@ int main(const int argc, const char **argv)
     f_path = sim_dir+"/adjustable-parameters.dat";
     f_inp.open(f_path);
     mmcc::check_file(f_inp,f_path);
-    mmcc::chrsim sim(f_inp);
+    mmcc::chrsim sim(f_inp); //simulation
     f_inp.close();
 
     if (new_sim) //begin new simulation
@@ -83,7 +80,14 @@ int main(const int argc, const char **argv)
     f_path += mmcc::cnfs(tpf_idx,3)+".trr";
     f_out.open(f_path,std::ios::binary);
     mmcc::check_file(f_out,f_path);
-    //simulation
+    for (int i_f = 0; i_f<sim.ap.F; ++i_f)
+    {
+      float prog_pc = (100.0*i_f)/(sim.ap.F); //progress percentage
+      std::cout<<"progress = "<<mmcc::cnfs(prog_pc,5,true,1)<<"%\r";
+      std::cout.flush();
+      // sim.advance_to_next_frame();
+      sim.write_trajectory(f_out,i_f);
+    }
     f_out.close();
 
     //save checkpoint

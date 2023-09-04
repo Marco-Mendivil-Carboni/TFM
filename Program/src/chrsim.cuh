@@ -36,6 +36,7 @@ class chrsim //chromatin simulation
   float sig = 1.0; //LJ particle size
 
   float c_rn; //random number constant
+
   using PRNGstate = curandStatePhilox4_32_10; //PRNG state alias
 
   float4 *r_2; //positions 2
@@ -67,6 +68,9 @@ class chrsim //chromatin simulation
 
   //load simulation state from binary file
   void load_checkpoint(std::ifstream &f_chkp);
+
+  //write trajectory to binary file in trr format
+  void write_trajectory(std::ofstream &f_traj, int i_f);
 
   private:
 
