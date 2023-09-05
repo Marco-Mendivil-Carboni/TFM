@@ -24,6 +24,17 @@ static constexpr float dt  = 1.0/2048; //timestep
 
 static constexpr int n_s = 1*2048; //MD steps between frames
 
+//Device Functions
+
+//Global Functions
+
+//initialize device PRNG state
+__global__ void setup_PRNG(int seed, chrsim::PRNGstate *state)
+{
+  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  curand_init(seed,i_p,0,&state[i_p]);
+}
+
 //Host Functions
 
 //check for errors in cuda runtime API call
@@ -55,8 +66,8 @@ chrsim::chrsim(std::ifstream &f_par)
   cuda_check(cudaMallocManaged(&state,n_p_thd*sizeof(PRNGstate)));
 
   //initialize PRNG
-  // setup_PRNG<<<n_p_blk,thd_blk>>>(time(nullptr),state);
-  // cuda_check(cudaDeviceSynchronize());
+  setup_PRNG<<<n_p_blk,thd_blk>>>(time(nullptr),state);
+  cuda_check(cudaDeviceSynchronize());
 }
 
 //chrsim destructor
@@ -191,14 +202,17 @@ void chrsim::write_trajectory(std::ofstream &f_traj, int i_f)
   int32_t header[] = {1993, 13, 12, 
     1599622471, 1601073780, 1701603686, 
     0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
-    *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header (see chemfiles)
+    *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header
+  //for more information on the contents of the header see chemfiles
   f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
   for (int i_p = 0; i_p<ap.N; ++i_p)
   {
-    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),sizeof(float));
-    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),sizeof(float));
-    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),sizeof(float));
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),4);
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),4);
   } 
+  //this is a minimal trr file writing routine that doesn't rely on \ 
+  //the xdr library but only works with vmd in little endian systems
 }
 
 //read adjustable parameters from file
@@ -219,14 +233,10 @@ void chrsim::read_parameters(std::ifstream &f_par)
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
 }
 
-//Device Functions
-
 // __device__ void example_function(float3 &r)
 // {
 //   r += ...;
 // }
-
-//Global Functions
 
 // __global__ void example_kernel(int N, float4 *r)
 // {
