@@ -22,17 +22,56 @@ static constexpr float k_b = 2.000000; //bending constant
 static constexpr float r_c = 1.122462; //LJ cutoff radius
 static constexpr float dt  = 1.0/2048; //timestep
 
-static constexpr int n_s = 1*2048; //MD steps between frames
+static constexpr int n_s = 1*2048; //RK steps between frames
 
 //Device Functions
 
 //Global Functions
 
 //initialize device PRNG state
-__global__ void setup_PRNG(int seed, chrsim::PRNGstate *state)
+__global__ void init_PRNG(prng *state, int seed)
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   curand_init(seed,i_p,0,&state[i_p]);
+}
+
+//begin Runge-Kutta iteration
+__global__ void begin_iter(int N, float c_rn, 
+  float4 *f_2, float4 *f_1, float4 *nrn, prng *state)
+{
+  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  float4 nrn_thd = nrn[i_p]; //thread normal random numbers
+  nrn_thd.x = c_rn*curand_normal(&state[i_p]);
+  nrn_thd.y = c_rn*curand_normal(&state[i_p]);
+  nrn_thd.z = c_rn*curand_normal(&state[i_p]);
+  nrn[i_p] = nrn_thd;
+  if (i_p<N)
+  {
+    f_2[i_p] = make_float4(0.0);
+    f_1[i_p] = make_float4(0.0);
+  }
+}
+
+//execute 1st stage of the Runge-Kutta method
+__global__ void exec_RK_1(int N, 
+  float4 *r_2, float4 *r_1, float4 *f_2, float4 *nrn)
+{
+  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  if (i_p<N)
+  {
+
+  }
+}
+
+//execute 2nd stage of the Runge-Kutta method
+__global__ void exec_RK_2(int N, 
+  float4 *r_2, float4 *r_1, float4 *f_2, float4 *f_1, float4 *nrn)
+{
+  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  if (i_p<N)
+  {
+
+  }
 }
 
 //Host Functions
@@ -63,10 +102,10 @@ chrsim::chrsim(std::ifstream &f_par)
   cuda_check(cudaMallocManaged(&f_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_1,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&nrn,n_p_thd*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&state,n_p_thd*sizeof(PRNGstate)));
+  cuda_check(cudaMallocManaged(&state,n_p_thd*sizeof(prng)));
 
   //initialize PRNG
-  setup_PRNG<<<n_p_blk,thd_blk>>>(time(nullptr),state);
+  init_PRNG<<<n_p_blk,thd_blk>>>(state,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
@@ -183,7 +222,7 @@ void chrsim::save_checkpoint(std::ofstream &f_chkp)
 {
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.write(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
-  f_chkp.write(reinterpret_cast<char *>(state),n_p_thd*sizeof(PRNGstate));
+  f_chkp.write(reinterpret_cast<char *>(state),n_p_thd*sizeof(prng));
   logger::record("simulation checkpoint saved");
 }
 
@@ -192,7 +231,7 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp)
 {
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.read(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
-  f_chkp.read(reinterpret_cast<char *>(state),n_p_thd*sizeof(PRNGstate));
+  f_chkp.read(reinterpret_cast<char *>(state),n_p_thd*sizeof(prng));
   logger::record("simulation checkpoint loaded");
 }
 
@@ -237,7 +276,6 @@ void chrsim::read_parameters(std::ifstream &f_par)
 // {
 //   r += ...;
 // }
-
 // __global__ void example_kernel(int N, float4 *r)
 // {
 //   int i_p = ...;

@@ -12,6 +12,10 @@
 namespace mmcc //Marco Mendívil Carboni code
 {
 
+//Aliases
+
+using prng = curandStatePhilox4_32_10; //PRNG type
+
 //Classes
 
 class chrsim //chromatin simulation
@@ -37,8 +41,6 @@ class chrsim //chromatin simulation
 
   float c_rn; //random number constant
 
-  using PRNGstate = curandStatePhilox4_32_10; //PRNG state alias
-
   float4 *r_2; //positions 2
   float4 *r_1; //positions 1
 
@@ -47,7 +49,7 @@ class chrsim //chromatin simulation
 
   float4 *nrn; //normal random numbers
 
-  PRNGstate *state; //PRNG state array
+  prng *state; //device PRNG state
 
   //Functions
 
