@@ -68,11 +68,11 @@ int glob_count(std::string &pattern);
 
 //convert number to formatted string
 template <typename T>
-std::string cnfs(T num, int len = 0, bool leadingzeros = true, int prc = 0)
+std::string cnfs(T num, int len = 0, char fillc = ' ', int prc = 0)
 {
   std::stringstream num_str;
   if (len>0){ num_str<<std::setw(len);}
-  if (leadingzeros){ num_str<<std::setfill('0');}
+  if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
   num_str<<num; return num_str.str();
 }

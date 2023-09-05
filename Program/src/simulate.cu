@@ -46,7 +46,7 @@ int main(const int argc, const char **argv)
       //generate and write initial condition
       sim.generate_initial_condition();
       f_path = sim_dir+"/initial-condition-";
-      f_path += mmcc::cnfs(sim_idx,3)+".gro";
+      f_path += mmcc::cnfs(sim_idx,3,'0')+".gro";
       f_out.open(f_path);
       mmcc::check_file(f_out,f_path);
       sim.write_initial_condition(f_out);
@@ -57,12 +57,12 @@ int main(const int argc, const char **argv)
       //set sim_idx and tpf_idx
       sim_idx = std::stoi(argv[2]);
       pattern = sim_dir+"/trajectory-";
-      pattern += mmcc::cnfs(sim_idx,3)+"*";
+      pattern += mmcc::cnfs(sim_idx,3,'0')+"*";
       tpf_idx = mmcc::glob_count(pattern);
 
       //load checkpoint
       f_path = sim_dir+"/checkpoint-";
-      f_path += mmcc::cnfs(sim_idx,3)+".bin";
+      f_path += mmcc::cnfs(sim_idx,3,'0')+".bin";
       f_inp.open(f_path,std::ios::binary);
       mmcc::check_file(f_inp,f_path);
       sim.load_checkpoint(f_inp);
@@ -71,14 +71,14 @@ int main(const int argc, const char **argv)
 
     //record indexes
     std::string msg = "indexes:";
-    msg += " sim_idx = "+mmcc::cnfs(sim_idx,3);
-    msg += " tpf_idx = "+mmcc::cnfs(tpf_idx,3);
+    msg += " sim_idx = "+mmcc::cnfs(sim_idx,3,'0');
+    msg += " tpf_idx = "+mmcc::cnfs(tpf_idx,3,'0');
     mmcc::logger::record(msg);
 
     //perform simulation
     f_path = sim_dir+"/trajectory-";
-    f_path += mmcc::cnfs(sim_idx,3)+"-";
-    f_path += mmcc::cnfs(tpf_idx,3)+".trr";
+    f_path += mmcc::cnfs(sim_idx,3,'0')+"-";
+    f_path += mmcc::cnfs(tpf_idx,3,'0')+".trr";
     f_out.open(f_path,std::ios::binary);
     mmcc::check_file(f_out,f_path);
     for (int i_f = 0; i_f<sim.ap.F; ++i_f)
@@ -92,7 +92,7 @@ int main(const int argc, const char **argv)
 
     //save checkpoint
     f_path = sim_dir+"/checkpoint-";
-    f_path += mmcc::cnfs(sim_idx,3)+".bin";
+    f_path += mmcc::cnfs(sim_idx,3,'0')+".bin";
     f_out.open(f_path,std::ios::binary);
     mmcc::check_file(f_out,f_path);
     sim.save_checkpoint(f_out);

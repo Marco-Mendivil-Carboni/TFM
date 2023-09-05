@@ -38,9 +38,9 @@ void logger::record(const std::string &msg)
 void logger::show_prog_pc(float prog_pc)
 {
   logger &sinlog = get_instance(); //singleton instance
-  sinlog.file<<"progress:"<<cnfs(prog_pc,5,true,1)<<"%";
+  sinlog.file<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
   sinlog.file.seekp(-15,std::ios::cur);
-  std::cout<<"progress:"<<cnfs(prog_pc,5,true,1)<<"%";
+  std::cout<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
   std::cout<<"\r"; std::cout.flush();
 }
 

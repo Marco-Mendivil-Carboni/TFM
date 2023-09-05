@@ -201,19 +201,19 @@ void chrsim::generate_initial_condition()
 void chrsim::write_initial_condition(std::ofstream &f_i_c)
 {
   f_i_c<<"Chromatin simulation, i_f = 0 t = 0.0\n";
-  f_i_c<<cnfs(ap.N,5,false)<<"\n";
+  f_i_c<<cnfs(ap.N,5,' ')<<"\n";
   for (int i_p = 0; i_p<ap.N; ++i_p)
   {
     f_i_c<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
     f_i_c<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
-    f_i_c<<cnfs(r_2[i_p].x,8,false,3);
-    f_i_c<<cnfs(r_2[i_p].y,8,false,3);
-    f_i_c<<cnfs(r_2[i_p].z,8,false,3);
+    f_i_c<<cnfs(r_2[i_p].x,8,' ',3);
+    f_i_c<<cnfs(r_2[i_p].y,8,' ',3);
+    f_i_c<<cnfs(r_2[i_p].z,8,' ',3);
     f_i_c<<"\n";
   }
-  f_i_c<<cnfs(0.0,10,false,5);
-  f_i_c<<cnfs(0.0,10,false,5);
-  f_i_c<<cnfs(0.0,10,false,5);
+  f_i_c<<cnfs(0.0,10,' ',5);
+  f_i_c<<cnfs(0.0,10,' ',5);
+  f_i_c<<cnfs(0.0,10,' ',5);
   f_i_c<<"\n";
 }
 
@@ -266,10 +266,10 @@ void chrsim::read_parameters(std::ifstream &f_par)
   f_par>>key>>(ap.R); if (key!="R"||ap.R<0){ throw error("error reading R");}
   f_par>>key>>(ap.F); if (key!="F"||ap.F<1){ throw error("error reading F");}
   std::string msg = "parameters:";
-  msg += " T = "+cnfs(ap.T,6,false,2);
-  msg += " N = "+cnfs(ap.N,5);
-  msg += " R = "+cnfs(ap.R,6,false,2);
-  msg += " F = "+cnfs(ap.F,5);
+  msg += " T = "+cnfs(ap.T,6,'0',2);
+  msg += " N = "+cnfs(ap.N,5,'0');
+  msg += " R = "+cnfs(ap.R,6,'0',2);
+  msg += " F = "+cnfs(ap.F,5,'0');
   logger::record(msg);
   float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}

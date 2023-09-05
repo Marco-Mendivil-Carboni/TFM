@@ -69,6 +69,6 @@ check $?
 
 vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
 
-# vmd -e ./Program/visualize-chromatin.tcl -args $testdir 1 > /dev/null
+vmd -e ./Program/visualize.tcl -args $testdir 1 > /dev/null
 
 rm -rI $testdir
