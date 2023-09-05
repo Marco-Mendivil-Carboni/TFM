@@ -173,6 +173,7 @@ void chrsim::save_checkpoint(std::ofstream &f_chkp)
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.write(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
   f_chkp.write(reinterpret_cast<char *>(state),n_p_thd*sizeof(PRNGstate));
+  logger::record("simulation checkpoint saved");
 }
 
 //load simulation state from binary file
@@ -181,6 +182,7 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp)
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.read(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
   f_chkp.read(reinterpret_cast<char *>(state),n_p_thd*sizeof(PRNGstate));
+  logger::record("simulation checkpoint loaded");
 }
 
 //write trajectory to binary file in trr format

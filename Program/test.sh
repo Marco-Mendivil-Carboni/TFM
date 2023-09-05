@@ -1,6 +1,6 @@
 #!/bin/bash
 
-testdir="Simulations/bash-script-tests"
+testdir="Simulations/test"
 testidx=1
 
 check () {
@@ -40,14 +40,18 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 ./Program/bin/simulate $testdir | grep "error reading N"
 check $?
 
-#check chromatin volume fraction too high error
+echo -n > "${testdir}/adjustable-parameters.dat"
+{ echo "T   298.0"; echo "N   512"; echo "R   01.00"; echo "F   100";
+} >> "${testdir}/adjustable-parameters.dat"
+./Program/bin/simulate $testdir | grep "chromatin volume fraction above 0.5"
+check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
 { echo "T   298.0"; echo "N   512"; echo "R   10.00"; echo "F   100";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir
-[[ -f "${testdir}/.history.log" && \
+[[ -f "${testdir}/all.log" && \
 -f "${testdir}/initial-condition-000.gro" && \
 -f "${testdir}/trajectory-000-000.trr" && \
 -f "${testdir}/checkpoint-000.bin" ]]
@@ -63,7 +67,7 @@ check $?
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 
-vmd -e ./Program/visualize.tcl -args $testdir 0
+vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
 
 # vmd -e ./Program/visualize-chromatin.tcl -args $testdir 1 > /dev/null
 

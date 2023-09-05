@@ -28,6 +28,9 @@ class logger //basic logger
   //log message with timestamp
   static void record(const std::string &msg);
 
+  //show progress percentage
+  static void show_prog_pc(float prog_pc);
+
   private:
 
   //Variables
@@ -71,8 +74,7 @@ std::string cnfs(T num, int len = 0, bool leadingzeros = true, int prc = 0)
   if (len>0){ num_str<<std::setw(len);}
   if (leadingzeros){ num_str<<std::setfill('0');}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
-  num_str<<num;
-  return num_str.str();
+  num_str<<num; return num_str.str();
 }
 
 //check file is open or else throw

@@ -23,9 +23,10 @@ int main(const int argc, const char **argv)
   int tpf_idx; //trajectory positions file index
 
   //open log file inside simulation directory
-  f_path = sim_dir+"/.history.log";
+  f_path = sim_dir+"/all.log";
   mmcc::logger::set_file(f_path);
 
+  //main try block
   try
   {
     //read parameters and initialize simulation
@@ -83,8 +84,7 @@ int main(const int argc, const char **argv)
     for (int i_f = 0; i_f<sim.ap.F; ++i_f)
     {
       float prog_pc = (100.0*i_f)/(sim.ap.F); //progress percentage
-      std::cout<<"progress = "<<mmcc::cnfs(prog_pc,5,true,1)<<"%\r";
-      std::cout.flush();
+      mmcc::logger::show_prog_pc(prog_pc);
       // sim.advance_to_next_frame();
       sim.write_trajectory(f_out,i_f);
     }

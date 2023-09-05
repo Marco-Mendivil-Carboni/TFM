@@ -18,6 +18,8 @@ void logger::set_file(const std::string &path)
   logger &sinlog = get_instance(); //singleton instance
   if (sinlog.file.is_open()){ sinlog.file.close();}
   sinlog.file.open(path,std::ios::app);
+  sinlog.file.close();
+  sinlog.file.open(path,std::ios::in|std::ios::ate);
   if (!sinlog.file.is_open()){ std::cout<<"unable to open "<<path<<std::endl;}
 }
 
@@ -30,6 +32,16 @@ void logger::record(const std::string &msg)
   strftime(timestamp,22,"[%d/%m/%y %H:%M:%S] ",now_info);
   sinlog.file<<timestamp<<msg<<std::endl;
   std::cout<<timestamp<<msg<<std::endl;
+}
+
+//show progress percentage
+void logger::show_prog_pc(float prog_pc)
+{
+  logger &sinlog = get_instance(); //singleton instance
+  sinlog.file<<"progress:"<<cnfs(prog_pc,5,true,1)<<"%";
+  sinlog.file.seekp(-15,std::ios::cur);
+  std::cout<<"progress:"<<cnfs(prog_pc,5,true,1)<<"%";
+  std::cout<<"\r"; std::cout.flush();
 }
 
 //logger constructor
