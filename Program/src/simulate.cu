@@ -86,7 +86,7 @@ int main(const int argc, const char **argv)
       float prog_pc = (100.0*i_f)/(sim.ap.F); //progress percentage
       mmcc::logger::show_prog_pc(prog_pc);
       // sim.advance_to_next_frame();
-      sim.write_trajectory(f_out,i_f);
+      sim.write_trajectory(f_out);
     }
     f_out.close();
 

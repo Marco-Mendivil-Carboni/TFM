@@ -200,7 +200,7 @@ void chrsim::generate_initial_condition()
 //write initial condition to file in gro format
 void chrsim::write_initial_condition(std::ofstream &f_i_c)
 {
-  f_i_c<<"Chromatin simulation, t=0.0\n";
+  f_i_c<<"Chromatin simulation, i_f = 0 t = 0.0\n";
   f_i_c<<cnfs(ap.N,5,false)<<"\n";
   for (int i_p = 0; i_p<ap.N; ++i_p)
   {
@@ -220,6 +220,7 @@ void chrsim::write_initial_condition(std::ofstream &f_i_c)
 //save simulation state to binary file
 void chrsim::save_checkpoint(std::ofstream &f_chkp)
 {
+  f_chkp.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.write(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
   f_chkp.write(reinterpret_cast<char *>(state),n_p_thd*sizeof(prng));
@@ -229,6 +230,7 @@ void chrsim::save_checkpoint(std::ofstream &f_chkp)
 //load simulation state from binary file
 void chrsim::load_checkpoint(std::ifstream &f_chkp)
 {
+  f_chkp.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.read(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
   f_chkp.read(reinterpret_cast<char *>(state),n_p_thd*sizeof(prng));
@@ -236,8 +238,9 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp)
 }
 
 //write trajectory to binary file in trr format
-void chrsim::write_trajectory(std::ofstream &f_traj, int i_f)
+void chrsim::write_trajectory(std::ofstream &f_traj)
 {
+  ++i_f;
   int32_t header[] = {1993, 13, 12, 
     1599622471, 1601073780, 1701603686, 
     0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
@@ -249,7 +252,7 @@ void chrsim::write_trajectory(std::ofstream &f_traj, int i_f)
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),4);
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),4);
-  } 
+  }
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 }
@@ -276,6 +279,7 @@ void chrsim::read_parameters(std::ifstream &f_par)
 // {
 //   r += ...;
 // }
+
 // __global__ void example_kernel(int N, float4 *r)
 // {
 //   int i_p = ...;

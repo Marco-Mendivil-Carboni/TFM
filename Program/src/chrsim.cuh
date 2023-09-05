@@ -36,7 +36,9 @@ class chrsim //chromatin simulation
   size_t n_p_blk; //number of particle blocks
   size_t n_p_thd; //number of particle threads
 
+  int i_f = 0; //frame index
   float t = 0.0; //simulation time
+
   float sig = 1.0; //LJ particle size
 
   float c_rn; //random number constant
@@ -72,7 +74,7 @@ class chrsim //chromatin simulation
   void load_checkpoint(std::ifstream &f_chkp);
 
   //write trajectory to binary file in trr format
-  void write_trajectory(std::ofstream &f_traj, int i_f);
+  void write_trajectory(std::ofstream &f_traj);
 
   private:
 
