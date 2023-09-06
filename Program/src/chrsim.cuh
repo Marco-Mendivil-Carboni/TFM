@@ -56,7 +56,7 @@ class chrsim //chromatin simulation
   //Functions
 
   //chrsim constructor
-  chrsim(std::ifstream &f_par);
+  chrsim(std::ifstream &f_par); //parameter file
 
   //chrsim destructor
   ~chrsim();
@@ -65,35 +65,35 @@ class chrsim //chromatin simulation
   void generate_initial_condition();
 
   //write initial condition to file in gro format
-  void write_initial_condition(std::ofstream &f_i_c);
+  void write_initial_condition(std::ofstream &f_i_c); //initial condition file
 
   //save simulation state to binary file
-  void save_checkpoint(std::ofstream &f_chkp);
+  void save_checkpoint(std::ofstream &f_chkp); //checkpoint file
 
   //load simulation state from binary file
-  void load_checkpoint(std::ifstream &f_chkp);
+  void load_checkpoint(std::ifstream &f_chkp); //checkpoint file
 
   //run simulation and write trajectory file
-  void run_simulation(std::ofstream &f_traj);
+  void run_simulation(std::ofstream &f_traj); //trajectory file
 
   private:
 
   //Functions
 
   //read adjustable parameters from file
-  void read_parameters(std::ifstream &f_par);
+  void read_parameters(std::ifstream &f_par); //parameter file
 
   //take RK step----------------------------------------------------------------tmp
   void take_step();//-----------------------------------------------------------tmp
 
   //write trajectory frame to binary file in trr format
-  void write_trajectory_frame(std::ofstream &f_traj);
+  void write_trajectory_frame(std::ofstream &f_traj); //trajectory file
 };
 
 //Functions
 
 //check for errors in cuda runtime API call
-void cuda_check(cudaError_t result);
+void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 
 } //namespace mmcc
 

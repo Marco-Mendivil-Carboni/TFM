@@ -1,7 +1,7 @@
 //Includes
 
-#include "chrsim.cuh"
-#include "util.hpp"
+#include "chrsim.cuh" //chromatin simulation
+#include "util.hpp" //utilities
 
 #include <time.h> //time utilities library
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
@@ -21,22 +21,29 @@ static constexpr float k_b = 2.000000; //bending constant
 static constexpr float r_c = 1.122462; //LJ cutoff radius
 static constexpr float dt  = 1.0/2048; //timestep
 
-static constexpr int n_s = 1*2048; //RK steps between frames
+static constexpr int f_s = 1*2048; //RK steps per frame
 
 //Device Functions
 
 //Global Functions
 
 //initialize device PRNG state
-__global__ void init_PRNG(prng *state, int seed)
+__global__ void init_PRNG(
+  prng *state, //device PRNG state
+  int seed) //PRNG seed
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   curand_init(seed,i_p,0,&state[i_p]);
 }
 
 //begin Runge-Kutta iteration
-__global__ void begin_iter(int N, float c_rn, 
-  float4 *f_2, float4 *f_1, float4 *nrn, prng *state)
+__global__ void begin_iter(
+  int N, //number of particles
+  float c_rn, //random number constant
+  float4 *f_2, //forces 2
+  float4 *f_1, //forces 1
+  float4 *nrn, //normal random numbers
+  prng *state) //device PRNG state
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   float4 nrn_thd = nrn[i_p]; //thread normal random numbers
@@ -52,8 +59,12 @@ __global__ void begin_iter(int N, float c_rn,
 }
 
 //execute 1st stage of the Runge-Kutta method
-__global__ void exec_RK_1(int N, 
-  float4 *r_2, float4 *r_1, float4 *f_2, float4 *nrn)
+__global__ void exec_RK_1(
+  int N, //number of particles
+  float4 *r_2, //positions 2
+  float4 *r_1, //positions 1
+  float4 *f_2, //forces 2
+  float4 *nrn) //normal random numbers
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
@@ -63,8 +74,13 @@ __global__ void exec_RK_1(int N,
 }
 
 //execute 2nd stage of the Runge-Kutta method
-__global__ void exec_RK_2(int N, 
-  float4 *r_2, float4 *r_1, float4 *f_2, float4 *f_1, float4 *nrn)
+__global__ void exec_RK_2(
+  int N, //number of particles
+  float4 *r_2, //positions 2
+  float4 *r_1, //positions 1
+  float4 *f_2, //forces 2
+  float4 *f_1, //forces 1
+  float4 *nrn) //normal random numbers
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
@@ -76,18 +92,18 @@ __global__ void exec_RK_2(int N,
 //Host Functions
 
 //check for errors in cuda runtime API call
-void cuda_check(cudaError_t result)
+void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
 {
-  if (result!=cudaSuccess)
+  if (rtn_val!=cudaSuccess)
   {
-    std::string msg = "cuda: ";
-    msg += cudaGetErrorString(result);
+    std::string msg = "cuda: "; //error message
+    msg += cudaGetErrorString(rtn_val);
     throw error(msg);
   }
 }
 
 //chrsim constructor
-chrsim::chrsim(std::ifstream &f_par)
+chrsim::chrsim(std::ifstream &f_par) //parameter file
 {
   //initialize parameters and variables
   read_parameters(f_par);
@@ -129,8 +145,15 @@ void chrsim::generate_initial_condition()
 
   //declare auxiliary variables
   float beta = 1.0/(k_B*ap.T); //inverse temperature
-  float rand, theta, phi, bondlen, bondangle;
-  float3 randdir, olddir, newdir, perdir;
+  float rand; //random number in (0,1]
+  float theta; //polar angle
+  float phi; //azimuthal angle
+  float len_b; //bond length
+  float angle_b; //bond angle
+  float3 randdir; //random direction
+  float3 olddir; //old direction
+  float3 newdir; //new direction
+  float3 perpdir; //perpendicular direction
 
   //place first particle
   r_2[0] = make_float4(0.0);
@@ -143,48 +166,50 @@ void chrsim::generate_initial_condition()
   sig = 1.0/2;
 
   //perform random walk
-  int n_failures = 0;
-  for (int i_p = 1; i_p<ap.N; ++i_p)
+  int att = 0; //number of attempts
+  for (int i_p = 1; i_p<ap.N; ++i_p) //particle index
   {
     //generate random direction perpendicular to old direction
     curandGenerateUniform(gen,&rand,1); theta = acos(1.0-2.0*rand);
     curandGenerateUniform(gen,&rand,1); phi = 2.0*M_PI*rand;
     randdir = make_float3(sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta));
-    perdir = cross(olddir,randdir);
-    perdir = normalize(perdir);
+    perpdir = cross(olddir,randdir);
+    perpdir = normalize(perpdir);
 
     //generate random bond angle and calculate new direction
     curandGenerateUniform(gen,&rand,1);
-    bondangle = acos(1.0+log(1.0-(1.0-exp(-2.0*(k_b*beta)))*rand)/(k_b*beta));
-    newdir = cos(bondangle)*olddir+sin(bondangle)*perdir;
+    angle_b = acos(1.0+log(1.0-(1.0-exp(-2.0*(k_b*beta)))*rand)/(k_b*beta));
+    newdir = cos(angle_b)*olddir+sin(angle_b)*perpdir;
 
     //calculate position of next particle
     curandGenerateUniform(gen,&rand,1);
-    bondlen = l_0+sqrt(2.0/(k_e*beta))*erfinv(2.0*rand-1.0);
-    r_2[i_p] = make_float4(bondlen*newdir)+r_2[i_p-1];
+    len_b = l_0+sqrt(2.0/(k_e*beta))*erfinv(2.0*rand-1.0);
+    r_2[i_p] = make_float4(len_b*newdir)+r_2[i_p-1];
 
     //check if new position is acceptable
     bool p_a = true; //position is acceptable
     if (!isfinite(r_2[i_p].x)){ p_a = false;}
     if (!isfinite(r_2[i_p].y)){ p_a = false;}
     if (!isfinite(r_2[i_p].z)){ p_a = false;}
-    for (int j_p = 0; j_p<(i_p-1); ++j_p)
+    for (int j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
     {
-      float dist = length(make_float3(r_2[j_p]-r_2[i_p]));
-      if (dist<(r_c*sig)){ p_a = false; break;}
+      float d_pp; //particle-particle distance
+      d_pp = length(make_float3(r_2[j_p]-r_2[i_p]));
+      if (d_pp<(r_c*sig)){ p_a = false; break;}
     }
-    float d_r = length(make_float3(r_2[i_p]));
+    float d_r; //radial distance to origin
+    d_r = length(make_float3(r_2[i_p]));
     if ((ap.R-d_r)<(r_c*sig)){ p_a = false;}
 
     if (p_a) //continue
     {
       olddir = newdir;
-      n_failures = 0;
+      att = 0;
     }
     else //go back
     {
-      ++n_failures;
-      if( n_failures>1024){ i_p = 1;}
+      ++att;
+      if (att>1024){ i_p = 1;}
       else{ i_p--;}
     }
   }
@@ -197,11 +222,11 @@ void chrsim::generate_initial_condition()
 }
 
 //write initial condition to file in gro format
-void chrsim::write_initial_condition(std::ofstream &f_i_c)
+void chrsim::write_initial_condition(std::ofstream &f_i_c) //initial condition file
 {
-  f_i_c<<"Chromatin simulation, i_f = 0 t = 0.0\n";
+  f_i_c<<"Chromatin simulation, i_f = 0, t = 0.0\n";
   f_i_c<<cnfs(ap.N,5,' ')<<"\n";
-  for (int i_p = 0; i_p<ap.N; ++i_p)
+  for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
   {
     f_i_c<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
     f_i_c<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
@@ -217,7 +242,7 @@ void chrsim::write_initial_condition(std::ofstream &f_i_c)
 }
 
 //save simulation state to binary file
-void chrsim::save_checkpoint(std::ofstream &f_chkp)
+void chrsim::save_checkpoint(std::ofstream &f_chkp) //checkpoint file
 {
   f_chkp.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
@@ -227,7 +252,7 @@ void chrsim::save_checkpoint(std::ofstream &f_chkp)
 }
 
 //load simulation state from binary file
-void chrsim::load_checkpoint(std::ifstream &f_chkp)
+void chrsim::load_checkpoint(std::ifstream &f_chkp) //checkpoint file
 {
   f_chkp.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
@@ -237,32 +262,32 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp)
 }
 
 //run simulation and write trajectory file
-void chrsim::run_simulation(std::ofstream &f_traj)
+void chrsim::run_simulation(std::ofstream &f_traj) //trajectory file
 {
-  for (int f = 0; f<ap.F; ++f)
+  for (int f = 0; f<ap.F; ++f) //frame
   {
     float prog_pc = (100.0*f)/(ap.F); //progress percentage
     mmcc::logger::show_prog_pc(prog_pc);
-    for (int s = 0; s<n_s; ++s)
+    for (int s = 0; s<f_s; ++s) //step
     {
       take_step();
     }
     cuda_check(cudaDeviceSynchronize());
     ++i_f;
-    t += n_s*dt;
+    t += f_s*dt;
     write_trajectory_frame(f_traj);
   }
 }
 
 //read adjustable parameters from file
-void chrsim::read_parameters(std::ifstream &f_par)
+void chrsim::read_parameters(std::ifstream &f_par) //parameter file
 {
-  std::string key;
+  std::string key; //parameter string key
   f_par>>key>>(ap.T); if (key!="T"||ap.T<0){ throw error("error reading T");}
   f_par>>key>>(ap.N); if (key!="N"||ap.N<1){ throw error("error reading N");}
   f_par>>key>>(ap.R); if (key!="R"||ap.R<0){ throw error("error reading R");}
   f_par>>key>>(ap.F); if (key!="F"||ap.F<1){ throw error("error reading F");}
-  std::string msg = "parameters:";
+  std::string msg = "parameters:"; //message
   msg += " T = "+cnfs(ap.T,6,'0',2);
   msg += " N = "+cnfs(ap.N,5,'0');
   msg += " R = "+cnfs(ap.R,6,'0',2);
@@ -279,7 +304,7 @@ void chrsim::take_step()//------------------------------------------------------
 }
 
 //write trajectory frame to binary file in trr format
-void chrsim::write_trajectory_frame(std::ofstream &f_traj)
+void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
 {
   int32_t header[] = {1993, 13, 12, 
     1599622471, 1601073780, 1701603686, 
@@ -287,7 +312,7 @@ void chrsim::write_trajectory_frame(std::ofstream &f_traj)
     *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header
   //for more information on the contents of the header see chemfiles
   f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
-  for (int i_p = 0; i_p<ap.N; ++i_p)
+  for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
   {
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),4);
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);
@@ -301,7 +326,6 @@ void chrsim::write_trajectory_frame(std::ofstream &f_traj)
 // {
 //   r += ...;
 // }
-
 // __global__ void example_kernel(int N, float4 *r)
 // {
 //   int i_p = ...;

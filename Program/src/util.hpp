@@ -23,13 +23,13 @@ class logger //basic logger
   //Functions
 
   //set log file and open it
-  static void set_file(const std::string &path);
+  static void set_file(const std::string &path); //log file path
 
   //log message with timestamp
-  static void record(const std::string &msg);
+  static void record(const std::string &msg); //message
 
   //show progress percentage
-  static void show_prog_pc(float prog_pc);
+  static void show_prog_pc(float prog_pc); //progress percentage
 
   private:
 
@@ -56,21 +56,25 @@ class error : public std::runtime_error //generic exception type
     //Functions
 
     //error constructor
-    error(const std::string &msg);
+    error(const std::string &msg); //error message
 };
 
 //Functions
 
 //count files matching pattern
-int glob_count(std::string &pattern);
+int glob_count(std::string &pattern); //file path pattern
 
 //Templates
 
 //convert number to formatted string
 template <typename T>
-std::string cnfs(T num, int len = 0, char fillc = ' ', int prc = 0)
+std::string cnfs
+  (T num, //number
+  int len = 0, //length
+  char fillc = ' ', //filler character
+  int prc = 0) //precision
 {
-  std::stringstream num_str;
+  std::stringstream num_str; //number string
   if (len>0){ num_str<<std::setw(len);}
   if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
@@ -79,7 +83,9 @@ std::string cnfs(T num, int len = 0, char fillc = ' ', int prc = 0)
 
 //check file is open or else throw
 template <typename T>
-void check_file(T &file, std::string &path)
+void check_file
+  (T &file, //file stream
+  std::string &path) //file path string
 {
   if (!file.is_open())
   {

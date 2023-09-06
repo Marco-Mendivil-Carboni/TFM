@@ -1,6 +1,6 @@
 //Includes
 
-#include "util.hpp"
+#include "util.hpp" //utilities
 
 #include <time.h> //time utilities library
 #include <glob.h> //pathname pattern matching types
@@ -13,7 +13,7 @@ namespace mmcc //Marco Mendívil Carboni code
 //Functions
 
 //set log file and open it
-void logger::set_file(const std::string &path)
+void logger::set_file(const std::string &path) //log file path
 {
   logger &sinlog = get_instance(); //singleton instance
   if (sinlog.file.is_open()){ sinlog.file.close();}
@@ -24,18 +24,19 @@ void logger::set_file(const std::string &path)
 }
 
 //log message with timestamp
-void logger::record(const std::string &msg)
+void logger::record(const std::string &msg) //message
 {
   logger &sinlog = get_instance(); //singleton instance
-  time_t now = time(nullptr);
-  tm *now_info = localtime(&now); char timestamp[22];
+  time_t now = time(nullptr); //current time
+  tm *now_info = localtime(&now); //curent time information
+  char timestamp[22]; //timestamp C-style string
   strftime(timestamp,22,"[%d/%m/%y %H:%M:%S] ",now_info);
   sinlog.file<<timestamp<<msg<<std::endl;
   std::cout<<timestamp<<msg<<std::endl;
 }
 
 //show progress percentage
-void logger::show_prog_pc(float prog_pc)
+void logger::show_prog_pc(float prog_pc) //progress percentage
 {
   logger &sinlog = get_instance(); //singleton instance
   sinlog.file<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
@@ -61,23 +62,24 @@ logger &logger::get_instance()
 }
 
 //error constructor
-error::error(const std::string &msg) : std::runtime_error{msg} {}
+error::error(const std::string &msg) //error message
+  : std::runtime_error{msg} {}
 
 //count files matching pattern
-int glob_count(std::string &pattern)
+int glob_count(std::string &pattern) //file path pattern
 {
-  glob_t glob_result;
-  int return_value = glob(pattern.c_str(),0,nullptr,&glob_result);
-  if (return_value!=0)
+  glob_t glob_res; //glob result
+  int rtn_val = glob(pattern.c_str(),0,nullptr,&glob_res); //return value
+  if (rtn_val!=0)
   {
-    globfree(&glob_result);
-    if (return_value==GLOB_NOMATCH){ return 0;}
+    globfree(&glob_res);
+    if (rtn_val==GLOB_NOMATCH){ return 0;}
     else{ throw error("unable to find matches of "+pattern);}
   }
   else
   {
-    globfree(&glob_result);
-    return glob_result.gl_pathc;
+    globfree(&glob_res);
+    return glob_res.gl_pathc;
   }
 }
 
