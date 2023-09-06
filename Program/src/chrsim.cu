@@ -4,7 +4,6 @@
 #include "util.hpp" //utilities
 
 #include <time.h> //time utilities library
-#include <rpc/xdr.h> //external data representation library
 
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
 
@@ -327,7 +326,6 @@ void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
 // {
 //   r += ...;
 // }
-
 // __global__ void example_kernel(int N, float4 *r)
 // {
 //   int i_p = ...;
