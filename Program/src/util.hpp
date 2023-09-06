@@ -74,7 +74,7 @@ std::string cnfs
   char fillc = ' ', //filler character
   int prc = 0) //precision
 {
-  std::stringstream num_str; //number string
+  std::stringstream num_str; //number stringstream
   if (len>0){ num_str<<std::setw(len);}
   if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}

@@ -4,6 +4,8 @@
 #include "util.hpp" //utilities
 
 #include <time.h> //time utilities library
+#include <rpc/xdr.h> //external data representation library
+
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
 
 //Namespace
@@ -90,17 +92,6 @@ __global__ void exec_RK_2(
 }
 
 //Host Functions
-
-//check for errors in cuda runtime API call
-void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
-{
-  if (rtn_val!=cudaSuccess)
-  {
-    std::string msg = "cuda: "; //error message
-    msg += cudaGetErrorString(rtn_val);
-    throw error(msg);
-  }
-}
 
 //chrsim constructor
 chrsim::chrsim(std::ifstream &f_par) //parameter file
@@ -306,8 +297,7 @@ void chrsim::take_step()//------------------------------------------------------
 //write trajectory frame to binary file in trr format
 void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
 {
-  int32_t header[] = {1993, 13, 12, 
-    1599622471, 1601073780, 1701603686, 
+  int32_t header[] = {1993, 1, 0, 
     0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
     *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header
   //for more information on the contents of the header see chemfiles
@@ -322,10 +312,22 @@ void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
   //the xdr library but only works with vmd in little endian systems
 }
 
+//check for errors in cuda runtime API call
+void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
+{
+  if (rtn_val!=cudaSuccess)
+  {
+    std::string msg = "cuda: "; //error message
+    msg += cudaGetErrorString(rtn_val);
+    throw error(msg);
+  }
+}
+
 // __device__ void example_function(float3 &r)
 // {
 //   r += ...;
 // }
+
 // __global__ void example_kernel(int N, float4 *r)
 // {
 //   int i_p = ...;
