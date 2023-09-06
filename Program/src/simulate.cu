@@ -75,19 +75,13 @@ int main(const int argc, const char **argv)
     msg += " tpf_idx = "+mmcc::cnfs(tpf_idx,3,'0');
     mmcc::logger::record(msg);
 
-    //perform simulation
+    //run simulation
     f_path = sim_dir+"/trajectory-";
     f_path += mmcc::cnfs(sim_idx,3,'0')+"-";
     f_path += mmcc::cnfs(tpf_idx,3,'0')+".trr";
     f_out.open(f_path,std::ios::binary);
     mmcc::check_file(f_out,f_path);
-    for (int i_f = 0; i_f<sim.ap.F; ++i_f)
-    {
-      float prog_pc = (100.0*i_f)/(sim.ap.F); //progress percentage
-      mmcc::logger::show_prog_pc(prog_pc);
-      // sim.advance_to_next_frame();
-      sim.write_trajectory(f_out);
-    }
+    sim.run_simulation(f_out);
     f_out.close();
 
     //save checkpoint

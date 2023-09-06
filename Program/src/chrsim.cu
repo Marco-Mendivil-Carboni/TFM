@@ -3,8 +3,7 @@
 #include "chrsim.cuh"
 #include "util.hpp"
 
-#include <ctime> //time utilities library
-
+#include <time.h> //time utilities library
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
 
 //Namespace
@@ -237,24 +236,22 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp)
   logger::record("simulation checkpoint loaded");
 }
 
-//write trajectory to binary file in trr format
-void chrsim::write_trajectory(std::ofstream &f_traj)
+//run simulation and write trajectory file
+void chrsim::run_simulation(std::ofstream &f_traj)
 {
-  ++i_f;
-  int32_t header[] = {1993, 13, 12, 
-    1599622471, 1601073780, 1701603686, 
-    0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
-    *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header
-  //for more information on the contents of the header see chemfiles
-  f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
-  for (int i_p = 0; i_p<ap.N; ++i_p)
+  for (int f = 0; f<ap.F; ++f)
   {
-    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),4);
-    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);
-    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),4);
+    float prog_pc = (100.0*f)/(ap.F); //progress percentage
+    mmcc::logger::show_prog_pc(prog_pc);
+    for (int s = 0; s<n_s; ++s)
+    {
+      take_step();
+    }
+    cuda_check(cudaDeviceSynchronize());
+    ++i_f;
+    t += n_s*dt;
+    write_trajectory_frame(f_traj);
   }
-  //this is a minimal trr file writing routine that doesn't rely on \ 
-  //the xdr library but only works with vmd in little endian systems
 }
 
 //read adjustable parameters from file
@@ -273,6 +270,31 @@ void chrsim::read_parameters(std::ifstream &f_par)
   logger::record(msg);
   float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
+}
+
+//take RK step------------------------------------------------------------------tmp
+void chrsim::take_step()//------------------------------------------------------tmp
+{
+  begin_iter<<<n_p_blk,thd_blk>>>(ap.N,c_rn,f_2,f_1,nrn,state);
+}
+
+//write trajectory frame to binary file in trr format
+void chrsim::write_trajectory_frame(std::ofstream &f_traj)
+{
+  int32_t header[] = {1993, 13, 12, 
+    1599622471, 1601073780, 1701603686, 
+    0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
+    *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header
+  //for more information on the contents of the header see chemfiles
+  f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
+  for (int i_p = 0; i_p<ap.N; ++i_p)
+  {
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),4);
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);
+    f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),4);
+  }
+  //this is a minimal trr file writing routine that doesn't rely on \ 
+  //the xdr library but only works with vmd in little endian systems
 }
 
 // __device__ void example_function(float3 &r)

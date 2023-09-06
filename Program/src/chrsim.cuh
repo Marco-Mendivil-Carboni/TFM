@@ -73,8 +73,8 @@ class chrsim //chromatin simulation
   //load simulation state from binary file
   void load_checkpoint(std::ifstream &f_chkp);
 
-  //write trajectory to binary file in trr format
-  void write_trajectory(std::ofstream &f_traj);
+  //run simulation and write trajectory file
+  void run_simulation(std::ofstream &f_traj);
 
   private:
 
@@ -82,6 +82,12 @@ class chrsim //chromatin simulation
 
   //read adjustable parameters from file
   void read_parameters(std::ifstream &f_par);
+
+  //take RK step----------------------------------------------------------------tmp
+  void take_step();//-----------------------------------------------------------tmp
+
+  //write trajectory frame to binary file in trr format
+  void write_trajectory_frame(std::ofstream &f_traj);
 };
 
 //Functions
