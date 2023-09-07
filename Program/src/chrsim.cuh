@@ -39,9 +39,9 @@ class chrsim //chromatin simulation
   int i_f = 0; //frame index
   float t = 0.0; //simulation time
 
-  float sig = 1.0; //LJ particle size
-
   float c_rn; //random number constant
+
+  float sig = 1.0; //LJ particle size
 
   float4 *r_2; //positions 2
   float4 *r_1; //positions 1
@@ -83,8 +83,8 @@ class chrsim //chromatin simulation
   //read adjustable parameters from file
   void read_parameters(std::ifstream &f_par); //parameter file
 
-  //take RK step----------------------------------------------------------------tmp
-  void take_step();//-----------------------------------------------------------tmp
+  //make one Runge-Kutta iteration
+  void make_RK_iteration();
 
   //write trajectory frame to binary file in trr format
   void write_trajectory_frame(std::ofstream &f_traj); //trajectory file

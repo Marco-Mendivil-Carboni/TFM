@@ -204,6 +204,14 @@ void chrsim::generate_initial_condition()
     }
   }
 
+  //expand beads
+  while (sig<1.0)
+  {
+    make_RK_iteration();
+    sig *= 1.0+1.0/8192;
+  }
+  cuda_check(cudaDeviceSynchronize());
+
   //free host PRNG
   curandDestroyGenerator(gen);
 
@@ -260,7 +268,7 @@ void chrsim::run_simulation(std::ofstream &f_traj) //trajectory file
     mmcc::logger::show_prog_pc(prog_pc);
     for (int s = 0; s<f_s; ++s) //step
     {
-      take_step();
+      make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
     ++i_f;
@@ -287,18 +295,23 @@ void chrsim::read_parameters(std::ifstream &f_par) //parameter file
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
 }
 
-//take RK step------------------------------------------------------------------tmp
-void chrsim::take_step()//------------------------------------------------------tmp
+//make one iteration of the Runge-Kutta method
+void chrsim::make_RK_iteration()
 {
   begin_iter<<<n_p_blk,thd_blk>>>(ap.N,c_rn,f_2,f_1,nrn,state);
+  exec_RK_1<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,nrn);
+  exec_RK_2<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,f_1,nrn);
 }
 
 //write trajectory frame to binary file in trr format
 void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
 {
-  int32_t header[] = {1993, 1, 0, 
+  //this is a minimal trr file writing routine that doesn't rely on \ 
+  //the xdr library but only works with vmd in little endian systems
+
+  int32_t header[18] = {1993, 1, 0, 
     0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
-    *(reinterpret_cast<int32_t *>(&t)), 0}; //trr file header
+    *(reinterpret_cast<int32_t *>(&t)), 0}; //frame header
   //for more information on the contents of the header see chemfiles
   f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
   for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
@@ -307,8 +320,6 @@ void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].z)),4);
   }
-  //this is a minimal trr file writing routine that doesn't rely on \ 
-  //the xdr library but only works with vmd in little endian systems
 }
 
 //check for errors in cuda runtime API call
@@ -326,6 +337,7 @@ void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
 // {
 //   r += ...;
 // }
+
 // __global__ void example_kernel(int N, float4 *r)
 // {
 //   int i_p = ...;
