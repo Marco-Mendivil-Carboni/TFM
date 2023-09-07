@@ -66,7 +66,7 @@ error::error(const std::string &msg) //error message
   : std::runtime_error{msg} {}
 
 //count files matching pattern
-int glob_count(std::string &pattern) //file path pattern
+int glob_count(const std::string &pattern) //file path pattern
 {
   glob_t glob_res; //glob result
   int rtn_val = glob(pattern.c_str(),0,nullptr,&glob_res); //return value

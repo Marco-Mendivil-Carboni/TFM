@@ -24,17 +24,27 @@ static constexpr float dt  = 1.0/2048; //timestep
 
 static constexpr int f_s = 1*2048; //RK steps per frame
 
+//Structures
+
+// struct bonds {
+// 
+// };
+
 //Device Functions
 
 //Global Functions
 
-//initialize device PRNG state
+//initialize device PRNG states
 __global__ void init_PRNG(
-  prng *state, //device PRNG state
+  int N, //number of particles
+  prng *state, //device PRNG states
   int seed) //PRNG seed
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  curand_init(seed,i_p,0,&state[i_p]);
+  if (i_p<N)
+  {
+    curand_init(seed,i_p,0,&state[i_p]);
+  }
 }
 
 //begin Runge-Kutta iteration
@@ -44,16 +54,12 @@ __global__ void begin_iter(
   float4 *f_2, //forces 2
   float4 *f_1, //forces 1
   float4 *nrn, //normal random numbers
-  prng *state) //device PRNG state
+  prng *state) //device PRNG states
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  float4 nrn_thd = nrn[i_p]; //thread normal random numbers
-  nrn_thd.x = c_rn*curand_normal(&state[i_p]);
-  nrn_thd.y = c_rn*curand_normal(&state[i_p]);
-  nrn_thd.z = c_rn*curand_normal(&state[i_p]);
-  nrn[i_p] = nrn_thd;
   if (i_p<N)
   {
+    nrn[i_p] = c_rn*curand_normal4(&state[i_p]);
     f_2[i_p] = make_float4(0.0);
     f_1[i_p] = make_float4(0.0);
   }
@@ -70,7 +76,7 @@ __global__ void exec_RK_1(
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
-
+    r_1[i_p] = r_2[i_p]+f_2[i_p]*dt/xi+nrn[i_p]/xi;
   }
 }
 
@@ -86,7 +92,7 @@ __global__ void exec_RK_2(
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
-
+    r_2[i_p] = r_2[i_p]+0.5*(f_1[i_p]+f_2[i_p])*dt/xi+nrn[i_p]/xi;
   }
 }
 
@@ -106,11 +112,11 @@ chrsim::chrsim(std::ifstream &f_par) //parameter file
   cuda_check(cudaMallocManaged(&r_1,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_1,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&nrn,n_p_thd*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&state,n_p_thd*sizeof(prng)));
+  cuda_check(cudaMallocManaged(&nrn,ap.N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&state,ap.N*sizeof(prng)));
 
   //initialize PRNG
-  init_PRNG<<<n_p_blk,thd_blk>>>(state,time(nullptr));
+  init_PRNG<<<n_p_blk,thd_blk>>>(ap.N,state,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
@@ -140,9 +146,9 @@ void chrsim::generate_initial_condition()
   float phi; //azimuthal angle
   float len_b; //bond length
   float angle_b; //bond angle
-  float3 randdir; //random direction
   float3 olddir; //old direction
   float3 newdir; //new direction
+  float3 randdir; //random direction
   float3 perpdir; //perpendicular direction
 
   //place first particle
@@ -332,21 +338,5 @@ void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
     throw error(msg);
   }
 }
-
-// __device__ void example_function(float3 &r)
-// {
-//   r += ...;
-// }
-
-// __global__ void example_kernel(int N, float4 *r)
-// {
-//   int i_p = ...;
-//   if (i_p<N)
-//   {
-//     float3 r_int = make_float3(r[i_p]);
-//     use r_int by reference in device functions onward
-//     example_function(r_int);
-//   }
-// }
 
 } //namespace mmcc

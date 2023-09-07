@@ -62,7 +62,7 @@ class error : public std::runtime_error //generic exception type
 //Functions
 
 //count files matching pattern
-int glob_count(std::string &pattern); //file path pattern
+int glob_count(const std::string &pattern); //file path pattern
 
 //Templates
 
@@ -85,7 +85,7 @@ std::string cnfs
 template <typename T>
 void check_file
   (T &file, //file stream
-  std::string &path) //file path string
+  const std::string &path) //file path string
 {
   if (!file.is_open())
   {

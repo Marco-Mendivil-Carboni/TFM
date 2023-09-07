@@ -22,37 +22,6 @@ class chrsim //chromatin simulation
 {
   public:
 
-  //Parameters and Variables
-
-  struct //adjustable parameters
-  {
-    float T; //temperature
-    int N; //number of particles
-    float R; //radius of sphere
-    int F; //frames per file
-  } ap;
-
-  size_t thd_blk = 256; //threads per block
-  size_t n_p_blk; //number of particle blocks
-  size_t n_p_thd; //number of particle threads
-
-  int i_f = 0; //frame index
-  float t = 0.0; //simulation time
-
-  float c_rn; //random number constant
-
-  float sig = 1.0; //LJ particle size
-
-  float4 *r_2; //positions 2
-  float4 *r_1; //positions 1
-
-  float4 *f_2; //forces 2
-  float4 *f_1; //forces 1
-
-  float4 *nrn; //normal random numbers
-
-  prng *state; //device PRNG state
-
   //Functions
 
   //chrsim constructor
@@ -77,6 +46,37 @@ class chrsim //chromatin simulation
   void run_simulation(std::ofstream &f_traj); //trajectory file
 
   private:
+
+  //Parameters and Variables
+
+  struct //adjustable parameters
+  {
+    float T; //temperature
+    int N; //number of particles
+    float R; //radius of sphere
+    int F; //frames per file
+  } ap;
+
+  uint thd_blk = 256; //threads per block
+  uint n_p_blk; //number of particle blocks
+  uint n_p_thd; //number of particle threads
+
+  int i_f = 0; //frame index
+  float t = 0.0; //simulation time
+
+  float c_rn; //random number constant
+
+  float sig = 1.0; //LJ particle size
+
+  float4 *r_2; //positions 2
+  float4 *r_1; //positions 1
+
+  float4 *f_2; //forces 2
+  float4 *f_1; //forces 1
+
+  float4 *nrn; //normal random numbers
+
+  prng *state; //device PRNG states
 
   //Functions
 
