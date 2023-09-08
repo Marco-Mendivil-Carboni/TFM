@@ -13,14 +13,28 @@ namespace mmcc //Marco Mendívil Carboni code
 //Functions
 
 //set log file and open it
-void logger::set_file(const std::string &path) //log file path
+void logger::set_file(
+  const std::string &path, //log file path
+  char mode) //log file openmode
 {
   logger &sinlog = get_instance(); //singleton instance
   if (sinlog.file.is_open()){ sinlog.file.close();}
-  sinlog.file.open(path,std::ios::app);
-  sinlog.file.close();
+  if (path==""){ sinlog.w_f = false; return;}
+  switch (mode)
+  {
+    case 'a': //create file and if it exists do not overwrite it
+      sinlog.file.open(path,std::ios::app); sinlog.file.close();
+      break;
+    case 'w': //create file and if it exists overwrite it
+      sinlog.file.open(path); sinlog.file.close();
+      break; 
+    default: //return if openmode is unknown
+      std::cout<<"unknown log file openmode"<<std::endl;
+      return;
+  }
   sinlog.file.open(path,std::ios::in|std::ios::ate);
-  if (!sinlog.file.is_open()){ std::cout<<"unable to open "<<path<<std::endl;}
+  if (sinlog.file.is_open()){ sinlog.w_f = true;}
+  else{ sinlog.w_f = false; std::cout<<"unable to open "<<path<<std::endl;}
 }
 
 //log message with timestamp
@@ -31,7 +45,10 @@ void logger::record(const std::string &msg) //message
   tm *now_info = localtime(&now); //curent time information
   char timestamp[22]; //timestamp C-style string
   strftime(timestamp,22,"[%d/%m/%y %H:%M:%S] ",now_info);
-  sinlog.file<<timestamp<<msg<<std::endl;
+  if (sinlog.w_f)
+  {
+    sinlog.file<<timestamp<<msg<<std::endl;
+  }
   std::cout<<timestamp<<msg<<std::endl;
 }
 
@@ -39,8 +56,11 @@ void logger::record(const std::string &msg) //message
 void logger::show_prog_pc(float prog_pc) //progress percentage
 {
   logger &sinlog = get_instance(); //singleton instance
-  sinlog.file<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
-  sinlog.file.seekp(-16,std::ios::cur);
+  if (sinlog.w_f)
+  {
+    sinlog.file<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
+    sinlog.file.seekp(-16,std::ios::cur);
+  }
   std::cout<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
   std::cout<<"\r"; std::cout.flush();
 }

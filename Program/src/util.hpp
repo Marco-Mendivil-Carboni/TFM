@@ -21,7 +21,9 @@ class logger //basic logger
   //Functions
 
   //set log file and open it
-  static void set_file(const std::string &path); //log file path
+  static void set_file(
+    const std::string &path, //log file path
+    char mode = 'a'); //log file openmode
 
   //log message with timestamp
   static void record(const std::string &msg); //message
@@ -32,6 +34,8 @@ class logger //basic logger
   private:
 
   //Variables
+
+  bool w_f = false; //write output to file
 
   std::ofstream file; //log file
 
