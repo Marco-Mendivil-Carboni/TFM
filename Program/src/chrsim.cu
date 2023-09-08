@@ -24,13 +24,44 @@ static constexpr float dt  = 1.0/2048; //timestep
 
 static constexpr int f_s = 1*2048; //RK steps per frame
 
-//Structures
-
-// struct bonds {
-// 
-// };
-
 //Device Functions
+
+//calculate bond vectors and inverse lengths
+inline __device__ void calc_bonds(
+  int N, //number of particles
+  int i_p, //particle index
+  float4 *r, //positions
+  float3 *b_vec, //bond vectors
+  float *b_ilen) //bond inverse lengths
+{
+  for (int i_b = 0; i_b<4; ++i_b) //bond index
+  {
+    if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate values if bond exists
+    {
+      b_vec[i_b] = make_float3(r[i_p+i_b-1]-r[i_p+i_b-2]);
+      b_ilen[i_b] = rsqrtf(dot(b_vec[i_b],b_vec[i_b]));
+    }
+    else //set values to zero if bond doesn't exist
+    {
+      b_vec[i_b] = make_float3(0.0);
+      b_ilen[i_b] = 0.0;
+    }
+  }
+}
+
+//calculate bonded forces
+inline __device__ void calc_bonded_f(
+  int N, //number of particles
+  int i_p, //particle index
+  float4 *r, //positions
+  float4 *f) //forces
+{
+  float3 b_vec[4]; //bond vectors
+  float b_ilen[4]; //bond inverse lengths
+  calc_bonds(N,i_p,r,b_vec,b_ilen);
+  f[i_p] += make_float4(-k_e*(1.0-l_0*b_ilen[1])*(b_vec[1]));
+  f[i_p] += make_float4(+k_e*(1.0-l_0*b_ilen[2])*(b_vec[2]));
+}
 
 //Global Functions
 
@@ -76,6 +107,7 @@ __global__ void exec_RK_1(
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
+    calc_bonded_f(N,i_p,r_2,f_2);
     r_1[i_p] = r_2[i_p]+f_2[i_p]*dt/xi+nrn[i_p]/xi;
   }
 }
@@ -92,6 +124,7 @@ __global__ void exec_RK_2(
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
+    calc_bonded_f(N,i_p,r_1,f_1);
     r_2[i_p] = r_2[i_p]+0.5*(f_1[i_p]+f_2[i_p])*dt/xi+nrn[i_p]/xi;
   }
 }
@@ -277,8 +310,7 @@ void chrsim::run_simulation(std::ofstream &f_traj) //trajectory file
       make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
-    ++i_f;
-    t += f_s*dt;
+    ++i_f; t += f_s*dt;
     write_trajectory_frame(f_traj);
   }
 }
