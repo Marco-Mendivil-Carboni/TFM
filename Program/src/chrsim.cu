@@ -104,7 +104,6 @@ chrsim::chrsim(std::ifstream &f_par) //parameter file
   //initialize parameters and variables
   read_parameters(f_par);
   n_p_blk = (ap.N+thd_blk-1)/thd_blk;
-  n_p_thd = n_p_blk*thd_blk;
   c_rn = sqrt(2.0*xi*k_B*ap.T*dt);
 
   //allocate unified memory
@@ -158,7 +157,7 @@ void chrsim::generate_initial_condition()
   randdir = make_float3(sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta));
   olddir = randdir;
 
-  //set initial sigma value
+  //reduce sigma for random walk
   sig = 1.0/2;
 
   //perform random walk
@@ -210,13 +209,14 @@ void chrsim::generate_initial_condition()
     }
   }
 
-  //expand beads
+  //expand beads and reset sigma
   while (sig<1.0)
   {
     make_RK_iteration();
-    sig *= 1.0+1.0/8192;
+    sig *= 1.0+dt/4;
   }
   cuda_check(cudaDeviceSynchronize());
+  sig = 1.0;
 
   //free host PRNG
   curandDestroyGenerator(gen);
@@ -226,23 +226,23 @@ void chrsim::generate_initial_condition()
 }
 
 //write initial condition to file in gro format
-void chrsim::write_initial_condition(std::ofstream &f_i_c) //initial condition file
+void chrsim::write_initial_condition(std::ofstream &f_ic) //IC file
 {
-  f_i_c<<"Chromatin simulation, i_f = 0, t = 0.0\n";
-  f_i_c<<cnfs(ap.N,5,' ')<<"\n";
+  f_ic<<"Chromatin simulation, i_f = 0, t = 0.0\n";
+  f_ic<<cnfs(ap.N,5,' ')<<"\n";
   for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
   {
-    f_i_c<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
-    f_i_c<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
-    f_i_c<<cnfs(r_2[i_p].x,8,' ',3);
-    f_i_c<<cnfs(r_2[i_p].y,8,' ',3);
-    f_i_c<<cnfs(r_2[i_p].z,8,' ',3);
-    f_i_c<<"\n";
+    f_ic<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
+    f_ic<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
+    f_ic<<cnfs(r_2[i_p].x,8,' ',3);
+    f_ic<<cnfs(r_2[i_p].y,8,' ',3);
+    f_ic<<cnfs(r_2[i_p].z,8,' ',3);
+    f_ic<<"\n";
   }
-  f_i_c<<cnfs(0.0,10,' ',5);
-  f_i_c<<cnfs(0.0,10,' ',5);
-  f_i_c<<cnfs(0.0,10,' ',5);
-  f_i_c<<"\n";
+  f_ic<<cnfs(0.0,10,' ',5);
+  f_ic<<cnfs(0.0,10,' ',5);
+  f_ic<<cnfs(0.0,10,' ',5);
+  f_ic<<"\n";
 }
 
 //save simulation state to binary file
@@ -251,7 +251,7 @@ void chrsim::save_checkpoint(std::ofstream &f_chkp) //checkpoint file
   f_chkp.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.write(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
-  f_chkp.write(reinterpret_cast<char *>(state),n_p_thd*sizeof(prng));
+  f_chkp.write(reinterpret_cast<char *>(state),ap.N*sizeof(prng));
   logger::record("simulation checkpoint saved");
 }
 
@@ -261,7 +261,7 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp) //checkpoint file
   f_chkp.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
   f_chkp.read(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
-  f_chkp.read(reinterpret_cast<char *>(state),n_p_thd*sizeof(prng));
+  f_chkp.read(reinterpret_cast<char *>(state),ap.N*sizeof(prng));
   logger::record("simulation checkpoint loaded");
 }
 
@@ -297,7 +297,7 @@ void chrsim::read_parameters(std::ifstream &f_par) //parameter file
   msg += " R = "+cnfs(ap.R,6,'0',2);
   msg += " F = "+cnfs(ap.F,5,'0');
   logger::record(msg);
-  float cvf = ap.N*pow(0.5/(ap.R-0.5),3); //chromatin volume fraction
+  float cvf = ap.N*pow(0.5*sig/(ap.R-0.5*sig),3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
 }
 

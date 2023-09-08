@@ -25,7 +25,7 @@ int main(
   int t_f_idx; //trajectory file index
 
   //open log file inside simulation directory
-  f_path = sim_dir+"/all.log";
+  f_path = sim_dir+"/all-messages.log";
   mmcc::logger::set_file(f_path);
 
   //main try block

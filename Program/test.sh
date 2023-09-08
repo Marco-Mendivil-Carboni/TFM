@@ -51,7 +51,7 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir
-[[ -f "${testdir}/all.log" && \
+[[ -f "${testdir}/all-messages.log" && \
 -f "${testdir}/initial-condition-000.gro" && \
 -f "${testdir}/trajectory-000-000.trr" && \
 -f "${testdir}/checkpoint-000.bin" ]]

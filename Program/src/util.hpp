@@ -5,9 +5,7 @@
 
 #include <iostream> //standard input/output stream objects
 #include <fstream> //file stream classes
-#include <stdexcept> //standard exceptions classes
-#include <sstream> //string stream classes
-#include <iomanip> //parametric manipulators
+#include <iomanip> //input/output parametric manipulators
 
 //Namespace
 
