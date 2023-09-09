@@ -23,7 +23,7 @@ class logger //basic logger
   //set log file and open it
   static void set_file(
     const std::string &path, //log file path
-    char mode = 'a'); //log file openmode
+    bool ovr = false); //overwrite log file
 
   //log message with timestamp
   static void record(const std::string &msg); //message

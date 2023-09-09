@@ -15,23 +15,13 @@ namespace mmcc //Marco Mendívil Carboni code
 //set log file and open it
 void logger::set_file(
   const std::string &path, //log file path
-  char mode) //log file openmode
+  bool ovr) //overwrite log file
 {
   logger &sinlog = get_instance(); //singleton instance
   if (sinlog.file.is_open()){ sinlog.file.close();}
   if (path==""){ sinlog.w_f = false; return;}
-  switch (mode)
-  {
-    case 'a': //create file and if it exists do not overwrite it
-      sinlog.file.open(path,std::ios::app); sinlog.file.close();
-      break;
-    case 'w': //create file and if it exists overwrite it
-      sinlog.file.open(path); sinlog.file.close();
-      break; 
-    default: //return if openmode is unknown
-      std::cout<<"unknown log file openmode"<<std::endl;
-      return;
-  }
+  if (ovr){ sinlog.file.open(path); sinlog.file.close();}
+  else{ sinlog.file.open(path,std::ios::app); sinlog.file.close();}
   sinlog.file.open(path,std::ios::in|std::ios::ate);
   if (sinlog.file.is_open()){ sinlog.w_f = true;}
   else{ sinlog.w_f = false; std::cout<<"unable to open "<<path<<std::endl;}
