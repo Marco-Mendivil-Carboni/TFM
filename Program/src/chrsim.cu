@@ -26,29 +26,6 @@ static constexpr int f_s = 1*2048; //RK steps per frame
 
 //Device Functions
 
-//calculate bond vectors and inverse lengths
-inline __device__ void calc_bonds(
-  int N, //number of particles
-  int i_p, //particle index
-  float4 *r, //positions
-  float3 *b_vec, //bond vectors
-  float *b_ilen) //bond inverse lengths
-{
-  for (int i_b = 0; i_b<4; ++i_b) //bond index
-  {
-    if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate values if bond exists
-    {
-      b_vec[i_b] = make_float3(r[i_p+i_b-1]-r[i_p+i_b-2]);
-      b_ilen[i_b] = rsqrtf(dot(b_vec[i_b],b_vec[i_b]));
-    }
-    else //set values to zero if bond doesn't exist
-    {
-      b_vec[i_b] = make_float3(0.0);
-      b_ilen[i_b] = 0.0;
-    }
-  }
-}
-
 //calculate bonded forces
 inline __device__ void calc_bonded_f(
   int N, //number of particles
@@ -56,11 +33,42 @@ inline __device__ void calc_bonded_f(
   float4 *r, //positions
   float4 *f) //forces
 {
+  //declare auxiliary variables
   float3 b_vec[4]; //bond vectors
-  float b_ilen[4]; //bond inverse lengths
-  calc_bonds(N,i_p,r,b_vec,b_ilen);
-  f[i_p] += make_float4(-k_e*(1.0-l_0*b_ilen[1])*(b_vec[1]));
-  f[i_p] += make_float4(+k_e*(1.0-l_0*b_ilen[2])*(b_vec[2]));
+  float b_i_l[4]; //bond inverse lengths
+  float b_cos[3]; //bond angle cosines
+  float3 f_b = make_float3(0.0); //bonded forces
+
+  //calculate bond vectors, inverse lengths and angle cosines
+  for (int i_b = 0; i_b<4; ++i_b) //bond index
+  {
+    if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate values if bond exists
+    {
+      b_vec[i_b] = make_float3(r[i_p+i_b-1]-r[i_p+i_b-2]);
+      b_i_l[i_b] = rsqrtf(dot(b_vec[i_b],b_vec[i_b]));
+    }
+    else //set values to zero if bond doesn't exist
+    {
+      b_vec[i_b] = make_float3(0.0);
+      b_i_l[i_b] = 0.0;
+    }
+  }
+  for (int i_c = 0; i_c<3; ++i_c) //cosine index
+  {
+    b_cos[i_c] = dot(b_vec[i_c+1],b_vec[i_c])*b_i_l[i_c+1]*b_i_l[i_c];
+  }
+
+  //calculate elastic potential force
+  f_b += k_e*(+(1.0-l_0*b_i_l[2])*b_vec[2]-(1.0-l_0*b_i_l[1])*b_vec[1]);
+
+  //calculate bending potential force
+  f_b += k_b*(+b_i_l[1]*b_i_l[0]*b_vec[0]-b_cos[0]*b_vec[1]*b_i_l[1]*b_i_l[1]);
+  f_b += k_b*(+b_i_l[1]*b_i_l[2]*b_vec[2]-b_cos[1]*b_vec[1]*b_i_l[1]*b_i_l[1]);
+  f_b += k_b*(-b_i_l[2]*b_i_l[1]*b_vec[1]+b_cos[1]*b_vec[2]*b_i_l[2]*b_i_l[2]);
+  f_b += k_b*(-b_i_l[2]*b_i_l[3]*b_vec[3]+b_cos[2]*b_vec[2]*b_i_l[2]*b_i_l[2]);
+
+  //add result to forces
+  f[i_p] += make_float4(f_b);
 }
 
 //Global Functions
