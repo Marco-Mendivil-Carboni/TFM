@@ -19,35 +19,35 @@ mkdir $testdir
 
 echo "---"
 
-./Program/bin/simulate | grep "no arguments\|$"
+./Program/bin/simulate | grep "no arguments"
 check $?
 
-./Program/bin/simulate 1 2 3 | grep "extra arguments\|$"
+./Program/bin/simulate 1 2 3 | grep "extra arguments"
 check $?
 
-./Program/bin/simulate wrong-dir | grep "unable to open wrong-dir\|$"
+./Program/bin/simulate wrong-dir | grep "unable to open wrong-dir"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "N   512"; echo "T   298.0"; echo "R   10.00"; echo "F   100";
+{ echo "number_of_particles -10"; echo "confinement_radius 10.00";
 } >> "${testdir}/adjustable-parameters.dat"
-./Program/bin/simulate $testdir | grep "error reading T\|$"
+./Program/bin/simulate $testdir | grep "number_of_particles out of range"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "T   298.0"; echo "N   000"; echo "R   10.00"; echo "F   100";
+{ echo "number_of_particles 512";
 } >> "${testdir}/adjustable-parameters.dat"
-./Program/bin/simulate $testdir | grep "error reading N\|$"
+./Program/bin/simulate $testdir | grep "confinement_radius out of range"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "T   298.0"; echo "N   512"; echo "R   01.00"; echo "F   100";
+{ echo "number_of_particles 512"; echo "confinement_radius 1.00";
 } >> "${testdir}/adjustable-parameters.dat"
-./Program/bin/simulate $testdir | grep "chromatin volume fraction above 0.5\|$"
+./Program/bin/simulate $testdir | grep "chromatin volume fraction above 0.5"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "T   298.0"; echo "N   512"; echo "R   10.00"; echo "F   100";
+{ echo "number_of_particles 512"; echo "confinement_radius 10.00";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir

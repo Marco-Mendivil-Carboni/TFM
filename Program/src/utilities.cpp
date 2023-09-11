@@ -75,6 +75,14 @@ logger &logger::get_instance()
 error::error(const std::string &msg) //error message
   : std::runtime_error(msg) {}
 
+//parmap constructor
+parmap::parmap(std::ifstream &f_par) //parameter file
+{
+  std::string key; //parameter key
+  std::string val; //parameter value
+  while (f_par>>key>>val){ insert({key,val});}
+}
+
 //count files matching pattern
 int glob_count(const std::string &pattern) //file path pattern
 {

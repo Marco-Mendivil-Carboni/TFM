@@ -137,30 +137,76 @@ __global__ void exec_RK_2(
 
 //Host Functions
 
-//chrsim constructor
-chrsim::chrsim(std::ifstream &f_par) //parameter file
+//chrdat constructor
+chrdat::chrdat(parmap &par) //parameters
+  : N {par.get_val<int>("number_of_particles",0)}
+  , R {par.get_val<float>("confinement_radius",-1.0)}
+  , T {par.get_val<float>("temperature",298.0)}
+  , t {0.0} , sig {1.0}
 {
-  //initialize parameters and variables
-  read_parameters(f_par);
-  n_p_blk = (ap.N+thd_blk-1)/thd_blk;
-  sd = sqrt(2.0*xi*k_B*ap.T*dt);
+  //check parameters
+  if (N<1){ throw error("number_of_particles out of range");}
+  if (R<0.0){ throw error("confinement_radius out of range");}
+  if (T<0.0){ throw error("temperature out of range");}
+  float cvf = N*pow(0.5*sig/(R-0.5*sig),3); //chromatin volume fraction
+  if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
+  std::string msg = "chrdat parameters:"; //message
+  msg += " N = "+cnfs(N,5,'0');
+  msg += " R = "+cnfs(R,6,'0',2);
+  msg += " T = "+cnfs(T,6,'0',2);
+  logger::record(msg);
+
+  //allocate host memory
+  pt = new int[N];
+  r = new float4[N];
+  f = new float4[N];
+}
+
+//chrdat destructor
+chrdat::~chrdat()
+{
+  delete[] pt;
+  delete[] r;
+  delete[] f;
+}
+
+//chrsim constructor
+chrsim::chrsim(parmap &par) //parameters
+  : chrdat(par)
+  , f_f {par.get_val<int>("frames_per_file",100)}
+  , s_f {par.get_val<int>("steps_per_frame",1*2048)}
+  , thd_blk {par.get_val<int>("threads_per_block",256)}
+  , n_p_blk {(N+thd_blk-1)/thd_blk}
+  , sd {sqrtf(2.0*xi*k_B*T*dt)}
+{
+  //check parameters
+  if (f_f<1){ throw error("frames_per_file out of range");}
+  if (s_f<1){ throw error("steps_per_frame out of range");}
+  if (thd_blk<1){ throw error("threads_per_block out of range");}
+  std::string msg = "chrsim parameters:"; //message
+  msg += " f_f = "+cnfs(f_f,5,'0');
+  msg += " s_f = "+cnfs(s_f,5,'0');
+  msg += " thd_blk = "+cnfs(thd_blk,5,'0');
+  logger::record(msg);
 
   //allocate unified memory
-  cuda_check(cudaMallocManaged(&r_2,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&r_1,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&f_2,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&f_1,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&n_r,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&state,ap.N*sizeof(prng)));
+  cuda_check(cudaMallocManaged(&dpt,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&r_2,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&r_1,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&f_2,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&f_1,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&n_r,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&state,N*sizeof(prng)));
 
   //initialize PRNG
-  init_PRNG<<<n_p_blk,thd_blk>>>(ap.N,state,time(nullptr));
+  init_PRNG<<<n_p_blk,thd_blk>>>(N,state,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
 //chrsim destructor
 chrsim::~chrsim()
 {
+  cudaFree(dpt);
   cudaFree(r_2);
   cudaFree(r_1);
   cudaFree(f_2);
@@ -178,7 +224,7 @@ void chrsim::generate_initial_condition()
   curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
 
   //declare auxiliary variables
-  float beta = 1.0/(k_B*ap.T); //inverse temperature
+  float beta = 1.0/(k_B*T); //inverse temperature
   float rand; //random number in (0,1]
   float theta; //polar angle
   float phi; //azimuthal angle
@@ -201,7 +247,7 @@ void chrsim::generate_initial_condition()
 
   //perform random walk
   int att = 0; //number of attempts
-  for (int i_p = 1; i_p<ap.N; ++i_p) //particle index
+  for (int i_p = 1; i_p<N; ++i_p) //particle index
   {
     //generate random direction perpendicular to old direction
     curandGenerateUniform(gen,&rand,1); theta = acos(1.0-2.0*rand);
@@ -233,7 +279,7 @@ void chrsim::generate_initial_condition()
     }
     float d_r; //radial distance to origin
     d_r = length(make_float3(r_2[i_p]));
-    if ((ap.R-d_r)<(r_c*sig)){ p_a = false;}
+    if ((R-d_r)<(r_c*sig)){ p_a = false;}
 
     if (p_a) //continue
     {
@@ -268,8 +314,8 @@ void chrsim::generate_initial_condition()
 void chrsim::write_initial_condition(std::ofstream &f_ic) //IC file
 {
   f_ic<<"Chromatin simulation, i_f = 0, t = 0.0\n";
-  f_ic<<cnfs(ap.N,5,' ')<<"\n";
-  for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
+  f_ic<<cnfs(N,5,' ')<<"\n";
+  for (int i_p = 0; i_p<N; ++i_p) //particle index
   {
     f_ic<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
     f_ic<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
@@ -289,8 +335,8 @@ void chrsim::save_checkpoint(std::ofstream &f_chkp) //checkpoint file
 {
   f_chkp.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.write(reinterpret_cast<char *>(&t),sizeof(t));
-  f_chkp.write(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
-  f_chkp.write(reinterpret_cast<char *>(state),ap.N*sizeof(prng));
+  f_chkp.write(reinterpret_cast<char *>(r_2),N*sizeof(float4));
+  f_chkp.write(reinterpret_cast<char *>(state),N*sizeof(prng));
   logger::record("simulation checkpoint saved");
 }
 
@@ -299,52 +345,34 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp) //checkpoint file
 {
   f_chkp.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   f_chkp.read(reinterpret_cast<char *>(&t),sizeof(t));
-  f_chkp.read(reinterpret_cast<char *>(r_2),ap.N*sizeof(float4));
-  f_chkp.read(reinterpret_cast<char *>(state),ap.N*sizeof(prng));
+  f_chkp.read(reinterpret_cast<char *>(r_2),N*sizeof(float4));
+  f_chkp.read(reinterpret_cast<char *>(state),N*sizeof(prng));
   logger::record("simulation checkpoint loaded");
 }
 
 //run simulation and write trajectory file
 void chrsim::run_simulation(std::ofstream &f_traj) //trajectory file
 {
-  for (int f = 0; f<ap.f_f; ++f) //frame
+  for (int f = 0; f<f_f; ++f) //frame
   {
-    float prog_pc = (100.0*f)/(ap.f_f); //progress percentage
+    float prog_pc = (100.0*f)/(f_f); //progress percentage
     logger::show_prog_pc(prog_pc);
-    for (int s = 0; s<ap.f_s; ++s) //step
+    for (int s = 0; s<s_f; ++s) //step
     {
       make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
-    ++i_f; t += ap.f_s*dt;
+    ++i_f; t += s_f*dt;
     write_trajectory_frame(f_traj);
   }
-}
-
-//read adjustable parameters from file
-void chrsim::read_parameters(std::ifstream &f_par) //parameter file
-{
-  std::string key; //parameter string key
-  f_par>>key>>(ap.T); if (key!="T"||ap.T<0){ throw error("error reading T");}
-  f_par>>key>>(ap.N); if (key!="N"||ap.N<1){ throw error("error reading N");}
-  f_par>>key>>(ap.R); if (key!="R"||ap.R<0){ throw error("error reading R");}
-  f_par>>key>>(ap.f_f); if (key!="F"||ap.f_f<1){ throw error("error reading F");}
-  std::string msg = "parameters:"; //message
-  msg += " T = "+cnfs(ap.T,6,'0',2);
-  msg += " N = "+cnfs(ap.N,5,'0');
-  msg += " R = "+cnfs(ap.R,6,'0',2);
-  msg += " F = "+cnfs(ap.f_f,5,'0');
-  logger::record(msg);
-  float cvf = ap.N*pow(0.5*sig/(ap.R-0.5*sig),3); //chromatin volume fraction
-  if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
 }
 
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  begin_iter<<<n_p_blk,thd_blk>>>(ap.N,sd,f_2,f_1,n_r,state);
-  exec_RK_1<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,n_r);
-  exec_RK_2<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,f_1,n_r);
+  begin_iter<<<n_p_blk,thd_blk>>>(N,sd,f_2,f_1,n_r,state);
+  exec_RK_1<<<n_p_blk,thd_blk>>>(N,r_2,r_1,f_2,n_r);
+  exec_RK_2<<<n_p_blk,thd_blk>>>(N,r_2,r_1,f_2,f_1,n_r);
 }
 
 //write trajectory frame to binary file in trr format
@@ -353,12 +381,12 @@ void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 
-  uint32_t header[18] = {1993, 1, 0, 
-    0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
-    *(reinterpret_cast<uint32_t *>(&t)), 0}; //frame header
+  int32_t header[18] = {1993, 1, 0, 
+    0, 0, 0, 0, 0, 0, 0, 3*N*4, 0, 0, N, i_f, 0, 
+    *(reinterpret_cast<int32_t *>(&t)), 0}; //frame header
   //for more information on the contents of the header see chemfiles
   f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
-  for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
+  for (int i_p = 0; i_p<N; ++i_p) //particle index
   {
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].x)),4);
     f_traj.write(reinterpret_cast<char *>(&(r_2[i_p].y)),4);

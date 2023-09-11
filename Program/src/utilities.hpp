@@ -6,6 +6,7 @@
 #include <iostream> //standard input/output stream objects
 #include <fstream> //file stream classes
 #include <iomanip> //input/output parametric manipulators
+#include <map> //map container classes
 
 //Namespace
 
@@ -59,6 +60,33 @@ class error : public std::runtime_error //generic exception type
 
   //error constructor
   error(const std::string &msg); //error message
+};
+
+class parmap : public std::map<std::string,std::string> //parameter map
+{
+  public:
+
+  //Functions
+
+  //parmap constructor
+  parmap(std::ifstream &f_par); //parameter file
+
+  //Templates
+
+  //get parameter value
+  template <typename T>
+  T get_val(
+    std::string key, //parameter key
+    T def_val) //default value
+  {
+    T val; //parameter value
+    if (find(key)==end()){ val = def_val;}
+    else
+    {
+      std::stringstream{at(key)}>>val;
+    }
+    return val;
+  }
 };
 
 //Functions

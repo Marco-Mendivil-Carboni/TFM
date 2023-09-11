@@ -22,7 +22,7 @@ if {$argc==2} {
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
     set param_fp [open $param_file "r"]
     set param_lines [split [read $param_fp] "\n"]
-    set R [expr 10.0*[scan [lindex $param_lines 2] "R\t%f"]]
+    set R [expr 10.0*[scan [lindex $param_lines 1] "confinement_radius %f"]]
     draw material Transparent
     draw sphere {0 0 0} radius $R resolution $res
 

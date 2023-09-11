@@ -35,8 +35,9 @@ int main(
     f_path = sim_dir+"/adjustable-parameters.dat";
     f_inp.open(f_path);
     mmc::check_file(f_inp,f_path);
-    mmc::chrsim sim(f_inp); //simulation
+    mmc::parmap par(f_inp); //parameters
     f_inp.close();
+    mmc::chrsim sim(par); //simulation
 
     if (new_sim) //begin new simulation
     {
@@ -46,7 +47,7 @@ int main(
       t_f_idx = 0;
 
       //generate and write initial condition
-      sim.generate_initial_condition();
+      sim.generate_initial_condition();//merge with write routine----------------
       f_path = sim_dir+"/initial-condition-";
       f_path += mmc::cnfs(sim_idx,3,'0')+".gro";
       f_out.open(f_path);

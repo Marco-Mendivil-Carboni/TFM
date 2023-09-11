@@ -3,6 +3,8 @@
 
 //Includes
 
+#include "utilities.hpp"
+
 #include <fstream> //file stream classes
 
 #include <curand_kernel.h> //cuRAND device functions
@@ -18,14 +20,43 @@ using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Classes
 
-class chrsim //chromatin simulation
+class chrdat //chromatin data
+{
+  public:
+
+  //Functions
+
+  //chrdat constructor
+  chrdat(parmap &par); //parameters
+
+  //chrdat destructor
+  ~chrdat();
+
+  protected:
+
+  //Parameters and Variables
+
+  const int N; //number of particles
+  const float R; //confinement radius
+  const float T; //temperature
+
+  float t; //time
+
+  int *pt; //particle type array
+  float4 *r; //position array
+  float4 *f; //force array
+
+  float sig; //particle LJ size
+};
+
+class chrsim : public chrdat //chromatin simulation
 {
   public:
 
   //Functions
 
   //chrsim constructor
-  chrsim(std::ifstream &f_par); //parameter file
+  chrsim(parmap &par); //parameters
 
   //chrsim destructor
   ~chrsim();
@@ -49,37 +80,28 @@ class chrsim //chromatin simulation
 
   //Parameters and Variables
 
-  struct //adjustable parameters
-  {
-    uint N; //number of particles
-    float T; //temperature
-    float R; //confinement radius
-    uint f_f; //frames per file
-    uint f_s = 1*2048; //steps per frame
-  } ap;
+  const int f_f; //frames per file
+  const int s_f; //steps per frame
 
-  uint thd_blk = 256; //threads per block
-  uint n_p_blk; //number of particle blocks
+  const int thd_blk; //threads per block
+  const int n_p_blk; //number of particle blocks
 
-  uint i_f = 0; //frame index
-  float t = 0.0; //simulation time
-  float sig = 1.0; //particle LJ size
+  int i_f = 0; //frame index//tmp------------------------------------------------
 
-  float4 *r_2; //position array 2
-  float4 *r_1; //position array 1
+  int *dpt; //device particle type array
 
-  float4 *f_2; //force array 2
-  float4 *f_1; //force array 1
+  float4 *r_2; //device position array 2
+  float4 *r_1; //device position array 1
+
+  float4 *f_2; //device force array 2
+  float4 *f_1; //device force array 1
 
   float sd; //random number standard deviation
-  float4 *n_r; //normal random numbers
+  float4 *n_r; //device random number array
 
   prng *state; //device PRNG state array
 
   //Functions
-
-  //read adjustable parameters from file
-  void read_parameters(std::ifstream &f_par); //parameter file
 
   //make one Runge-Kutta iteration
   void make_RK_iteration();
