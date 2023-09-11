@@ -9,7 +9,7 @@
 
 //Namespace
 
-namespace mmcc //Marco Mendívil Carboni code
+namespace mmc //Marco Mendívil Carboni
 {
 
 //Classes
@@ -55,10 +55,10 @@ class error : public std::runtime_error //generic exception type
 {
   public:
 
-    //Functions
+  //Functions
 
-    //error constructor
-    error(const std::string &msg); //error message
+  //error constructor
+  error(const std::string &msg); //error message
 };
 
 //Functions
@@ -95,6 +95,6 @@ void check_file
   }
 }
 
-} //namespace mmcc
+} //namespace mmc
 
 #endif //MMCC_UTIL_H

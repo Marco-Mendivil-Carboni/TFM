@@ -7,7 +7,7 @@
 
 //Namespace
 
-namespace mmcc //Marco Mendívil Carboni code
+namespace mmc //Marco Mendívil Carboni
 {
 
 //Functions
@@ -73,7 +73,7 @@ logger &logger::get_instance()
 
 //error constructor
 error::error(const std::string &msg) //error message
-  : std::runtime_error{msg} {}
+  : std::runtime_error(msg) {}
 
 //count files matching pattern
 int glob_count(const std::string &pattern) //file path pattern
@@ -93,4 +93,4 @@ int glob_count(const std::string &pattern) //file path pattern
   }
 }
 
-} //namespace mmcc
+} //namespace mmc

@@ -9,7 +9,7 @@
 
 //Namespace
 
-namespace mmcc //Marco Mendívil Carboni code
+namespace mmc //Marco Mendívil Carboni
 {
 
 //Aliases
@@ -51,30 +51,30 @@ class chrsim //chromatin simulation
 
   struct //adjustable parameters
   {
+    uint N; //number of particles
     float T; //temperature
-    int N; //number of particles
-    float R; //radius of sphere
-    int F; //frames per file
+    float R; //confinement radius
+    uint f_f; //frames per file
+    uint f_s = 1*2048; //steps per frame
   } ap;
 
   uint thd_blk = 256; //threads per block
   uint n_p_blk; //number of particle blocks
 
-  int i_f = 0; //frame index
-
+  uint i_f = 0; //frame index
   float t = 0.0; //simulation time
-  float c_rn; //random number constant
-  float sig = 1.0; //LJ particle size
+  float sig = 1.0; //particle LJ size
 
-  float4 *r_2; //positions 2
-  float4 *r_1; //positions 1
+  float4 *r_2; //position array 2
+  float4 *r_1; //position array 1
 
-  float4 *f_2; //forces 2
-  float4 *f_1; //forces 1
+  float4 *f_2; //force array 2
+  float4 *f_1; //force array 1
 
-  float4 *nrn; //normal random numbers
+  float sd; //random number standard deviation
+  float4 *n_r; //normal random numbers
 
-  prng *state; //device PRNG states
+  prng *state; //device PRNG state array
 
   //Functions
 
@@ -93,6 +93,6 @@ class chrsim //chromatin simulation
 //check for errors in cuda runtime API call
 void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 
-} //namespace mmcc
+} //namespace mmc
 
 #endif //MMCC_CHRSIM_H

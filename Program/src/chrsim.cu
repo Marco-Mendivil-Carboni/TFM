@@ -9,7 +9,7 @@
 
 //Namespace
 
-namespace mmcc //Marco Mendívil Carboni code
+namespace mmc //Marco Mendívil Carboni
 {
 
 //Constants
@@ -21,8 +21,6 @@ static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
 static constexpr float r_c = 1.122462; //LJ cutoff radius
 static constexpr float dt  = 1.0/2048; //timestep
-
-static constexpr int f_s = 1*2048; //RK steps per frame
 
 //Device Functions
 
@@ -73,10 +71,10 @@ inline __device__ void calc_bonded_f(
 
 //Global Functions
 
-//initialize device PRNG states
+//initialize device PRNG state array
 __global__ void init_PRNG(
   int N, //number of particles
-  prng *state, //device PRNG states
+  prng *state, //device PRNG state array
   int seed) //PRNG seed
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -89,16 +87,16 @@ __global__ void init_PRNG(
 //begin Runge-Kutta iteration
 __global__ void begin_iter(
   int N, //number of particles
-  float c_rn, //random number constant
-  float4 *f_2, //forces 2
-  float4 *f_1, //forces 1
-  float4 *nrn, //normal random numbers
-  prng *state) //device PRNG states
+  float sd, //random number standard deviation
+  float4 *f_2, //force array 2
+  float4 *f_1, //force array 1
+  float4 *n_r, //random number array
+  prng *state) //device PRNG state array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
-    nrn[i_p] = c_rn*curand_normal4(&state[i_p]);
+    n_r[i_p] = sd*curand_normal4(&state[i_p]);
     f_2[i_p] = make_float4(0.0);
     f_1[i_p] = make_float4(0.0);
   }
@@ -107,33 +105,33 @@ __global__ void begin_iter(
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
   int N, //number of particles
-  float4 *r_2, //positions 2
-  float4 *r_1, //positions 1
-  float4 *f_2, //forces 2
-  float4 *nrn) //normal random numbers
+  float4 *r_2, //position array 2
+  float4 *r_1, //position array 1
+  float4 *f_2, //force array 2
+  float4 *n_r) //random number array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
     calc_bonded_f(N,i_p,r_2,f_2);
-    r_1[i_p] = r_2[i_p]+f_2[i_p]*dt/xi+nrn[i_p]/xi;
+    r_1[i_p] = r_2[i_p]+f_2[i_p]*dt/xi+n_r[i_p]/xi;
   }
 }
 
 //execute 2nd stage of the Runge-Kutta method
 __global__ void exec_RK_2(
   int N, //number of particles
-  float4 *r_2, //positions 2
-  float4 *r_1, //positions 1
-  float4 *f_2, //forces 2
-  float4 *f_1, //forces 1
-  float4 *nrn) //normal random numbers
+  float4 *r_2, //position array 2
+  float4 *r_1, //position array 1
+  float4 *f_2, //force array 2
+  float4 *f_1, //force array 1
+  float4 *n_r) //random number array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p<N)
   {
     calc_bonded_f(N,i_p,r_1,f_1);
-    r_2[i_p] = r_2[i_p]+0.5*(f_1[i_p]+f_2[i_p])*dt/xi+nrn[i_p]/xi;
+    r_2[i_p] = r_2[i_p]+0.5*(f_1[i_p]+f_2[i_p])*dt/xi+n_r[i_p]/xi;
   }
 }
 
@@ -145,14 +143,14 @@ chrsim::chrsim(std::ifstream &f_par) //parameter file
   //initialize parameters and variables
   read_parameters(f_par);
   n_p_blk = (ap.N+thd_blk-1)/thd_blk;
-  c_rn = sqrt(2.0*xi*k_B*ap.T*dt);
+  sd = sqrt(2.0*xi*k_B*ap.T*dt);
 
   //allocate unified memory
   cuda_check(cudaMallocManaged(&r_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&r_1,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_2,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f_1,ap.N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&nrn,ap.N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&n_r,ap.N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&state,ap.N*sizeof(prng)));
 
   //initialize PRNG
@@ -167,7 +165,7 @@ chrsim::~chrsim()
   cudaFree(r_1);
   cudaFree(f_2);
   cudaFree(f_1);
-  cudaFree(nrn);
+  cudaFree(n_r);
   cudaFree(state);
 }
 
@@ -309,16 +307,16 @@ void chrsim::load_checkpoint(std::ifstream &f_chkp) //checkpoint file
 //run simulation and write trajectory file
 void chrsim::run_simulation(std::ofstream &f_traj) //trajectory file
 {
-  for (int f = 0; f<ap.F; ++f) //frame
+  for (int f = 0; f<ap.f_f; ++f) //frame
   {
-    float prog_pc = (100.0*f)/(ap.F); //progress percentage
-    mmcc::logger::show_prog_pc(prog_pc);
-    for (int s = 0; s<f_s; ++s) //step
+    float prog_pc = (100.0*f)/(ap.f_f); //progress percentage
+    logger::show_prog_pc(prog_pc);
+    for (int s = 0; s<ap.f_s; ++s) //step
     {
       make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
-    ++i_f; t += f_s*dt;
+    ++i_f; t += ap.f_s*dt;
     write_trajectory_frame(f_traj);
   }
 }
@@ -330,12 +328,12 @@ void chrsim::read_parameters(std::ifstream &f_par) //parameter file
   f_par>>key>>(ap.T); if (key!="T"||ap.T<0){ throw error("error reading T");}
   f_par>>key>>(ap.N); if (key!="N"||ap.N<1){ throw error("error reading N");}
   f_par>>key>>(ap.R); if (key!="R"||ap.R<0){ throw error("error reading R");}
-  f_par>>key>>(ap.F); if (key!="F"||ap.F<1){ throw error("error reading F");}
+  f_par>>key>>(ap.f_f); if (key!="F"||ap.f_f<1){ throw error("error reading F");}
   std::string msg = "parameters:"; //message
   msg += " T = "+cnfs(ap.T,6,'0',2);
   msg += " N = "+cnfs(ap.N,5,'0');
   msg += " R = "+cnfs(ap.R,6,'0',2);
-  msg += " F = "+cnfs(ap.F,5,'0');
+  msg += " F = "+cnfs(ap.f_f,5,'0');
   logger::record(msg);
   float cvf = ap.N*pow(0.5*sig/(ap.R-0.5*sig),3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
@@ -344,9 +342,9 @@ void chrsim::read_parameters(std::ifstream &f_par) //parameter file
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  begin_iter<<<n_p_blk,thd_blk>>>(ap.N,c_rn,f_2,f_1,nrn,state);
-  exec_RK_1<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,nrn);
-  exec_RK_2<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,f_1,nrn);
+  begin_iter<<<n_p_blk,thd_blk>>>(ap.N,sd,f_2,f_1,n_r,state);
+  exec_RK_1<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,n_r);
+  exec_RK_2<<<n_p_blk,thd_blk>>>(ap.N,r_2,r_1,f_2,f_1,n_r);
 }
 
 //write trajectory frame to binary file in trr format
@@ -355,9 +353,9 @@ void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 
-  int32_t header[18] = {1993, 1, 0, 
+  uint32_t header[18] = {1993, 1, 0, 
     0, 0, 0, 0, 0, 0, 0, 3*ap.N*4, 0, 0, ap.N, i_f, 0, 
-    *(reinterpret_cast<int32_t *>(&t)), 0}; //frame header
+    *(reinterpret_cast<uint32_t *>(&t)), 0}; //frame header
   //for more information on the contents of the header see chemfiles
   f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
   for (int i_p = 0; i_p<ap.N; ++i_p) //particle index
@@ -379,4 +377,4 @@ void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
   }
 }
 
-} //namespace mmcc
+} //namespace mmc
