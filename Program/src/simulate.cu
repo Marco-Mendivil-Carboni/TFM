@@ -1,7 +1,8 @@
 //Includes
 
 #include "chromatin.cuh"
-#include "utilities.hpp"
+
+#include <iostream> //standard input/output stream objects
 
 //Functions
 
@@ -47,7 +48,7 @@ int main(
       t_f_idx = 0;
 
       //generate and write initial condition
-      sim.generate_initial_condition();//merge with write routine----------------
+      sim.generate_initial_condition();
       f_path = sim_dir+"/initial-condition-";
       f_path += mmc::cnfs(sim_idx,3,'0')+".gro";
       f_out.open(f_path);
@@ -95,10 +96,10 @@ int main(
     sim.save_checkpoint(f_out);
     f_out.close();
   }
-  catch (const mmc::error& error)
+  catch (const mmc::error &err) //caught error
   {
     //exit program unsuccessfully
-    mmc::logger::record(error.what());
+    mmc::logger::record(err.what());
     return EXIT_FAILURE;
   }
 

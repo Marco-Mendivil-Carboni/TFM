@@ -1,10 +1,8 @@
 //Includes
 
 #include "chromatin.cuh"
-#include "utilities.hpp"
 
 #include <time.h> //time utilities library
-
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
 
 //Namespace
@@ -298,7 +296,7 @@ void chrsim::generate_initial_condition()
   while (sig<1.0)
   {
     make_RK_iteration();
-    sig *= 1.0+dt/4;
+    sig += dt/(32*sig*sig);
   }
   cuda_check(cudaDeviceSynchronize());
   sig = 1.0;

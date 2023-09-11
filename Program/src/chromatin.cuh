@@ -5,8 +5,6 @@
 
 #include "utilities.hpp"
 
-#include <fstream> //file stream classes
-
 #include <curand_kernel.h> //cuRAND device functions
 
 //Namespace

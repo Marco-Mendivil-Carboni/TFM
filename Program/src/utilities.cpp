@@ -2,6 +2,8 @@
 
 #include "utilities.hpp"
 
+#include <iostream> //standard input/output stream objects
+
 #include <time.h> //time utilities library
 #include <glob.h> //pathname pattern matching types
 
