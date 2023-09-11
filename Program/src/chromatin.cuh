@@ -1,5 +1,5 @@
-#ifndef MMCC_CHRSIM_H
-#define MMCC_CHRSIM_H
+#ifndef MMC_CHROMATIN_H
+#define MMC_CHROMATIN_H
 
 //Includes
 
@@ -95,4 +95,4 @@ void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 
 } //namespace mmc
 
-#endif //MMCC_CHRSIM_H
+#endif //MMC_CHROMATIN_H

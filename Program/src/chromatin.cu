@@ -1,7 +1,7 @@
 //Includes
 
-#include "chrsim.cuh" //chromatin simulation
-#include "util.hpp" //utilities
+#include "chromatin.cuh"
+#include "utilities.hpp"
 
 #include <time.h> //time utilities library
 

@@ -1,6 +1,6 @@
 //Includes
 
-#include "util.hpp" //utilities
+#include "utilities.hpp"
 
 #include <time.h> //time utilities library
 #include <glob.h> //pathname pattern matching types

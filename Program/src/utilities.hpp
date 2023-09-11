@@ -1,5 +1,5 @@
-#ifndef MMCC_UTIL_H
-#define MMCC_UTIL_H
+#ifndef MMC_UTILITIES_H
+#define MMC_UTILITIES_H
 
 //Includes
 
@@ -97,4 +97,4 @@ void check_file
 
 } //namespace mmc
 
-#endif //MMCC_UTIL_H
+#endif //MMC_UTILITIES_H
