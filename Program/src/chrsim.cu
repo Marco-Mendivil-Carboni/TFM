@@ -1,6 +1,6 @@
 //Includes
 
-#include "chromatin.cuh"
+#include "chrsim.cuh"
 
 #include <time.h> //time utilities library
 #include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
@@ -12,12 +12,7 @@ namespace mmc //Marco Mendívil Carboni
 
 //Constants
 
-static constexpr float xi  = 1.000000; //damping coefficient
 static constexpr float k_B = 0.001120; //Boltzmann constant
-static constexpr float l_0 = 1.000000; //bond natural length
-static constexpr float k_e = 100.0000; //elastic constant
-static constexpr float k_b = 2.000000; //bending constant
-static constexpr float r_c = 1.122462; //LJ cutoff radius
 static constexpr float dt  = 1.0/2048; //timestep
 
 //Device Functions
@@ -134,39 +129,6 @@ __global__ void exec_RK_2(
 }
 
 //Host Functions
-
-//chrdat constructor
-chrdat::chrdat(parmap &par) //parameters
-  : N {par.get_val<int>("number_of_particles",0)}
-  , R {par.get_val<float>("confinement_radius",-1.0)}
-  , T {par.get_val<float>("temperature",298.0)}
-  , t {0.0} , sig {1.0}
-{
-  //check parameters
-  if (N<1){ throw error("number_of_particles out of range");}
-  if (R<0.0){ throw error("confinement_radius out of range");}
-  if (T<0.0){ throw error("temperature out of range");}
-  float cvf = N*pow(0.5*sig/(R-0.5*sig),3); //chromatin volume fraction
-  if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
-  std::string msg = "chrdat parameters:"; //message
-  msg += " N = "+cnfs(N,5,'0');
-  msg += " R = "+cnfs(R,6,'0',2);
-  msg += " T = "+cnfs(T,6,'0',2);
-  logger::record(msg);
-
-  //allocate host memory
-  pt = new int[N];
-  r = new float4[N];
-  f = new float4[N];
-}
-
-//chrdat destructor
-chrdat::~chrdat()
-{
-  delete[] pt;
-  delete[] r;
-  delete[] f;
-}
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters

@@ -1,6 +1,6 @@
 //Includes
 
-#include "chromatin.cuh"
+#include "chrsim.cuh"
 
 #include <iostream> //standard input/output stream objects
 

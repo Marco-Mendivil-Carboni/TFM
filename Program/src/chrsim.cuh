@@ -1,9 +1,9 @@
-#ifndef MMC_CHROMATIN_H
-#define MMC_CHROMATIN_H
+#ifndef MMC_CHRSIM_H
+#define MMC_CHRSIM_H
 
 //Includes
 
-#include "utilities.hpp"
+#include "chrdat.cuh"
 
 #include <curand_kernel.h> //cuRAND device functions
 
@@ -17,35 +17,6 @@ namespace mmc //Marco Mendívil Carboni
 using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Classes
-
-class chrdat //chromatin data
-{
-  public:
-
-  //Functions
-
-  //chrdat constructor
-  chrdat(parmap &par); //parameters
-
-  //chrdat destructor
-  ~chrdat();
-
-  protected:
-
-  //Parameters and Variables
-
-  const int N; //number of particles
-  const float R; //confinement radius
-  const float T; //temperature
-
-  float t; //time
-
-  int *pt; //particle type array
-  float4 *r; //position array
-  float4 *f; //force array
-
-  float sig; //particle LJ size
-};
 
 class chrsim : public chrdat //chromatin simulation
 {
@@ -87,16 +58,13 @@ class chrsim : public chrdat //chromatin simulation
   int i_f = 0; //frame index//tmp------------------------------------------------
 
   int *dpt; //device particle type array
-
   float4 *r_2; //device position array 2
   float4 *r_1; //device position array 1
-
   float4 *f_2; //device force array 2
   float4 *f_1; //device force array 1
 
   float sd; //random number standard deviation
   float4 *n_r; //device random number array
-
   prng *state; //device PRNG state array
 
   //Functions
@@ -115,4 +83,4 @@ void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 
 } //namespace mmc
 
-#endif //MMC_CHROMATIN_H
+#endif //MMC_CHRSIM_H
