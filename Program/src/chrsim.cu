@@ -75,11 +75,12 @@ __global__ void init_PRNG(
   curand_init(ps,i_p,0,&dps[i_p]);
 }
 
-//begin Runge-Kutta iteration
-__global__ void begin_iter(
+//execute 1st stage of the Runge-Kutta method
+__global__ void exec_RK_1(
   const int N, //number of particles
+  float4 *dr2, //device position array 2
+  float4 *dr1, //device position array 1
   float4 *df2, //device force array 2
-  float4 *df1, //device force array 1
   float sd, //random number standard deviation
   float4 *drn, //device random number array
   prng *dps) //device PRNG state array
@@ -88,19 +89,6 @@ __global__ void begin_iter(
   if (i_p>=N){ return;}
   drn[i_p] = sd*curand_normal4(&dps[i_p]);
   df2[i_p] = make_float4(0.0);
-  df1[i_p] = make_float4(0.0);
-}
-
-//execute 1st stage of the Runge-Kutta method
-__global__ void exec_RK_1(
-  const int N, //number of particles
-  float4 *dr2, //device position array 2
-  float4 *dr1, //device position array 1
-  float4 *df2, //device force array 2
-  float4 *drn) //device random number array
-{
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p>=N){ return;}
   calc_bonded_f(N,i_p,dr2,df2);
   dr1[i_p] = dr2[i_p]+df2[i_p]*dt/xi+drn[i_p]/xi;
 }
@@ -116,6 +104,7 @@ __global__ void exec_RK_2(
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
+  df1[i_p] = make_float4(0.0);
   calc_bonded_f(N,i_p,dr1,df1);
   dr2[i_p] = dr2[i_p]+0.5*(df1[i_p]+df2[i_p])*dt/xi+drn[i_p]/xi;
 }
@@ -305,8 +294,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  begin_iter<<<n_p_blk,thd_blk>>>(N,df2,df1,sd,drn,dps);
-  exec_RK_1<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,drn);
+  exec_RK_1<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,sd,drn,dps);
   exec_RK_2<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,df1,drn);
 }
 
