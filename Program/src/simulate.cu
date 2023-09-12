@@ -53,7 +53,7 @@ int main(
       pathstr += mmc::cnfs(sim_idx,3,'0')+".gro";
       out_f.open(pathstr);
       mmc::check_file(out_f,pathstr);
-      sim.write_initial_condition(out_f);
+      sim.write_frame_txt(out_f);
       out_f.close();
     }
     else //continue previous simulation

@@ -33,9 +33,6 @@ class chrsim : public chrdat //chromatin simulation
   //generate a random initial condition
   void generate_initial_condition();
 
-  //write initial condition to file in gro format
-  void write_initial_condition(std::ofstream &f_ic); //IC file
-
   //save simulation state to binary file
   void save_checkpoint(std::ofstream &bin_out_f); //binary output file
 
@@ -69,9 +66,6 @@ class chrsim : public chrdat //chromatin simulation
 
   //make one Runge-Kutta iteration
   void make_RK_iteration();
-
-  //write trajectory frame to binary file in trr format
-  void write_trajectory_frame(std::ofstream &f_traj); //trajectory file
 };
 
 //Functions

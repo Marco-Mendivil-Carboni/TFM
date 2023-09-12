@@ -135,7 +135,7 @@ chrsim::chrsim(parmap &par) //parameters
   if (framepf<1){ throw error("frames_per_file out of range");}
   if (spframe<1){ throw error("steps_per_frame out of range");}
   if (thd_blk<1){ throw error("threads_per_block out of range");}
-  std::string msg = "parameters:"; //message
+  std::string msg = "chrsim:"; //message
   msg += " framepf = "+cnfs(framepf,5,'0');
   msg += " spframe = "+cnfs(spframe,5,'0');
   msg += " thd_blk = "+cnfs(thd_blk,5,'0');
@@ -258,28 +258,11 @@ void chrsim::generate_initial_condition()
   //free host PRNG
   curandDestroyGenerator(gen);
 
+  //copy position array to host
+  cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
+
   //record success message
   logger::record("initial condition generated");
-}
-
-//write initial condition to file in gro format
-void chrsim::write_initial_condition(std::ofstream &f_ic) //IC file
-{
-  f_ic<<"Chromatin simulation, i_f = 0, t = 0.0\n";
-  f_ic<<cnfs(N,5,' ')<<"\n";
-  for (int i_p = 0; i_p<N; ++i_p) //particle index
-  {
-    f_ic<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X"<<std::right;
-    f_ic<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
-    f_ic<<cnfs(dr2[i_p].x,8,' ',3);
-    f_ic<<cnfs(dr2[i_p].y,8,' ',3);
-    f_ic<<cnfs(dr2[i_p].z,8,' ',3);
-    f_ic<<"\n";
-  }
-  f_ic<<cnfs(0.0,10,' ',5);
-  f_ic<<cnfs(0.0,10,' ',5);
-  f_ic<<cnfs(0.0,10,' ',5);
-  f_ic<<"\n";
 }
 
 //save simulation state to binary file
@@ -313,9 +296,9 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     {
       make_RK_iteration();
     }
-    cuda_check(cudaDeviceSynchronize());
     ++i_f; t += spframe*dt;
-    write_trajectory_frame(bin_out_f);
+    cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
+    write_frame_bin(bin_out_f);
   }
 }
 
@@ -325,25 +308,6 @@ void chrsim::make_RK_iteration()
   begin_iter<<<n_p_blk,thd_blk>>>(N,df2,df1,sd,drn,dps);
   exec_RK_1<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,drn);
   exec_RK_2<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,df1,drn);
-}
-
-//write trajectory frame to binary file in trr format
-void chrsim::write_trajectory_frame(std::ofstream &f_traj) //trajectory file
-{
-  //this is a minimal trr file writing routine that doesn't rely on \ 
-  //the xdr library but only works with vmd in little endian systems
-
-  int32_t header[18] = {1993, 1, 0, 
-    0, 0, 0, 0, 0, 0, 0, 3*N*4, 0, 0, N, i_f, 0, 
-    *(reinterpret_cast<int32_t *>(&t)), 0}; //frame header
-  //for more information on the contents of the header see chemfiles
-  f_traj.write(reinterpret_cast<char *>(header),sizeof(header));
-  for (int i_p = 0; i_p<N; ++i_p) //particle index
-  {
-    f_traj.write(reinterpret_cast<char *>(&(dr2[i_p].x)),4);
-    f_traj.write(reinterpret_cast<char *>(&(dr2[i_p].y)),4);
-    f_traj.write(reinterpret_cast<char *>(&(dr2[i_p].z)),4);
-  }
 }
 
 //check for errors in cuda runtime API call
