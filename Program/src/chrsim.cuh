@@ -3,7 +3,7 @@
 
 //Includes
 
-#include "chrdat.cuh"
+#include "chrdat.cuh" //chromatin data
 
 #include <curand_kernel.h> //cuRAND device functions
 
@@ -55,17 +55,15 @@ class chrsim : public chrdat //chromatin simulation
   const int thd_blk; //threads per block
   const int n_p_blk; //number of particle blocks
 
-  int i_f = 0; //frame index//tmp------------------------------------------------
-
   int *dpt; //device particle type array
-  float4 *r_2; //device position array 2
-  float4 *r_1; //device position array 1
-  float4 *f_2; //device force array 2
-  float4 *f_1; //device force array 1
+  float4 *dr2; //device position array 2
+  float4 *dr1; //device position array 1
+  float4 *df2; //device force array 2
+  float4 *df1; //device force array 1
 
   float sd; //random number standard deviation
-  float4 *n_r; //device random number array
-  prng *state; //device PRNG state array
+  float4 *drn; //device random number array
+  prng *dps; //device PRNG state array
 
   //Functions
 

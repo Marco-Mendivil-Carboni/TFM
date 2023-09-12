@@ -3,7 +3,7 @@
 
 //Includes
 
-#include "utilities.hpp"
+#include "utilities.hpp" //general utilities
 
 //Namespace
 
@@ -41,7 +41,9 @@ class chrdat //chromatin data
   const float R; //confinement radius
   const float T; //temperature
 
+  int i_f; //frame index
   double t; //time
+
   int *pt; //particle type array
   float4 *r; //position array
   float4 *f; //force array
