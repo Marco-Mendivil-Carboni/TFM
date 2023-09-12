@@ -3,7 +3,114 @@
 #include "chrsim.cuh" //chromatin simulation
 
 #include <time.h> //time utilities library
-#include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
+
+//------------------------------------------------------------------------------tmp
+//float3
+inline __host__ __device__ float3 make_float3(float4 a)
+{
+    return make_float3(a.x, a.y, a.z);
+}
+inline __host__ __device__ float3 operator-(float3 &a)
+{
+    return make_float3(-a.x, -a.y, -a.z);
+}
+inline __host__ __device__ float3 operator+(float3 a, float3 b)
+{
+    return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+inline __host__ __device__ void operator+=(float3 &a, float3 b)
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+}
+inline __host__ __device__ float3 operator-(float3 a, float3 b)
+{
+    return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+inline __host__ __device__ void operator-=(float3 &a, float3 b)
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+}
+inline __host__ __device__ float3 operator*(float3 a, float b)
+{
+    return make_float3(a.x * b, a.y * b, a.z * b);
+}
+inline __host__ __device__ float3 operator*(float b, float3 a)
+{
+    return make_float3(b * a.x, b * a.y, b * a.z);
+}
+inline __host__ __device__ float3 operator/(float3 a, float b)
+{
+    return make_float3(a.x / b, a.y / b, a.z / b);
+}
+inline __host__ __device__ float dot(float3 a, float3 b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+inline __host__ __device__ float length(float3 v)
+{
+    return sqrtf(dot(v, v));
+}
+inline __host__ __device__ float3 normalize(float3 v)
+{
+    float invLen = rsqrtf(dot(v, v));
+    return v * invLen;
+}
+inline __host__ __device__ float3 cross(float3 a, float3 b)
+{
+    return make_float3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x);
+}
+//float4
+inline __host__ __device__ float4 make_float4(float3 a)
+{
+    return make_float4(a.x, a.y, a.z, 0.0f);
+}
+inline __host__ __device__ float4 operator-(float4 &a)
+{
+    return make_float4(-a.x, -a.y, -a.z, -a.w);
+}
+inline __host__ __device__ float4 operator+(float4 a, float4 b)
+{
+    return make_float4(a.x + b.x, a.y + b.y, a.z + b.z,  a.w + b.w);
+}
+inline __host__ __device__ void operator+=(float4 &a, float4 b)
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    a.w += b.w;
+}
+inline __host__ __device__ float4 operator-(float4 a, float4 b)
+{
+    return make_float4(a.x - b.x, a.y - b.y, a.z - b.z,  a.w - b.w);
+}
+inline __host__ __device__ void operator-=(float4 &a, float4 b)
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    a.w -= b.w;
+}
+inline __host__ __device__ float4 operator*(float4 a, float b)
+{
+    return make_float4(a.x * b, a.y * b, a.z * b,  a.w * b);
+}
+inline __host__ __device__ float4 operator*(float b, float4 a)
+{
+    return make_float4(b * a.x, b * a.y, b * a.z, b * a.w);
+}
+inline __host__ __device__ float4 operator/(float4 a, float b)
+{
+    return make_float4(a.x / b, a.y / b, a.z / b,  a.w / b);
+}
+inline __host__ __device__ float dot(float4 a, float4 b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+//------------------------------------------------------------------------------tmp
 
 //Namespace
 
@@ -13,6 +120,7 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float k_B = 0.001120; //Boltzmann constant
+
 static constexpr float dt  = 1.0/2048; //timestep
 
 //Device Functions
@@ -28,7 +136,7 @@ inline __device__ void calc_bonded_f(
   float3 vec[4]; //bond vectors
   float il[4]; //bond inverse lengths
   float cos[3]; //bond angle cosines
-  float3 f_b = make_float3(0.0); //bonded forces
+  float3 f_b = {0.0,0.0,0.0}; //bonded forces
 
   //calculate bond vectors, inverse lengths and angle cosines
   for (int i_b = 0; i_b<4; ++i_b) //bond index
@@ -40,7 +148,7 @@ inline __device__ void calc_bonded_f(
     }
     else //set variables to zero if bond doesn't exist
     {
-      vec[i_b] = make_float3(0.0);
+      vec[i_b] = {0.0,0.0,0.0};
       il[i_b] = 0.0;
     }
   }
@@ -58,7 +166,7 @@ inline __device__ void calc_bonded_f(
   f_b += k_b*(-il[2]*il[1]*vec[1]+cos[1]*vec[2]*il[2]*il[2]);
   f_b += k_b*(-il[2]*il[3]*vec[3]+cos[2]*vec[2]*il[2]*il[2]);
 
-  //add result to forces
+  //add result to force array
   f[i_p] += make_float4(f_b);
 }
 
@@ -88,7 +196,7 @@ __global__ void exec_RK_1(
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
   drn[i_p] = sd*curand_normal4(&dps[i_p]);
-  df2[i_p] = make_float4(0.0);
+  df2[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,dr2,df2);
   dr1[i_p] = dr2[i_p]+df2[i_p]*dt/xi+drn[i_p]/xi;
 }
@@ -104,7 +212,7 @@ __global__ void exec_RK_2(
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
-  df1[i_p] = make_float4(0.0);
+  df1[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,dr1,df1);
   dr2[i_p] = dr2[i_p]+0.5*(df1[i_p]+df2[i_p])*dt/xi+drn[i_p]/xi;
 }
@@ -177,10 +285,10 @@ void chrsim::generate_initial_condition()
   float3 per_dir; //perpendicular direction
 
   //place first particle
-  dr2[0] = make_float4(0.0);
+  dr2[0] = {0.0,0.0,0.0,0.0};
   curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
   curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
-  ran_dir = make_float3(sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta));
+  ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
   old_dir = ran_dir;
 
   //reduce sigma for random walk
@@ -193,7 +301,7 @@ void chrsim::generate_initial_condition()
     //generate random direction perpendicular to old direction
     curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
     curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
-    ran_dir = make_float3(sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta));
+    ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
     per_dir = cross(old_dir,ran_dir);
     per_dir = normalize(per_dir);
 

@@ -63,7 +63,7 @@ check $?
 -f "${testdir}/checkpoint-001.bin" ]]
 check $?
 
-./Program/bin/simulate $testdir 0
+nvprof ./Program/bin/simulate $testdir 0
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 

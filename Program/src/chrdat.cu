@@ -2,8 +2,6 @@
 
 #include "chrdat.cuh" //chromatin data
 
-#include </usr/local/cuda/samples/common/inc/helper_math.h> //float4 utilities
-
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni
