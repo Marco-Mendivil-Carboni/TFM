@@ -19,7 +19,7 @@ static constexpr float dt  = 1.0/2048; //timestep
 
 //calculate bonded forces
 inline __device__ void calc_bonded_f(
-  int N, //number of particles
+  const int N, //number of particles
   int i_p, //particle index
   float4 *r, //position array
   float4 *f) //force array
@@ -33,12 +33,12 @@ inline __device__ void calc_bonded_f(
   //calculate bond vectors, inverse lengths and angle cosines
   for (int i_b = 0; i_b<4; ++i_b) //bond index
   {
-    if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate values if bond exists
+    if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate variables if bond exists
     {
       b_vec[i_b] = make_float3(r[i_p+i_b-1]-r[i_p+i_b-2]);
       b_il[i_b] = rsqrtf(dot(b_vec[i_b],b_vec[i_b]));
     }
-    else //set values to zero if bond doesn't exist
+    else //set variables to zero if bond doesn't exist
     {
       b_vec[i_b] = make_float3(0.0);
       b_il[i_b] = 0.0;
@@ -64,22 +64,20 @@ inline __device__ void calc_bonded_f(
 
 //Global Functions
 
-//initialize device PRNG dps array
+//initialize device PRNG state array
 __global__ void init_PRNG(
-  int N, //number of particles
-  prng *dps, //device PRNG dps array
+  const int N, //number of particles
+  prng *dps, //device PRNG state array
   int seed) //PRNG seed
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p<N)
-  {
-    curand_init(seed,i_p,0,&dps[i_p]);
-  }
+  if (i_p>=N){ return;}
+  curand_init(seed,i_p,0,&dps[i_p]);
 }
 
 //begin Runge-Kutta iteration
 __global__ void begin_iter(
-  int N, //number of particles
+  const int N, //number of particles
   float4 *df2, //device force array 2
   float4 *df1, //device force array 1
   float sd, //random number standard deviation
@@ -87,33 +85,29 @@ __global__ void begin_iter(
   prng *dps) //device PRNG state array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p<N)
-  {
-    drn[i_p] = sd*curand_normal4(&dps[i_p]);
-    df2[i_p] = make_float4(0.0);
-    df1[i_p] = make_float4(0.0);
-  }
+  if (i_p>=N){ return;}
+  drn[i_p] = sd*curand_normal4(&dps[i_p]);
+  df2[i_p] = make_float4(0.0);
+  df1[i_p] = make_float4(0.0);
 }
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
-  int N, //number of particles
+  const int N, //number of particles
   float4 *dr2, //device position array 2
   float4 *dr1, //device position array 1
   float4 *df2, //device force array 2
   float4 *drn) //device random number array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p<N)
-  {
-    calc_bonded_f(N,i_p,dr2,df2);
-    dr1[i_p] = dr2[i_p]+df2[i_p]*dt/xi+drn[i_p]/xi;
-  }
+  if (i_p>=N){ return;}
+  calc_bonded_f(N,i_p,dr2,df2);
+  dr1[i_p] = dr2[i_p]+df2[i_p]*dt/xi+drn[i_p]/xi;
 }
 
 //execute 2nd stage of the Runge-Kutta method
 __global__ void exec_RK_2(
-  int N, //number of particles
+  const int N, //number of particles
   float4 *dr2, //device position array 2
   float4 *dr1, //device position array 1
   float4 *df2, //device force array 2
@@ -121,11 +115,9 @@ __global__ void exec_RK_2(
   float4 *drn) //device random number array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p<N)
-  {
-    calc_bonded_f(N,i_p,dr1,df1);
-    dr2[i_p] = dr2[i_p]+0.5*(df1[i_p]+df2[i_p])*dt/xi+drn[i_p]/xi;
-  }
+  if (i_p>=N){ return;}
+  calc_bonded_f(N,i_p,dr1,df1);
+  dr2[i_p] = dr2[i_p]+0.5*(df1[i_p]+df2[i_p])*dt/xi+drn[i_p]/xi;
 }
 
 //Host Functions
