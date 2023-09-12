@@ -16,42 +16,42 @@ namespace mmc //Marco Mendívil Carboni
 
 //set log file and open it
 void logger::set_file(
-  const std::string &path, //log file path
-  bool ovr) //overwrite log file
+  const std::string &pathstr, //file path string
+  bool ovr) //overwrite file
 {
-  logger &sinlog = get_instance(); //singleton instance
-  if (sinlog.file.is_open()){ sinlog.file.close();}
-  if (path==""){ sinlog.w_f = false; return;}
-  if (ovr){ sinlog.file.open(path); sinlog.file.close();}
-  else{ sinlog.file.open(path,std::ios::app); sinlog.file.close();}
-  sinlog.file.open(path,std::ios::in|std::ios::ate);
-  if (sinlog.file.is_open()){ sinlog.w_f = true;}
-  else{ sinlog.w_f = false; std::cout<<"unable to open "<<path<<std::endl;}
+  logger &sin = get_instance(); //singleton instance
+  if (sin.log_f.is_open()){ sin.log_f.close();}
+  if (pathstr==""){ sin.w_f = false; return;}
+  if (ovr){ sin.log_f.open(pathstr); sin.log_f.close();}
+  else{ sin.log_f.open(pathstr,std::ios::app); sin.log_f.close();}
+  sin.log_f.open(pathstr,std::ios::in|std::ios::ate);
+  if (sin.log_f.is_open()){ sin.w_f = true;}
+  else{ sin.w_f = false; std::cout<<"unable to open "<<pathstr<<std::endl;}
 }
 
 //log message with timestamp
 void logger::record(const std::string &msg) //message
 {
-  logger &sinlog = get_instance(); //singleton instance
+  logger &sin = get_instance(); //singleton instance
   time_t now = time(nullptr); //current time
   tm *now_info = localtime(&now); //curent time information
-  char timestamp[22]; //timestamp C-style string
-  strftime(timestamp,22,"[%d/%m/%y %H:%M:%S] ",now_info);
-  if (sinlog.w_f)
+  char timestr[22]; //timestamp C-style string
+  strftime(timestr,22,"[%d/%m/%y %H:%M:%S] ",now_info);
+  if (sin.w_f)
   {
-    sinlog.file<<timestamp<<msg<<std::endl;
+    sin.log_f<<timestr<<msg<<std::endl;
   }
-  std::cout<<timestamp<<msg<<std::endl;
+  std::cout<<timestr<<msg<<std::endl;
 }
 
 //show progress percentage
 void logger::show_prog_pc(float prog_pc) //progress percentage
 {
-  logger &sinlog = get_instance(); //singleton instance
-  if (sinlog.w_f)
+  logger &sin = get_instance(); //singleton instance
+  if (sin.w_f)
   {
-    sinlog.file<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
-    sinlog.file.seekp(-16,std::ios::cur);
+    sin.log_f<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
+    sin.log_f.seekp(-16,std::ios::cur);
   }
   std::cout<<"progress: "<<cnfs(prog_pc,5,'0',1)<<"%";
   std::cout<<"\r"; std::cout.flush();
@@ -63,14 +63,14 @@ logger::logger() {}
 //logger destructor
 logger::~logger()
 {
-  file.close();
+  log_f.close();
 }
 
 //return singleton instance
 logger &logger::get_instance()
 {
-  static logger sinlog; //singleton logger
-  return sinlog;
+  static logger sin; //singleton instance
+  return sin;
 }
 
 //error constructor
@@ -78,28 +78,28 @@ error::error(const std::string &msg) //error message
   : std::runtime_error(msg) {}
 
 //parmap constructor
-parmap::parmap(std::ifstream &f_par) //parameter file
+parmap::parmap(std::ifstream &par_f) //parameter file
 {
   std::string key; //parameter key
   std::string val; //parameter value
-  while (f_par>>key>>val){ insert({key,val});}
+  while (par_f>>key>>val){ insert({key,val});}
 }
 
 //count files matching pattern
-int glob_count(const std::string &pattern) //file path pattern
+int glob_count(const std::string &pathpat) //file path pattern
 {
-  glob_t glob_res; //glob result
-  int rtn_val = glob(pattern.c_str(),0,nullptr,&glob_res); //return value
+  glob_t glob_sr; //glob search result
+  int rtn_val = glob(pathpat.c_str(),0,nullptr,&glob_sr); //return value
   if (rtn_val!=0)
   {
-    globfree(&glob_res);
+    globfree(&glob_sr);
     if (rtn_val==GLOB_NOMATCH){ return 0;}
-    else{ throw error("unable to find matches of "+pattern);}
+    else{ throw error("unable to find matches of "+pathpat);}
   }
   else
   {
-    globfree(&glob_res);
-    return glob_res.gl_pathc;
+    globfree(&glob_sr);
+    return glob_sr.gl_pathc;
   }
 }
 

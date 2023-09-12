@@ -37,20 +37,20 @@ class chrsim : public chrdat //chromatin simulation
   void write_initial_condition(std::ofstream &f_ic); //IC file
 
   //save simulation state to binary file
-  void save_checkpoint(std::ofstream &f_chkp); //checkpoint file
+  void save_checkpoint(std::ofstream &bin_out_f); //binary output file
 
   //load simulation state from binary file
-  void load_checkpoint(std::ifstream &f_chkp); //checkpoint file
+  void load_checkpoint(std::ifstream &bin_inp_f); //binary input file
 
-  //run simulation and write trajectory file
-  void run_simulation(std::ofstream &f_traj); //trajectory file
+  //run simulation and write trajectory to binary file
+  void run_simulation(std::ofstream &bin_out_f); //binary output file
 
   private:
 
   //Parameters and Variables
 
-  const int f_f; //frames per file
-  const int s_f; //steps per frame
+  const int framepf; //frames per file
+  const int spframe; //steps per frame
 
   const int thd_blk; //threads per block
   const int n_p_blk; //number of particle blocks

@@ -16,8 +16,8 @@ static constexpr float xi  = 1.000000; //damping coefficient
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
-static constexpr float r_c = 1.122462; //LJ cutoff radius//rename this to repulsive cutoff
-//add attractive cutoff
+static constexpr float r_c = 1.122462; //LJ cutoff radius//rename this to repulsive cutoff radius (rcr)
+//add attractive cutoff radius (acr)
 
 //Classes
 
@@ -32,6 +32,18 @@ class chrdat //chromatin data
 
   //chrdat destructor
   ~chrdat();
+
+  //write frame to text file
+  void write_frame_txt(std::ofstream &txt_out_f); //text output file
+
+  //read frame from text file
+  void read_frame_txt(std::ifstream &txt_inp_f); //text input file
+
+  //write frame to binary file
+  void write_frame_bin(std::ofstream &bin_out_f); //binary output file
+
+  //read frame from binary file
+  void read_frame_bin(std::ifstream &bin_inp_f); //binary input file
 
   protected:
 

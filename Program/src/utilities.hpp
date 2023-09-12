@@ -22,8 +22,8 @@ class logger //basic logger
 
   //set log file and open it
   static void set_file(
-    const std::string &path, //log file path
-    bool ovr = false); //overwrite log file
+    const std::string &pathstr, //file path string
+    bool ovr = false); //overwrite file
 
   //log message with timestamp
   static void record(const std::string &msg); //message
@@ -36,7 +36,7 @@ class logger //basic logger
   //Variables
 
   bool w_f = false; //write output to file
-  std::ofstream file; //log file
+  std::ofstream log_f; //log file
 
   //Functions
 
@@ -67,7 +67,7 @@ class parmap : public std::map<std::string,std::string> //parameter map
   //Functions
 
   //parmap constructor
-  parmap(std::ifstream &f_par); //parameter file
+  parmap(std::ifstream &par_f); //parameter file
 
   //Templates
 
@@ -90,7 +90,7 @@ class parmap : public std::map<std::string,std::string> //parameter map
 //Functions
 
 //count files matching pattern
-int glob_count(const std::string &pattern); //file path pattern
+int glob_count(const std::string &pathpat); //file path pattern
 
 //Templates
 
@@ -112,12 +112,12 @@ std::string cnfs
 //check file is open or else throw
 template <typename T>
 void check_file
-  (T &file, //file stream
-  const std::string &path) //file path string
+  (T &s_f, //stream file 
+  const std::string &pathstr) //file path string
 {
-  if (!file.is_open())
+  if (!s_f.is_open())
   {
-    throw error("unable to open "+path);
+    throw error("unable to open "+pathstr);
   }
 }
 

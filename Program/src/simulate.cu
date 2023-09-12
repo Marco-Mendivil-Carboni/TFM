@@ -18,59 +18,59 @@ int main(
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory
   bool new_sim = (argc==2) ? true : false; //make new simulation
-  std::ifstream f_inp; //input file
-  std::ofstream f_out; //output file
-  std::string f_path; //file path string
-  std::string pattern; //file path pattern
+  std::ifstream inp_f; //input file
+  std::ofstream out_f; //output file
+  std::string pathstr; //file path string
+  std::string pathpat; //file path pathpat
   int sim_idx; //simulation index
   int t_f_idx; //trajectory file index
 
   //open log file inside simulation directory
-  f_path = sim_dir+"/all-messages.log";
-  mmc::logger::set_file(f_path);
+  pathstr = sim_dir+"/all-messages.log";
+  mmc::logger::set_file(pathstr);
 
   //main try block
   try
   {
     //read parameters and initialize simulation
-    f_path = sim_dir+"/adjustable-parameters.dat";
-    f_inp.open(f_path);
-    mmc::check_file(f_inp,f_path);
-    mmc::parmap par(f_inp); //parameters
-    f_inp.close();
+    pathstr = sim_dir+"/adjustable-parameters.dat";
+    inp_f.open(pathstr);
+    mmc::check_file(inp_f,pathstr);
+    mmc::parmap par(inp_f); //parameters
+    inp_f.close();
     mmc::chrsim sim(par); //simulation
 
     if (new_sim) //begin new simulation
     {
       //set sim_idx and t_f_idx
-      pattern = sim_dir+"/initial-condition-*";
-      sim_idx = mmc::glob_count(pattern);
+      pathpat = sim_dir+"/initial-condition-*";
+      sim_idx = mmc::glob_count(pathpat);
       t_f_idx = 0;
 
       //generate and write initial condition
       sim.generate_initial_condition();
-      f_path = sim_dir+"/initial-condition-";
-      f_path += mmc::cnfs(sim_idx,3,'0')+".gro";
-      f_out.open(f_path);
-      mmc::check_file(f_out,f_path);
-      sim.write_initial_condition(f_out);
-      f_out.close();
+      pathstr = sim_dir+"/initial-condition-";
+      pathstr += mmc::cnfs(sim_idx,3,'0')+".gro";
+      out_f.open(pathstr);
+      mmc::check_file(out_f,pathstr);
+      sim.write_initial_condition(out_f);
+      out_f.close();
     }
     else //continue previous simulation
     {
       //set sim_idx and t_f_idx
       sim_idx = std::stoi(argv[2]);
-      pattern = sim_dir+"/trajectory-";
-      pattern += mmc::cnfs(sim_idx,3,'0')+"*";
-      t_f_idx = mmc::glob_count(pattern);
+      pathpat = sim_dir+"/trajectory-";
+      pathpat += mmc::cnfs(sim_idx,3,'0')+"*";
+      t_f_idx = mmc::glob_count(pathpat);
 
       //load checkpoint
-      f_path = sim_dir+"/checkpoint-";
-      f_path += mmc::cnfs(sim_idx,3,'0')+".bin";
-      f_inp.open(f_path,std::ios::binary);
-      mmc::check_file(f_inp,f_path);
-      sim.load_checkpoint(f_inp);
-      f_inp.close();
+      pathstr = sim_dir+"/checkpoint-";
+      pathstr += mmc::cnfs(sim_idx,3,'0')+".bin";
+      inp_f.open(pathstr,std::ios::binary);
+      mmc::check_file(inp_f,pathstr);
+      sim.load_checkpoint(inp_f);
+      inp_f.close();
     }
 
     //record indexes
@@ -80,21 +80,21 @@ int main(
     mmc::logger::record(msg);
 
     //run simulation
-    f_path = sim_dir+"/trajectory-";
-    f_path += mmc::cnfs(sim_idx,3,'0')+"-";
-    f_path += mmc::cnfs(t_f_idx,3,'0')+".trr";
-    f_out.open(f_path,std::ios::binary);
-    mmc::check_file(f_out,f_path);
-    sim.run_simulation(f_out);
-    f_out.close();
+    pathstr = sim_dir+"/trajectory-";
+    pathstr += mmc::cnfs(sim_idx,3,'0')+"-";
+    pathstr += mmc::cnfs(t_f_idx,3,'0')+".trr";
+    out_f.open(pathstr,std::ios::binary);
+    mmc::check_file(out_f,pathstr);
+    sim.run_simulation(out_f);
+    out_f.close();
 
     //save checkpoint
-    f_path = sim_dir+"/checkpoint-";
-    f_path += mmc::cnfs(sim_idx,3,'0')+".bin";
-    f_out.open(f_path,std::ios::binary);
-    mmc::check_file(f_out,f_path);
-    sim.save_checkpoint(f_out);
-    f_out.close();
+    pathstr = sim_dir+"/checkpoint-";
+    pathstr += mmc::cnfs(sim_idx,3,'0')+".bin";
+    out_f.open(pathstr,std::ios::binary);
+    mmc::check_file(out_f,pathstr);
+    sim.save_checkpoint(out_f);
+    out_f.close();
   }
   catch (const mmc::error &err) //caught error
   {
