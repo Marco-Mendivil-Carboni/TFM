@@ -60,6 +60,7 @@ class chrsim : public chrdat //chromatin simulation
 
   float sd; //random number standard deviation
   float4 *drn; //device random number array
+
   prng *dps; //device PRNG state array
 
   //Functions
@@ -67,11 +68,6 @@ class chrsim : public chrdat //chromatin simulation
   //make one Runge-Kutta iteration
   void make_RK_iteration();
 };
-
-//Functions
-
-//check for errors in cuda runtime API call
-void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 
 } //namespace mmc
 

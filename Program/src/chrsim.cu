@@ -283,7 +283,8 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     {
       make_RK_iteration();
     }
-    ++i_f; t += spframe*dt;
+    ++i_f;
+    t += spframe*dt;
     cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
     write_frame_bin(bin_out_f);
   }
@@ -294,17 +295,6 @@ void chrsim::make_RK_iteration()
 {
   exec_RK_1<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,sd,drn,dps);
   exec_RK_2<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,df1,drn);
-}
-
-//check for errors in cuda runtime API call
-void cuda_check(cudaError_t rtn_val) //cuda runtime API call return value
-{
-  if (rtn_val!=cudaSuccess)
-  {
-    std::string msg = "cuda: "; //error message
-    msg += cudaGetErrorString(rtn_val);
-    throw error(msg);
-  }
 }
 
 } //namespace mmc
