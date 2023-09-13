@@ -1,6 +1,6 @@
 //Includes
 
-#include "utilities.hpp" //general utilities
+#include "util.cuh" //general utilities
 
 #include <iostream> //standard input/output stream objects
 

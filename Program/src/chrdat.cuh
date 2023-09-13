@@ -3,7 +3,7 @@
 
 //Includes
 
-#include "utilities.hpp" //general utilities
+#include "util.cuh" //general utilities
 
 //Namespace
 
@@ -12,12 +12,14 @@ namespace mmc //Marco Mendívil Carboni
 
 //Constants
 
-static constexpr float xi  = 1.000000; //damping coefficient
+static constexpr float xi = 1.000000; //damping coefficient
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
 static constexpr float r_c = 1.122462; //LJ cutoff radius//rename this to repulsive cutoff radius (rcr)
 //add attractive cutoff radius (acr)
+
+static constexpr float k_B = 0.001120; //Boltzmann constant
 
 //Classes
 
