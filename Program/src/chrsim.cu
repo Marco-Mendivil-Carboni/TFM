@@ -129,7 +129,6 @@ chrsim::chrsim(parmap &par) //parameters
   logger::record(msg);
 
   //allocate unified memory
-  cuda_check(cudaMallocManaged(&dpt,N*sizeof(int)));
   cuda_check(cudaMallocManaged(&dr2,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&dr1,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&df2,N*sizeof(float4)));
@@ -145,19 +144,18 @@ chrsim::chrsim(parmap &par) //parameters
 //chrsim destructor
 chrsim::~chrsim()
 {
-  cudaFree(dpt);
-  cudaFree(dr2);
-  cudaFree(dr1);
-  cudaFree(df2);
-  cudaFree(df1);
-  cudaFree(drn);
-  cudaFree(dps);
+  cuda_check(cudaFree(dr2));
+  cuda_check(cudaFree(dr1));
+  cuda_check(cudaFree(df2));
+  cuda_check(cudaFree(df1));
+  cuda_check(cudaFree(drn));
+  cuda_check(cudaFree(dps));
 }
 
 //generate a random initial condition
 void chrsim::generate_initial_condition()
 {
-  //initialize PRNG
+  //initialize host PRNG
   curandGenerator_t gen; //host PRNG
   curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
@@ -233,20 +231,19 @@ void chrsim::generate_initial_condition()
     }
   }
 
-  //expand beads and reset sigma
+  //expand beads
   while (sig<1.0)
   {
     make_RK_iteration();
     sig += dt/(32*sig*sig);
   }
-  cuda_check(cudaDeviceSynchronize());
+  cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
+
+  //reset sigma
   sig = 1.0;
 
   //free host PRNG
   curandDestroyGenerator(gen);
-
-  //copy position array to host
-  cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
 
   //record success message
   logger::record("initial condition generated");
@@ -283,9 +280,8 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     {
       make_RK_iteration();
     }
-    ++i_f;
-    t += spframe*dt;
     cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
+    ++i_f; t += spframe*dt;
     write_frame_bin(bin_out_f);
   }
 }

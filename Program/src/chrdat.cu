@@ -30,17 +30,17 @@ chrdat::chrdat(parmap &par) //parameters
   logger::record(msg);
 
   //allocate host memory
-  pt = new int[N];
-  r = new float4[N];
-  f = new float4[N];
+  cuda_check(cudaMallocManaged(&pt,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&r,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&f,N*sizeof(float4)));
 }
 
 //chrdat destructor
 chrdat::~chrdat()
 {
-  delete[] pt;
-  delete[] r;
-  delete[] f;
+  cudaFree(pt);
+  cudaFree(r);
+  cudaFree(f);
 }
 
 //write frame to text file
