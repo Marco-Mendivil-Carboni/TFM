@@ -38,9 +38,9 @@ chrdat::chrdat(parmap &par) //parameters
 //chrdat destructor
 chrdat::~chrdat()
 {
-  cudaFree(pt);
-  cudaFree(r);
-  cudaFree(f);
+  cuda_check(cudaFree(pt));
+  cuda_check(cudaFree(r));
+  cuda_check(cudaFree(f));
 }
 
 //write frame to text file

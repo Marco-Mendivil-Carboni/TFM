@@ -52,14 +52,12 @@ class chrsim : public chrdat //chromatin simulation
   const int thd_blk; //threads per block
   const int n_p_blk; //number of particle blocks
 
-  float4 *dr2; //device position array 2
-  float4 *dr1; //device position array 1
-  float4 *df2; //device force array 2
-  float4 *df1; //device force array 1
+  float4 *er; //extra position array
+  float4 *ef; //extra force array
 
   float sd; //random number standard deviation
-  float4 *drn; //device random number array
-  prng *dps; //device PRNG state array
+  float4 *rn; //random number array
+  prng *ps; //PRNG state array
 
   //Functions
 

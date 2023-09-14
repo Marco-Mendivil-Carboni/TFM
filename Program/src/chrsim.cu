@@ -62,49 +62,49 @@ inline __device__ void calc_bonded_f(
 
 //Global Functions
 
-//initialize device PRNG state array
+//initialize PRNG state array
 __global__ void init_PRNG(
   const int N, //number of particles
-  prng *dps, //device PRNG state array
-  int ps) //PRNG seed
+  prng *ps, //PRNG state array
+  int pseed) //PRNG seed
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
-  curand_init(ps,i_p,0,&dps[i_p]);
+  curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
   const int N, //number of particles
-  float4 *dr2, //device position array 2
-  float4 *dr1, //device position array 1
-  float4 *df2, //device force array 2
+  float4 *r, //position array
+  float4 *er, //extra position array
+  float4 *f, //force array
   float sd, //random number standard deviation
-  float4 *drn, //device random number array
-  prng *dps) //device PRNG state array
+  float4 *rn, //random number array
+  prng *ps) //PRNG state array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
-  drn[i_p] = sd*curand_normal4(&dps[i_p]);
-  df2[i_p] = {0.0,0.0,0.0,0.0};
-  calc_bonded_f(N,i_p,dr2,df2);
-  dr1[i_p] = dr2[i_p]+df2[i_p]*dt/xi+drn[i_p]/xi;
+  rn[i_p] = sd*curand_normal4(&ps[i_p]);
+  f[i_p] = {0.0,0.0,0.0,0.0};
+  calc_bonded_f(N,i_p,r,f);
+  er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
 }
 
 //execute 2nd stage of the Runge-Kutta method
 __global__ void exec_RK_2(
   const int N, //number of particles
-  float4 *dr2, //device position array 2
-  float4 *dr1, //device position array 1
-  float4 *df2, //device force array 2
-  float4 *df1, //device force array 1
-  float4 *drn) //device random number array
+  float4 *r, //position array
+  float4 *er, //extra position array
+  float4 *f, //force array
+  float4 *ef, //extra force array
+  float4 *rn) //random number array
 {
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
-  df1[i_p] = {0.0,0.0,0.0,0.0};
-  calc_bonded_f(N,i_p,dr1,df1);
-  dr2[i_p] = dr2[i_p]+0.5*(df1[i_p]+df2[i_p])*dt/xi+drn[i_p]/xi;
+  ef[i_p] = {0.0,0.0,0.0,0.0};
+  calc_bonded_f(N,i_p,er,ef);
+  r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
 }
 
 //Host Functions
@@ -129,27 +129,23 @@ chrsim::chrsim(parmap &par) //parameters
   logger::record(msg);
 
   //allocate unified memory
-  cuda_check(cudaMallocManaged(&dr2,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&dr1,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&df2,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&df1,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&drn,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&dps,N*sizeof(prng)));
+  cuda_check(cudaMallocManaged(&er,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&ef,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
+  cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
 
   //initialize PRNG
-  init_PRNG<<<n_p_blk,thd_blk>>>(N,dps,time(nullptr));
+  init_PRNG<<<n_p_blk,thd_blk>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
 //chrsim destructor
 chrsim::~chrsim()
 {
-  cuda_check(cudaFree(dr2));
-  cuda_check(cudaFree(dr1));
-  cuda_check(cudaFree(df2));
-  cuda_check(cudaFree(df1));
-  cuda_check(cudaFree(drn));
-  cuda_check(cudaFree(dps));
+  cuda_check(cudaFree(er));
+  cuda_check(cudaFree(ef));
+  cuda_check(cudaFree(rn));
+  cuda_check(cudaFree(ps));
 }
 
 //generate a random initial condition
@@ -173,7 +169,7 @@ void chrsim::generate_initial_condition()
   float3 per_dir; //perpendicular direction
 
   //place first particle
-  dr2[0] = {0.0,0.0,0.0,0.0};
+  r[0] = {0.0,0.0,0.0,0.0};
   curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
   curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
   ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
@@ -201,21 +197,21 @@ void chrsim::generate_initial_condition()
     //calculate position of next particle
     curandGenerateUniform(gen,&ran,1);
     len_b = l_0+sqrt(2.0/(k_e*iT))*erfinv(2.0*ran-1.0);
-    dr2[i_p] = make_float4(len_b*new_dir)+dr2[i_p-1];
+    r[i_p] = make_float4(len_b*new_dir)+r[i_p-1];
 
     //check if new position is acceptable
     bool p_a = true; //position is acceptable
-    if (!isfinite(dr2[i_p].x)){ p_a = false;}
-    if (!isfinite(dr2[i_p].y)){ p_a = false;}
-    if (!isfinite(dr2[i_p].z)){ p_a = false;}
+    if (!isfinite(r[i_p].x)){ p_a = false;}
+    if (!isfinite(r[i_p].y)){ p_a = false;}
+    if (!isfinite(r[i_p].z)){ p_a = false;}
     for (int j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
     {
       float d_p; //particle-particle distance
-      d_p = length(make_float3(dr2[j_p]-dr2[i_p]));
+      d_p = length(make_float3(r[j_p]-r[i_p]));
       if (d_p<(r_c*sig)){ p_a = false; break;}
     }
     float d_r; //radial distance to origin
-    d_r = length(make_float3(dr2[i_p]));
+    d_r = length(make_float3(r[i_p]));
     if ((R-d_r)<(r_c*sig)){ p_a = false;}
 
     if (p_a) //continue
@@ -237,7 +233,7 @@ void chrsim::generate_initial_condition()
     make_RK_iteration();
     sig += dt/(32*sig*sig);
   }
-  cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
+  cuda_check(cudaDeviceSynchronize());
 
   //reset sigma
   sig = 1.0;
@@ -254,8 +250,8 @@ void chrsim::save_checkpoint(std::ofstream &bin_out_f) //binary output file
 {
   bin_out_f.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_out_f.write(reinterpret_cast<char *>(&t),sizeof(t));
-  bin_out_f.write(reinterpret_cast<char *>(dr2),N*sizeof(float4));
-  bin_out_f.write(reinterpret_cast<char *>(dps),N*sizeof(prng));
+  bin_out_f.write(reinterpret_cast<char *>(r),N*sizeof(float4));
+  bin_out_f.write(reinterpret_cast<char *>(ps),N*sizeof(prng));
   logger::record("simulation checkpoint saved");
 }
 
@@ -264,8 +260,8 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 {
   bin_inp_f.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
-  bin_inp_f.read(reinterpret_cast<char *>(dr2),N*sizeof(float4));
-  bin_inp_f.read(reinterpret_cast<char *>(dps),N*sizeof(prng));
+  bin_inp_f.read(reinterpret_cast<char *>(r),N*sizeof(float4));
+  bin_inp_f.read(reinterpret_cast<char *>(ps),N*sizeof(prng));
   logger::record("simulation checkpoint loaded");
 }
 
@@ -280,7 +276,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     {
       make_RK_iteration();
     }
-    cuda_check(cudaMemcpy(r,dr2,N*sizeof(float4),cudaMemcpyDefault));
+    cuda_check(cudaDeviceSynchronize());
     ++i_f; t += spframe*dt;
     write_frame_bin(bin_out_f);
   }
@@ -289,8 +285,8 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  exec_RK_1<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,sd,drn,dps);
-  exec_RK_2<<<n_p_blk,thd_blk>>>(N,dr2,dr1,df2,df1,drn);
+  exec_RK_1<<<n_p_blk,thd_blk>>>(N,r,er,f,sd,rn,ps);
+  exec_RK_2<<<n_p_blk,thd_blk>>>(N,r,er,f,ef,rn);
 }
 
 } //namespace mmc
