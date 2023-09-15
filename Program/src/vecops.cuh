@@ -59,6 +59,10 @@ inline __host__ __device__ float3 operator*(float b, float3 a)
 {
   return make_float3(b*a.x,b*a.y,b*a.z);
 }
+inline __host__ __device__ void operator*=(float3 &a, float b)
+{
+  a.x*=b; a.y*=b; a.z*=b;
+}
 inline __host__ __device__ float4 operator*(float4 a, float b)
 {
   return make_float4(a.x*b,a.y*b,a.z*b,a.w*b);
@@ -67,13 +71,25 @@ inline __host__ __device__ float4 operator*(float b, float4 a)
 {
   return make_float4(b*a.x,b*a.y,b*a.z,b*a.w);
 }
+inline __host__ __device__ void operator*=(float4 &a, float b)
+{
+  a.x*=b; a.y*=b; a.z*=b; a.w*=b;
+}
 inline __host__ __device__ float3 operator/(float3 a, float b)
 {
   return make_float3(a.x/b,a.y/b,a.z/b);
 }
+inline __host__ __device__ void operator/=(float3 &a, float b)
+{
+  a.x/=b; a.y/=b; a.z/=b;
+}
 inline __host__ __device__ float4 operator/(float4 a, float b)
 {
   return make_float4(a.x/b,a.y/b,a.z/b,a.w/b);
+}
+inline __host__ __device__ void operator/=(float4 &a, float b)
+{
+  a.x/=b; a.y/=b; a.z/=b; a.w/=b;
 }
 inline __host__ __device__ float dot(float3 a, float3 b)
 {

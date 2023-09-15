@@ -18,8 +18,8 @@ static constexpr float k_B = 0.001120; //Boltzmann constant
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
-static constexpr float r_c = 1.122462; //LJ cutoff radius//rename this to repulsive cutoff radius (rcr)
-//add attractive cutoff radius (acr)
+static constexpr float rcr = 1.122462; //LJ repulsive cutoff radius
+static constexpr float acr = 2.713283; //LJ attractive cutoff radius
 
 //Classes
 
@@ -62,7 +62,7 @@ class chrdat //chromatin data
   float4 *r; //position array
   float4 *f; //force array
 
-  float sig; //particle LJ size
+  float sig; //LJ particle size
 };
 
 } //namespace mmc

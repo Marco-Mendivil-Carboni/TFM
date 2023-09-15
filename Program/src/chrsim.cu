@@ -60,6 +60,31 @@ inline __device__ void calc_bonded_f(
   f[i_p] += make_float4(f_b);
 }
 
+//calculate confinement force
+inline __device__ void calc_wall_f(
+  const int N, //number of particles
+  const float R, //confinement radius
+  float sig, //LJ particle size
+  int i_p, //particle index
+  float4 *r, //position array
+  float4 *f) //force array
+{
+  //calculate auxiliary variables
+  float d_r; //radial distance to origin
+  d_r = length(make_float3(r[i_p]));
+  float dwp = (R+sig/2)-d_r; //wall-particle distance
+  if (dwp>(rcr*sig)){ return;}
+
+  //calculate confinement force
+  float3 f_c = make_float3(-r[i_p]/d_r); //confinement force
+  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
+  float d6 = dwp*dwp*dwp*dwp*dwp*dwp; //dwp to the sixth power
+  f_c *= 4.0*(12.0*(s6*s6)/(d6*d6*dwp)-6.0*(s6)/(d6*dwp));
+
+  //add result to force array
+  f[i_p] += make_float4(f_c);
+}
+
 //Global Functions
 
 //initialize PRNG state array
@@ -68,42 +93,63 @@ __global__ void init_PRNG(
   prng *ps, //PRNG state array
   int pseed) //PRNG seed
 {
+  //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
+
+  //initialize PRNG state
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
   const int N, //number of particles
+  const float R, //confinement radius
   float4 *r, //position array
-  float4 *er, //extra position array
   float4 *f, //force array
+  float sig, //LJ particle size
+  float4 *er, //extra position array
   float sd, //random number standard deviation
   float4 *rn, //random number array
   prng *ps) //PRNG state array
 {
+  //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
+
+  //calculate random numbers
   rn[i_p] = sd*curand_normal4(&ps[i_p]);
+
+  //calculate forces
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,r,f);
+  calc_wall_f(N,R,sig,i_p,r,f);
+
+  //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
 }
 
 //execute 2nd stage of the Runge-Kutta method
 __global__ void exec_RK_2(
   const int N, //number of particles
+  const float R, //confinement radius
   float4 *r, //position array
-  float4 *er, //extra position array
   float4 *f, //force array
+  float sig, //LJ particle size
+  float4 *er, //extra position array
   float4 *ef, //extra force array
   float4 *rn) //random number array
 {
+  //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
+
+  //calculate forces
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,er,ef);
+  calc_wall_f(N,R,sig,i_p,er,ef);
+
+  //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
 }
 
@@ -206,13 +252,13 @@ void chrsim::generate_initial_condition()
     if (!isfinite(r[i_p].z)){ p_a = false;}
     for (int j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
     {
-      float d_p; //particle-particle distance
-      d_p = length(make_float3(r[j_p]-r[i_p]));
-      if (d_p<(r_c*sig)){ p_a = false; break;}
+      float dpp; //particle-particle distance
+      dpp = length(make_float3(r[j_p]-r[i_p]));
+      if (dpp<sig){ p_a = false; break;}
     }
     float d_r; //radial distance to origin
     d_r = length(make_float3(r[i_p]));
-    if ((R-d_r)<(r_c*sig)){ p_a = false;}
+    if (((R+sig/2)-d_r)<sig){ p_a = false;}
 
     if (p_a) //continue
     {
@@ -285,8 +331,8 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  exec_RK_1<<<n_p_blk,thd_blk>>>(N,r,er,f,sd,rn,ps);
-  exec_RK_2<<<n_p_blk,thd_blk>>>(N,r,er,f,ef,rn);
+  exec_RK_1<<<n_p_blk,thd_blk>>>(N,R,r,f,sig,er,sd,rn,ps);
+  exec_RK_2<<<n_p_blk,thd_blk>>>(N,R,r,f,sig,er,ef,rn);
 }
 
 } //namespace mmc

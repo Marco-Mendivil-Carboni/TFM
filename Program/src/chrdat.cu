@@ -21,7 +21,7 @@ chrdat::chrdat(parmap &par) //parameters
   if (N<1){ throw error("number_of_particles out of range");}
   if (R<0.0){ throw error("confinement_radius out of range");}
   if (T<0.0){ throw error("temperature out of range");}
-  float cvf = N*pow(0.5*sig/(R-0.5*sig),3); //chromatin volume fraction
+  float cvf = N*pow(0.5*sig/R,3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   std::string msg = "chrdat:"; //message
   msg += " N = "+cnfs(N,5,'0');
