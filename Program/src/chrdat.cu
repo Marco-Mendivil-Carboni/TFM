@@ -30,7 +30,7 @@ chrdat::chrdat(parmap &par) //parameters
   logger::record(msg);
 
   //allocate host memory
-  cuda_check(cudaMallocManaged(&pt,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&pt,N*sizeof(ptype)));
   cuda_check(cudaMallocManaged(&r,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f,N*sizeof(float4)));
 }

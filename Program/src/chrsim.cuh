@@ -61,6 +61,12 @@ class chrsim : public chrdat //chromatin simulation
 
   //Functions
 
+  //set random particle types
+  void set_particle_types(curandGenerator_t &gen); //host PRNG
+
+  //perform a confined random walk
+  void perform_random_walk(curandGenerator_t &gen); //host PRNG
+
   //make one Runge-Kutta iteration
   void make_RK_iteration();
 };

@@ -73,7 +73,7 @@ inline __device__ void calc_wall_f(
   float d_r; //radial distance to origin
   d_r = length(make_float3(r[i_p]));
   float dwp = (R+sig/2)-d_r; //wall-particle distance
-  if (dwp>(rcr*sig)){ return;}
+  if (dwp>(rco*sig)){ return;}
 
   //calculate confinement force
   float3 f_c = make_float3(-r[i_p]/d_r); //confinement force
@@ -202,76 +202,14 @@ void chrsim::generate_initial_condition()
   curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
 
-  //declare auxiliary variables
-  float iT = 1.0/(k_B*T); //inverse temperature
-  float ran; //random number in (0,1]
-  float theta; //polar angle
-  float phi; //azimuthal angle
-  float len_b; //bond length
-  float angle_b; //bond angle
-  float3 old_dir; //old direction
-  float3 new_dir; //new direction
-  float3 ran_dir; //random direction
-  float3 per_dir; //perpendicular direction
-
-  //place first particle
-  r[0] = {0.0,0.0,0.0,0.0};
-  curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
-  curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
-  ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
-  old_dir = ran_dir;
+  //set random particle types
+  set_particle_types(gen);
 
   //reduce sigma for random walk
   sig = 1.0/2;
 
-  //perform random walk
-  int att = 0; //number of attempts
-  for (int i_p = 1; i_p<N; ++i_p) //particle index
-  {
-    //generate random direction perpendicular to old direction
-    curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
-    curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
-    ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
-    per_dir = cross(old_dir,ran_dir);
-    per_dir = normalize(per_dir);
-
-    //generate random bond angle and calculate new direction
-    curandGenerateUniform(gen,&ran,1);
-    angle_b = acos(1.0+log(1.0-(1.0-exp(-2.0*(k_b*iT)))*ran)/(k_b*iT));
-    new_dir = cos(angle_b)*old_dir+sin(angle_b)*per_dir;
-
-    //calculate position of next particle
-    curandGenerateUniform(gen,&ran,1);
-    len_b = l_0+sqrt(2.0/(k_e*iT))*erfinv(2.0*ran-1.0);
-    r[i_p] = make_float4(len_b*new_dir)+r[i_p-1];
-
-    //check if new position is acceptable
-    bool p_a = true; //position is acceptable
-    if (!isfinite(r[i_p].x)){ p_a = false;}
-    if (!isfinite(r[i_p].y)){ p_a = false;}
-    if (!isfinite(r[i_p].z)){ p_a = false;}
-    for (int j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
-    {
-      float dpp; //particle-particle distance
-      dpp = length(make_float3(r[j_p]-r[i_p]));
-      if (dpp<sig){ p_a = false; break;}
-    }
-    float d_r; //radial distance to origin
-    d_r = length(make_float3(r[i_p]));
-    if (((R+sig/2)-d_r)<sig){ p_a = false;}
-
-    if (p_a) //continue
-    {
-      old_dir = new_dir;
-      att = 0;
-    }
-    else //go back
-    {
-      ++att;
-      if (att>1024){ i_p = 1;}
-      else{ i_p--;}
-    }
-  }
+  //perform a confined random walk
+  perform_random_walk(gen);
 
   //expand beads
   while (sig<1.0)
@@ -325,6 +263,90 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     cuda_check(cudaDeviceSynchronize());
     ++i_f; t += spframe*dt;
     write_frame_bin(bin_out_f);
+  }
+}
+
+//set random particle types
+void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
+{
+  float ran; //random number in (0,1]
+  for (int i_p = 0; i_p<N; ++i_p) //particle index
+  {
+    curandGenerateUniform(gen,&ran,1);
+    if (ran<0.5){ pt[i_p] = LAD;}
+    else{ pt[i_p] = non_LAD;}
+  }
+}
+
+//perform a confined random walk
+void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
+{
+  //declare auxiliary variables
+  float iT = 1.0/(k_B*T); //inverse temperature
+  float ran; //random number in (0,1]
+  float theta; //polar angle
+  float phi; //azimuthal angle
+  float len_b; //bond length
+  float angle_b; //bond angle
+  float3 old_dir; //old direction
+  float3 new_dir; //new direction
+  float3 ran_dir; //random direction
+  float3 per_dir; //perpendicular direction
+
+  //place first particle
+  r[0] = {0.0,0.0,0.0,0.0};
+  curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
+  curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
+  ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
+  old_dir = ran_dir;
+
+  //place the rest of particles
+  int att = 0; //number of attempts
+  for (int i_p = 1; i_p<N; ++i_p) //particle index
+  {
+    //generate random direction perpendicular to old direction
+    curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
+    curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
+    ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
+    per_dir = cross(old_dir,ran_dir);
+    per_dir = normalize(per_dir);
+
+    //generate random bond angle and calculate new direction
+    curandGenerateUniform(gen,&ran,1);
+    angle_b = acos(1.0+log(1.0-(1.0-exp(-2.0*(k_b*iT)))*ran)/(k_b*iT));
+    new_dir = cos(angle_b)*old_dir+sin(angle_b)*per_dir;
+
+    //calculate position of next particle
+    curandGenerateUniform(gen,&ran,1);
+    len_b = l_0+sqrt(2.0/(k_e*iT))*erfinv(2.0*ran-1.0);
+    r[i_p] = make_float4(len_b*new_dir)+r[i_p-1];
+
+    //check if new position is acceptable
+    bool p_a = true; //position is acceptable
+    if (!isfinite(r[i_p].x)){ p_a = false;}
+    if (!isfinite(r[i_p].y)){ p_a = false;}
+    if (!isfinite(r[i_p].z)){ p_a = false;}
+    for (int j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
+    {
+      float dpp; //particle-particle distance
+      dpp = length(make_float3(r[j_p]-r[i_p]));
+      if (dpp<sig){ p_a = false; break;}
+    }
+    float d_r; //radial distance to origin
+    d_r = length(make_float3(r[i_p]));
+    if (((R+sig/2)-d_r)<sig){ p_a = false;}
+
+    if (p_a) //continue
+    {
+      old_dir = new_dir;
+      att = 0;
+    }
+    else //go back
+    {
+      ++att;
+      if (att>1024){ i_p = 1;}
+      else{ i_p--;}
+    }
   }
 }
 

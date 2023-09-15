@@ -18,8 +18,16 @@ static constexpr float k_B = 0.001120; //Boltzmann constant
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
-static constexpr float rcr = 1.122462; //LJ repulsive cutoff radius
-static constexpr float acr = 2.713283; //LJ attractive cutoff radius
+static constexpr float rco = 1.122462; //LJ repulsive cutoff
+static constexpr float aco = 2.713283; //LJ attractive cutoff
+
+//Enumerations
+
+enum ptype //particle type
+{
+  non_LAD, //non lamina associated domain
+  LAD //lamina associated domain
+};
 
 //Classes
 
@@ -58,7 +66,7 @@ class chrdat //chromatin data
   int i_f; //frame index
   double t; //time
 
-  int *pt; //particle type array
+  ptype *pt; //particle type array
   float4 *r; //position array
   float4 *f; //force array
 
