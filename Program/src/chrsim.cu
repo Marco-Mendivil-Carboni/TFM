@@ -12,8 +12,8 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
-static constexpr float rco = 1.122462; //Lennard-Jones repulsive cutoff
-static constexpr float aco = 2.713283; //Lennard-Jones attractive cutoff
+static constexpr float rco = 1.122462; //LJ repulsive cutoff
+static constexpr float aco = 2.713283; //LJ attractive cutoff
 
 //Device Functions
 
@@ -94,10 +94,10 @@ inline __device__ void calc_wall_f(
 //   int i_p, //particle index
 //   float4 *r, //position array
 //   float4 *f, //force array
-//   llgrid &LJg) //Lennard-Jones grid
+//   llgrid &LJg) //LJ grid
 // {
 //   //calculate auxiliary variables
-//   float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+//   float3 fLJ = {0.0,0.0,0.0}; //LJ forces
 //   int iclim = LJg.cps/2; //integer coordinates limit
 //   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
 //   int iofst = LJg.cps*LJg.cps*LJg.cps/2; //index offset
@@ -148,7 +148,7 @@ __global__ void init_PRNG(
 // __global__ void update_LJ_grid(
 //   const int N, //number of particles
 //   float4 *r, //position array
-//   llgrid &LJg) //Lennard-Jones grid
+//   llgrid &LJg) //LJ grid
 // {
 //   //calculate particle index
 //   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -220,33 +220,40 @@ __global__ void exec_RK_2(
 
 //Host Functions
 
-// //llgrid constructor
-// llgrid::llgrid(
-//   const int N, //number of particles
-//   const float R, //confinement radius
-//   float sd, //random number standard deviation
-//   float sig) //LJ particle size
-//   : csl {aco*sig+8*sd/xi}
-//   , cps {static_cast<int>(ceilf(R/csl))}
-// {
-//   //allocate unified memory
-//   int ngc = cps*cps*cps; //number of grid cells
-//   cuda_check(cudaMallocManaged(&first,ngc*sizeof(int)));
-//   cuda_check(cudaMallocManaged(&nxt,N*sizeof(int)));
+//llgrid constructor
+llgrid::llgrid(
+  const int N, //number of particles
+  const float csl, //cell side length
+  const int cps) //cells per side
+  : csl {csl}
+  , cps {cps}
+{
+  //check parameters
+  if (csl<0.0){ throw error("cell_side_length out of range");}
+  if (cps<1){ throw error("cells_per_side out of range");}
+  std::string msg = "llgrid:"; //message
+  msg += " csl = "+cnfs(csl,6,'0',2);
+  msg += " cps = "+cnfs(cps,5,'0');
+  logger::record(msg);
 
-//   //initialize first particle in cell array
-//   for (int i_c = 0; i_c<ngc; ++i_c) //cell index
-//   {
-//     first[i_c] = -1;
-//   }
-// }
+  //allocate unified memory
+  int n_c = cps*cps*cps; //number of cells
+  cuda_check(cudaMallocManaged(&first,n_c*sizeof(int)));
+  cuda_check(cudaMallocManaged(&nxt,N*sizeof(int)));
 
-// //llgrid destructor
-// llgrid::~llgrid()
-// {
-//   cuda_check(cudaFree(first));
-//   cuda_check(cudaFree(nxt));
-// }
+  //initialize first particle array
+  for (int i_c = 0; i_c<n_c; ++i_c) //cell index
+  {
+    first[i_c] = -1;
+  }
+}
+
+//llgrid destructor
+llgrid::~llgrid()
+{
+  cuda_check(cudaFree(first));
+  cuda_check(cudaFree(nxt));
+}
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
@@ -256,7 +263,7 @@ chrsim::chrsim(parmap &par) //parameters
   , thdpblk {par.get_val<int>("threads_per_block",256)}
   , n_blk {(N+thdpblk-1)/thdpblk}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  // , LJg(N,R,sd,sig)
+  , LJg(N,aco*sig+8*sd/xi,2*ceilf(R/(aco*sig+8*sd/xi)))
 {
   //check parameters
   if (framepf<1){ throw error("frames_per_file out of range");}
