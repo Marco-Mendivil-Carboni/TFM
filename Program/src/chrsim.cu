@@ -242,9 +242,11 @@ llgrid::llgrid(
   msg += " cps = "+cnfs(cps,5,'0');
   logger::record(msg);
 
+  //declare auxiliary variables
+  int n_c = cps*cps*cps; //number of cells
+
   //allocate unified memory
   cuda_check(cudaMallocManaged(&cell,N*sizeof(int)));
-  int n_c = cps*cps*cps; //number of cells
   cuda_check(cudaMallocManaged(&first,n_c*sizeof(int)));
   cuda_check(cudaMallocManaged(&nxt,N*sizeof(int)));
 
@@ -282,13 +284,15 @@ chrsim::chrsim(parmap &par) //parameters
   msg += " thdpblk = "+cnfs(thdpblk,5,'0');
   logger::record(msg);
 
+  //declare auxiliary variables
+  float csl = aco*sig+8*sd/xi; //cell side length
+
   //allocate unified memory
   cuda_check(cudaMallocManaged(&er,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ef,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
-  float csl = aco*sig+8*sd/xi; //cell side length
-  LJg_p = new llgrid(N,csl,2*ceilf(R/csl));
+  pLJg = new llgrid(N,csl,2*ceilf(R/csl));
 
   //initialize PRNG
   init_PRNG<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
@@ -302,7 +306,7 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
-  delete LJg_p;
+  delete pLJg;
 }
 
 //generate a random initial condition
@@ -464,9 +468,9 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  update_LJ_grid<<<n_blk,thdpblk>>>(N,r,*LJg_p);
-  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);//Add LJg----------------
-  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn,*LJg_p);
+  update_LJ_grid<<<n_blk,thdpblk>>>(N,r,*pLJg);
+  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);//Add pLJg----------------
+  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn,*pLJg);
 }
 
 } //namespace mmc

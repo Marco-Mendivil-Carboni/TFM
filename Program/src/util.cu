@@ -12,7 +12,23 @@
 namespace mmc //Marco Mendívil Carboni
 {
 
-//Functions and Operators
+//Operators
+
+//new operator
+void *mngd::operator new(size_t objsize) //object size
+{
+  void *obj_p; //object pointer
+  cuda_check(cudaMallocManaged(&obj_p,objsize));
+  return obj_p;
+}
+
+//delete operator
+void mngd::operator delete(void *obj_p) //object pointer
+{
+  cudaFree(obj_p);
+}
+
+//Functions
 
 //set log file and open it
 void logger::set_file(
@@ -86,20 +102,6 @@ parmap::parmap(std::ifstream &par_f) //parameter file
   {
     insert({key,val});
   }
-}
-
-//new operator
-void *mngdobj::operator new(size_t objsize) //object size
-{
-  void *obj_p; //object pointer
-  cudaMallocManaged(&obj_p,objsize);
-  return obj_p;
-}
-
-//delete operator
-void mngdobj::operator delete(void *obj_p) //object pointer
-{
-  cudaFree(obj_p);
 }
 
 //check for errors in cuda runtime API call

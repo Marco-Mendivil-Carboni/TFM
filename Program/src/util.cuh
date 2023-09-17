@@ -12,6 +12,19 @@
 namespace mmc //Marco Mendívil Carboni
 {
 
+//Structures
+
+struct mngd //managed structure
+{
+  //Operators
+
+  //new operator
+  void *operator new(size_t objsize); //object size
+
+  //delete operator
+  void operator delete(void *obj_p); //object pointer
+};
+
 //Classes
 
 class logger //basic logger
@@ -85,19 +98,6 @@ class parmap : public std::map<std::string,std::string> //parameter map
     }
     return val;
   }
-};
-
-class mngdobj //managed object
-{
-  public:
-
-  //Operators
-
-  //new operator
-  void *operator new(size_t objsize); //object size
-
-  //delete operator
-  void operator delete(void *obj_p); //object pointer
 };
 
 //Functions
