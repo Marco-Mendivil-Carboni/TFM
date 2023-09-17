@@ -18,8 +18,6 @@ static constexpr float k_B = 0.001120; //Boltzmann constant
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
-static constexpr float rco = 1.122462; //LJ repulsive cutoff
-static constexpr float aco = 2.713283; //LJ attractive cutoff
 
 //Enumerations
 

@@ -12,6 +12,8 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
+static constexpr float rco = 1.122462; //Lennard-Jones repulsive cutoff
+static constexpr float aco = 2.713283; //Lennard-Jones attractive cutoff
 
 //Device Functions
 
@@ -85,6 +87,47 @@ inline __device__ void calc_wall_f(
   f[i_p] += make_float4(f_c);
 }
 
+// //calculate Lennard-Jones forces
+// __device__ void calc_LJ_f(
+//   const int N, //number of particles
+//   float sig, //LJ particle size
+//   int i_p, //particle index
+//   float4 *r, //position array
+//   float4 *f, //force array
+//   llgrid &LJg) //Lennard-Jones grid
+// {
+//   //calculate auxiliary variables
+//   float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+//   int iclim = LJg.cps/2; //integer coordinates limit
+//   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
+//   int iofst = LJg.cps*LJg.cps*LJg.cps/2; //index offset
+//   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
+
+//   //traverse neighbouring cells
+//   int3 nir; //neighbour integer coordinates
+//   for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim,ir.x+1); ++nir.x)
+//   {
+//     for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim,ir.y+1); ++nir.y)
+//     {
+//       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim,ir.z+1); ++nir.z)
+//       {
+//         int i_c = iofst+nir.x+nir.y*LJg.cps+nir.z*LJg.cps*LJg.cps; //cell index
+//         for (int j_p = LJg.first[i_c]; j_p!=-1; j_p = LJg.nxt[j_p])
+//         {
+//           float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector//this way or the other way around?????
+//           float dpp = length(vpp); //particle particle distance
+//           if (dpp>(aco*sig)){ break;}
+//           float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
+//           fLJ += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+//         }
+//       }
+//     }
+//   }
+
+//   //add result to force array
+//   f[i_p] += make_float4(fLJ);
+// }
+
 //Global Functions
 
 //initialize PRNG state array
@@ -100,6 +143,28 @@ __global__ void init_PRNG(
   //initialize PRNG state
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
+
+// //update Lennard-Jones grid data
+// __global__ void update_LJ_grid(
+//   const int N, //number of particles
+//   float4 *r, //position array
+//   llgrid &LJg) //Lennard-Jones grid
+// {
+//   //calculate particle index
+//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+//   if (i_p>=N){ return;}
+
+//   //calculate auxiliary variables
+//   int iofst = LJg.cps*LJg.cps*LJg.cps/2; //index offset
+//   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
+//   int i_c = iofst+ir.x+ir.y*LJg.cps+ir.z*LJg.cps*LJg.cps; //cell index
+
+//   //reset linked list
+//   if (i_p==LJg.first[i_c]){ LJg.first[i_c] = -1;}
+
+//   //update linked list
+//   LJg.nxt[i_p] = atomicExch(&LJg.first[i_c],i_p);
+// }
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
@@ -155,23 +220,52 @@ __global__ void exec_RK_2(
 
 //Host Functions
 
+// //llgrid constructor
+// llgrid::llgrid(
+//   const int N, //number of particles
+//   const float R, //confinement radius
+//   float sd, //random number standard deviation
+//   float sig) //LJ particle size
+//   : csl {aco*sig+8*sd/xi}
+//   , cps {static_cast<int>(ceilf(R/csl))}
+// {
+//   //allocate unified memory
+//   int ngc = cps*cps*cps; //number of grid cells
+//   cuda_check(cudaMallocManaged(&first,ngc*sizeof(int)));
+//   cuda_check(cudaMallocManaged(&nxt,N*sizeof(int)));
+
+//   //initialize first particle in cell array
+//   for (int i_c = 0; i_c<ngc; ++i_c) //cell index
+//   {
+//     first[i_c] = -1;
+//   }
+// }
+
+// //llgrid destructor
+// llgrid::~llgrid()
+// {
+//   cuda_check(cudaFree(first));
+//   cuda_check(cudaFree(nxt));
+// }
+
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
   , framepf {par.get_val<int>("frames_per_file",100)}
   , spframe {par.get_val<int>("steps_per_frame",1*2048)}
-  , thd_blk {par.get_val<int>("threads_per_block",256)}
-  , n_p_blk {(N+thd_blk-1)/thd_blk}
+  , thdpblk {par.get_val<int>("threads_per_block",256)}
+  , n_blk {(N+thdpblk-1)/thdpblk}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
+  // , LJg(N,R,sd,sig)
 {
   //check parameters
   if (framepf<1){ throw error("frames_per_file out of range");}
   if (spframe<1){ throw error("steps_per_frame out of range");}
-  if (thd_blk<1){ throw error("threads_per_block out of range");}
+  if (thdpblk<1){ throw error("threads_per_block out of range");}
   std::string msg = "chrsim:"; //message
   msg += " framepf = "+cnfs(framepf,5,'0');
   msg += " spframe = "+cnfs(spframe,5,'0');
-  msg += " thd_blk = "+cnfs(thd_blk,5,'0');
+  msg += " thdpblk = "+cnfs(thdpblk,5,'0');
   logger::record(msg);
 
   //allocate unified memory
@@ -181,7 +275,7 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
 
   //initialize PRNG
-  init_PRNG<<<n_p_blk,thd_blk>>>(N,ps,time(nullptr));
+  init_PRNG<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
@@ -353,8 +447,9 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  exec_RK_1<<<n_p_blk,thd_blk>>>(N,R,r,f,sig,er,sd,rn,ps);
-  exec_RK_2<<<n_p_blk,thd_blk>>>(N,R,r,f,sig,er,ef,rn);
+  // update_LJ_grid<<<n_blk,thdpblk>>>(N,r,LJg);
+  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);//Add LJg----------------
+  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);//Add LJg-------------------
 }
 
 } //namespace mmc

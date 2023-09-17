@@ -16,6 +16,30 @@ namespace mmc //Marco Mendívil Carboni
 
 using prng = curandStatePhilox4_32_10; //PRNG type
 
+// //Structures
+
+// struct llgrid //linked list grid
+// {
+//   //Variables
+
+//   const float csl; //cell side length
+//   const int cps; //cells per side
+//   int *first; //first particle array
+//   int *nxt; //next particle array
+
+//   //Functions
+
+//   //llgrid constructor
+//   llgrid(
+//     const int N, //number of particles
+//     const float R, //confinement radius
+//     float sd, //random number standard deviation
+//     float sig); //LJ particle size
+
+//   //llgrid destructor
+//   ~llgrid();
+// };
+
 //Classes
 
 class chrsim : public chrdat //chromatin simulation
@@ -49,8 +73,8 @@ class chrsim : public chrdat //chromatin simulation
   const int framepf; //frames per file
   const int spframe; //steps per frame
 
-  const int thd_blk; //threads per block
-  const int n_p_blk; //number of particle blocks
+  const int thdpblk; //threads per block
+  const int n_blk; //number of blocks
 
   float4 *er; //extra position array
   float4 *ef; //extra force array
@@ -58,6 +82,8 @@ class chrsim : public chrdat //chromatin simulation
   float sd; //random number standard deviation
   float4 *rn; //random number array
   prng *ps; //PRNG state array
+
+  // __managed__ llgrid LJg; //Lennard-Jones grid
 
   //Functions
 
@@ -67,7 +93,7 @@ class chrsim : public chrdat //chromatin simulation
   //perform a confined random walk
   void perform_random_walk(curandGenerator_t &gen); //host PRNG
 
-  //make one Runge-Kutta iteration
+  //make one Runge-Kutta iteration//remove---------------------------------------?
   void make_RK_iteration();
 };
 
