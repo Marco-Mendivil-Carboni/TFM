@@ -18,12 +18,14 @@ using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Structures
 
-struct llgrid //linked list grid
+struct llgrid : public mngdobj //linked list grid
 {
   //Variables
 
   const float csl; //cell side length
   const int cps; //cells per side
+
+  int *cell; //particle cell array
   int *first; //first particle array
   int *nxt; //next particle array
 
@@ -83,7 +85,7 @@ class chrsim : public chrdat //chromatin simulation
   float4 *rn; //random number array
   prng *ps; //PRNG state array
 
-  llgrid LJg; //LJ grid
+  llgrid *LJg_p; //LJ grid pointer
 
   //Functions
 

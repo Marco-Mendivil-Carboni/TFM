@@ -87,6 +87,19 @@ class parmap : public std::map<std::string,std::string> //parameter map
   }
 };
 
+class mngdobj //managed object
+{
+  public:
+
+  //Operators
+
+  //new operator
+  void *operator new(size_t objsize); //object size
+
+  //delete operator
+  void operator delete(void *obj_p); //object pointer
+};
+
 //Functions
 
 //check for errors in cuda runtime API call
@@ -109,8 +122,7 @@ std::string cnfs(
   if (len>0){ num_str<<std::setw(len);}
   if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
-  num_str<<num;
-  return num_str.str();
+  num_str<<num; return num_str.str();
 }
 
 //check file is open or else throw
