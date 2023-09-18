@@ -245,7 +245,7 @@ llgrid::llgrid(
   //declare auxiliary variables
   int n_c = cps*cps*cps; //number of cells
 
-  //allocate unified memory
+  //allocate managed arrays
   cuda_check(cudaMallocManaged(&cell,N*sizeof(int)));
   cuda_check(cudaMallocManaged(&first,n_c*sizeof(int)));
   cuda_check(cudaMallocManaged(&nxt,N*sizeof(int)));
@@ -260,6 +260,7 @@ llgrid::llgrid(
 //llgrid destructor
 llgrid::~llgrid()
 {
+  //deallocate managed arrays
   cuda_check(cudaFree(cell));
   cuda_check(cudaFree(first));
   cuda_check(cudaFree(nxt));
@@ -287,11 +288,13 @@ chrsim::chrsim(parmap &par) //parameters
   //declare auxiliary variables
   float csl = aco*sig+8*sd/xi; //cell side length
 
-  //allocate unified memory
+  //allocate managed arrays
   cuda_check(cudaMallocManaged(&er,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ef,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
-  ps = new mngd_t<prng>[N];
+  cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
+
+  //allocate managed structures
   pLJg = new llgrid(N,csl,2*ceilf(R/csl));
 
   //initialize PRNG
@@ -302,10 +305,13 @@ chrsim::chrsim(parmap &par) //parameters
 //chrsim destructor
 chrsim::~chrsim()
 {
+  //deallocate managed arrays
   cuda_check(cudaFree(er));
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
-  delete[] ps;
+  cuda_check(cudaFree(ps));
+
+  //deallocate managed structures
   delete pLJg;
 }
 

@@ -31,9 +31,6 @@ struct mngds //managed structure
   void operator delete[](void *obj_p); //object pointer
 };
 
-template <typename T> //managed type
-struct mngd_t : T, mngds {};
-
 //Classes
 
 class logger //basic logger
@@ -129,8 +126,7 @@ std::string cnfs(
   if (len>0){ num_str<<std::setw(len);}
   if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
-  num_str<<num;
-  return num_str.str();
+  num_str<<num; return num_str.str();
 }
 
 //check file is open or else throw

@@ -29,7 +29,7 @@ chrdat::chrdat(parmap &par) //parameters
   msg += " T = "+cnfs(T,6,'0',2);
   logger::record(msg);
 
-  //allocate host memory
+  //allocate managed arrays
   cuda_check(cudaMallocManaged(&pt,N*sizeof(ptype)));
   cuda_check(cudaMallocManaged(&r,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f,N*sizeof(float4)));
@@ -38,6 +38,7 @@ chrdat::chrdat(parmap &par) //parameters
 //chrdat destructor
 chrdat::~chrdat()
 {
+  //deallocate managed arrays
   cuda_check(cudaFree(pt));
   cuda_check(cudaFree(r));
   cuda_check(cudaFree(f));
@@ -66,7 +67,6 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
 //read frame from text file
 void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
 {
-
 }
 
 //write frame to binary file
@@ -75,11 +75,10 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 
-  //frame header
+  //frame header, for more information on its contents see chemfiles
   int32_t header[18] = {1993, 1, 0, 
     0, 0, 0, 0, 0, 0, 0, 3*N*4, 0, 0, N, i_f, 0, 
     *(reinterpret_cast<int32_t *>(&t)), 0};
-  //for more information on the contents of the header see chemfiles
   bin_out_f.write(reinterpret_cast<char *>(header),sizeof(header));
   for (int i_p = 0; i_p<N; ++i_p) //particle index
   {
@@ -92,7 +91,6 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
 //read frame from binary file
 void chrdat::read_frame_bin(std::ifstream &bin_inp_f) //binary input file
 {
-
 }
 
 } //namespace mmc

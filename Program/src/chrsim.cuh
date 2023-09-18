@@ -80,10 +80,10 @@ class chrsim : public chrdat //chromatin simulation
   float4 *er; //extra position array
   float4 *ef; //extra force array
 
-  float sd; //random number standard deviation
+  const float sd; //random number standard deviation
 
   float4 *rn; //random number array
-  mngd_t<prng> *ps; //PRNG state array
+  prng *ps; //PRNG state array
 
   llgrid *pLJg; //LJ grid pointer
 
