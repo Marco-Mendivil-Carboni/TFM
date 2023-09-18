@@ -14,16 +14,25 @@ namespace mmc //Marco Mendívil Carboni
 
 //Structures
 
-struct mngd //managed structure
+struct mngds //managed structure
 {
   //Operators
 
   //new operator
   void *operator new(size_t objsize); //object size
 
+  //new[] operator
+  void *operator new[](size_t objsize); //object size
+
   //delete operator
   void operator delete(void *obj_p); //object pointer
+
+  //delete[] operator
+  void operator delete[](void *obj_p); //object pointer
 };
+
+template <typename T> //managed type
+struct mngd_t : T, mngds {};
 
 //Classes
 
@@ -108,8 +117,6 @@ void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 //count files matching pattern
 int glob_count(const std::string &pathpat); //file path pattern
 
-//Templates
-
 //convert number to formatted string
 template <typename T>
 std::string cnfs(
@@ -122,7 +129,8 @@ std::string cnfs(
   if (len>0){ num_str<<std::setw(len);}
   if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
-  num_str<<num; return num_str.str();
+  num_str<<num;
+  return num_str.str();
 }
 
 //check file is open or else throw

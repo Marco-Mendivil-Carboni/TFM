@@ -291,7 +291,7 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMallocManaged(&er,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ef,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
+  ps = new mngd_t<prng>[N];
   pLJg = new llgrid(N,csl,2*ceilf(R/csl));
 
   //initialize PRNG
@@ -305,7 +305,7 @@ chrsim::~chrsim()
   cuda_check(cudaFree(er));
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
-  cuda_check(cudaFree(ps));
+  delete[] ps;
   delete pLJg;
 }
 

@@ -18,7 +18,7 @@ using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Structures
 
-struct llgrid : mngd //linked list grid
+struct llgrid : mngds //linked list grid
 {
   //Variables
 
@@ -83,7 +83,7 @@ class chrsim : public chrdat //chromatin simulation
   float sd; //random number standard deviation
 
   float4 *rn; //random number array
-  prng *ps; //PRNG state array
+  mngd_t<prng> *ps; //PRNG state array
 
   llgrid *pLJg; //LJ grid pointer
 
