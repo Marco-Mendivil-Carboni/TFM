@@ -6,7 +6,11 @@
 #include "util.cuh" //general utilities
 #include "vecops.cuh" //vector operations
 
-#include <thrust/sort.h> //thrust sorting functions
+//thrust header files
+#include <thrust/sort.h>
+#include <thrust/device_vector.h>
+
+#include <thrust/device_ptr.h>
 
 //Namespace
 

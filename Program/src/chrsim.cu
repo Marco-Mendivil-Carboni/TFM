@@ -87,51 +87,57 @@ inline __device__ void calc_wall_f(
   f[i_p] += make_float4(f_c);
 }
 
-// //calculate Lennard-Jones forces
-// __device__ void calc_LJ_f(
-//   const int N, //number of particles
-//   float sig, //LJ particle size
-//   int i_p, //particle index
-//   float4 *r, //position array
-//   float4 *f, //force array
-//   llgrid &LJg) //LJ grid
-// {
-//   //calculate auxiliary variables
-//   float3 fLJ = {0.0,0.0,0.0}; //LJ forces
-//   int iclim = LJg.cps/2; //integer coordinates limit
-//   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
-//   int iofst = (LJg.cps/2)*(1+LJg.cps+LJg.cps*LJg.cps); //index offset
-//   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
+//calculate single Lennard-Jones force
+inline __device__ int calc_single_fLJ(
+  const int N, //number of particles
+  float sig, //LJ particle size
+  int i_p, //particle index
+  int j_p, //secondary particle index
+  float4 *r, //position array
+  float3 &fLJ) //Lennard-Jones force
+{
+  //calculate particle particle distance
+  float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector
+  float dpp = length(vpp); //particle particle distance
+  if (dpp>(rco*sig)){ return ((dpp-rco*sig)/(1.25*l_0));}//tmp------------------change to aco
 
-//   //traverse neighbouring cells
-//   int3 nir; //neighbour integer coordinates
-//   for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim-1,ir.x+1); ++nir.x)
-//   {
-//     for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim-1,ir.y+1); ++nir.y)
-//     {
-//       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
-//       {
-//         int i_c = iofst+ir.x+ir.y*LJg.cps+ir.z*LJg.cps*LJg.cps; //cell index
-//         for (int j_p = LJg.first[i_c]; j_p!=-1; j_p = LJg.nxt[j_p])
-//         {
-//           float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector//this way or the other way around?????
-//           float dpp = length(vpp); //particle particle distance
-//           if (dpp>(aco*sig)){ continue;}
-//           float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
-//           fLJ += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
-//         }
-//       }
-//     }
-//   }
+  //calculate Lennard-Jones force
+  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
+  float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
+  fLJ += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+  return 0;
+}
 
-//   //add result to force array
-//   f[i_p] += make_float4(fLJ);
-// }
+//calculate all Lennard-Jones forces
+__device__ void calc_all_fLJ(
+  const int N, //number of particles
+  float sig, //LJ particle size
+  int i_p, //particle index
+  float4 *r, //position array
+  float4 *f) //force array
+{
+  //declare auxiliary variables
+  int n_skp; //number of skippable particle
+  float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+
+  //traverse polymer both ways
+  for( int j_p = i_p-2; j_p>=0; j_p -= 1+n_skp) //secondary particle index
+  {
+    n_skp = calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);
+  }
+  for( int j_p = i_p+2; j_p<N; j_p += 1+n_skp) //secondary particle index
+  {
+    n_skp = calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);
+  }
+
+  //add result to force array
+  f[i_p] += make_float4(fLJ);
+}
 
 //Global Functions
 
 //initialize PRNG state array
-__global__ void init_PRNG(
+__global__ void init_ps(
   const int N, //number of particles
   prng *ps, //PRNG state array
   int pseed) //PRNG seed
@@ -144,19 +150,24 @@ __global__ void init_PRNG(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-// //calculate cell index
-// __global__ void calc_cell_idx(
+// //calculate grid cell index
+// __global__ void calc_cellidx(
 //   const int N, //number of particles
-//   float4 *r) //position array
+//   float4 *r, //position array
+//   const float csl, //grid cell side length
+//   const int n_cps, //number of grid cells per side
+//   int *cellidx, //grid cell index
+//   int *idx) //particle index
 // {
 //   //calculate particle index
 //   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
 //   if (i_p>=N){ return;}
 
-//   //calculate cell index
-//   int iofst = (LJg.cps/2)*(1+LJg.cps+LJg.cps*LJg.cps); //index offset
-//   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
-//   LJg.cell[i_p] = iofst+ir.x+ir.y*LJg.cps+ir.z*LJg.cps*LJg.cps;
+//   //calculate grid cell index
+//   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+//   cellidx[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
+//   idx[i_p] = i_p;
 // }
 
 //execute 1st stage of the Runge-Kutta method
@@ -182,7 +193,7 @@ __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,r,f);
   calc_wall_f(N,R,sig,i_p,r,f);
-  // calc_LJ_f(N,sig,i_p,r,f,LJg);
+  calc_all_fLJ(N,sig,i_p,r,f);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -207,7 +218,7 @@ __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,er,ef);
   calc_wall_f(N,R,sig,i_p,er,ef);
-  // calc_LJ_f(N,sig,i_p,er,ef,LJg);
+  calc_all_fLJ(N,sig,i_p,er,ef);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
@@ -249,7 +260,7 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMallocManaged(&cellbeg,n_c*sizeof(int)));
 
   //initialize PRNG
-  init_PRNG<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
+  init_ps<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
@@ -425,6 +436,11 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
+  // calc_cellidx<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx,idx);
+  // thrust::sort_by_key(
+  //   thrust::device_ptr<int>(cellidx),
+  //   thrust::device_ptr<int>(cellidx+N),
+  //   thrust::device_ptr<int>(idx));
   exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
   exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
 }

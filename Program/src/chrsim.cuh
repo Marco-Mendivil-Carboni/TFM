@@ -62,10 +62,10 @@ class chrsim : public chrdat //chromatin simulation
   const float csl; //grid cell side length
   const int n_cps; //number of grid cells per side
 
-  int *cellidx; //particle cell index
-  int *idx; //particle index
+  int *cellidx; //grid cell index array
+  int *idx; //particle index array
 
-  int *cellbeg; //cell beginning
+  int *cellbeg; //grid cell beginning array
 
   //Functions
 
