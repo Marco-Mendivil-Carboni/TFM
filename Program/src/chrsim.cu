@@ -98,25 +98,25 @@ inline __device__ void calc_wall_f(
 // {
 //   //calculate auxiliary variables
 //   float3 fLJ = {0.0,0.0,0.0}; //LJ forces
-//   int iclim = cps/2; //integer coordinates limit
-//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-//   int iofst = cps*cps*cps/2; //index offset
+//   int iclim = LJg.cps/2; //integer coordinates limit
+//   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
+//   int iofst = (LJg.cps/2)*(1+LJg.cps+LJg.cps*LJg.cps); //index offset
 //   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
 
 //   //traverse neighbouring cells
 //   int3 nir; //neighbour integer coordinates
-//   for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim,ir.x+1); ++nir.x)
+//   for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim-1,ir.x+1); ++nir.x)
 //   {
-//     for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim,ir.y+1); ++nir.y)
+//     for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim-1,ir.y+1); ++nir.y)
 //     {
-//       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim,ir.z+1); ++nir.z)
+//       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
 //       {
-//         int i_c = iofst+nir.x+nir.y*cps+nir.z*cps*cps; //cell index
-//         for (int j_p = first[i_c]; j_p!=-1; j_p = nxt[j_p])
+//         int i_c = iofst+ir.x+ir.y*LJg.cps+ir.z*LJg.cps*LJg.cps; //cell index
+//         for (int j_p = LJg.first[i_c]; j_p!=-1; j_p = LJg.nxt[j_p])
 //         {
 //           float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector//this way or the other way around?????
 //           float dpp = length(vpp); //particle particle distance
-//           if (dpp>(aco*sig)){ break;}
+//           if (dpp>(aco*sig)){ continue;}
 //           float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
 //           fLJ += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
 //         }
@@ -144,26 +144,20 @@ __global__ void init_PRNG(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-//update Lennard-Jones grid data
-__global__ void update_LJ_grid(
-  const int N, //number of particles
-  float4 *r, //position array
-  llgrid &LJg) //LJ grid
-{
-  //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p>=N){ return;}
+// //calculate cell index
+// __global__ void calc_cell_idx(
+//   const int N, //number of particles
+//   float4 *r) //position array
+// {
+//   //calculate particle index
+//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+//   if (i_p>=N){ return;}
 
-  //calculate auxiliary variables
-  int iofst = (LJg.cps/2)*(1+LJg.cps+LJg.cps*LJg.cps); //index offset
-  int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
-
-  //update grid data
-  LJg.cell[i_p] = iofst+ir.x+ir.y*LJg.cps+ir.z*LJg.cps*LJg.cps;
-  int prevf; //previous first particle
-  prevf = atomicExch(&LJg.first[LJg.cell[i_p]],i_p);
-  LJg.nxt[i_p] = prevf;
-}
+//   //calculate cell index
+//   int iofst = (LJg.cps/2)*(1+LJg.cps+LJg.cps*LJg.cps); //index offset
+//   int3 ir = floorf(make_float3(r[i_p])/LJg.csl); //integer coordinates
+//   LJg.cell[i_p] = iofst+ir.x+ir.y*LJg.cps+ir.z*LJg.cps*LJg.cps;
+// }
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
@@ -188,6 +182,7 @@ __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,r,f);
   calc_wall_f(N,R,sig,i_p,r,f);
+  // calc_LJ_f(N,sig,i_p,r,f,LJg);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -202,8 +197,7 @@ __global__ void exec_RK_2(
   float sig, //LJ particle size
   float4 *er, //extra position array
   float4 *ef, //extra force array
-  float4 *rn, //random number array
-  llgrid &LJg) //LJ grid
+  float4 *rn) //random number array
 {
   //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -213,58 +207,13 @@ __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bonded_f(N,i_p,er,ef);
   calc_wall_f(N,R,sig,i_p,er,ef);
+  // calc_LJ_f(N,sig,i_p,er,ef,LJg);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
-
-  //reset first particle array
-  if (i_p==LJg.first[LJg.cell[i_p]])
-  {
-    LJg.first[LJg.cell[i_p]] = -1;
-  }
 }
 
 //Host Functions
-
-//llgrid constructor
-llgrid::llgrid(
-  const int N, //number of particles
-  const float csl, //cell side length
-  const int cps) //cells per side
-  : csl {csl}
-  , cps {cps}
-{
-  //check parameters
-  if (csl<0.0){ throw error("cell_side_length out of range");}
-  if (cps<1){ throw error("cells_per_side out of range");}
-  std::string msg = "llgrid:"; //message
-  msg += " csl = "+cnfs(csl,6,'0',2);
-  msg += " cps = "+cnfs(cps,5,'0');
-  logger::record(msg);
-
-  //declare auxiliary variables
-  int n_c = cps*cps*cps; //number of cells
-
-  //allocate managed arrays
-  cuda_check(cudaMallocManaged(&cell,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&first,n_c*sizeof(int)));
-  cuda_check(cudaMallocManaged(&nxt,N*sizeof(int)));
-
-  //initialize first particle array
-  for (int i_c = 0; i_c<n_c; ++i_c) //cell index
-  {
-    first[i_c] = -1;
-  }
-}
-
-//llgrid destructor
-llgrid::~llgrid()
-{
-  //deallocate managed arrays
-  cuda_check(cudaFree(cell));
-  cuda_check(cudaFree(first));
-  cuda_check(cudaFree(nxt));
-}
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
@@ -294,9 +243,6 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
 
-  //allocate managed structures
-  pLJg = new llgrid(N,csl,2*ceilf(R/csl));
-
   //initialize PRNG
   init_PRNG<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
@@ -310,9 +256,6 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
-
-  //deallocate managed structures
-  delete pLJg;
 }
 
 //generate a random initial condition
@@ -474,9 +417,8 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  update_LJ_grid<<<n_blk,thdpblk>>>(N,r,*pLJg);
-  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);//Add pLJg----------------
-  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn,*pLJg);
+  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
+  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
 }
 
 } //namespace mmc

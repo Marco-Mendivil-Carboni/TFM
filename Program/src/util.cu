@@ -12,36 +12,6 @@
 namespace mmc //Marco Mendívil Carboni
 {
 
-//Operators
-
-//new operator
-void *mngds::operator new(size_t objsize) //object size
-{
-  void *obj_p; //object pointer
-  cuda_check(cudaMallocManaged(&obj_p,objsize));
-  return obj_p;
-}
-
-//new[] operator
-void *mngds::operator new[](size_t objsize) //object size
-{
-  void *obj_p; //object pointer
-  cuda_check(cudaMallocManaged(&obj_p,objsize));
-  return obj_p;
-}
-
-//delete operator
-void mngds::operator delete(void *obj_p) //object pointer
-{
-  cudaFree(obj_p);
-}
-
-//delete[] operator
-void mngds::operator delete[](void *obj_p) //object pointer
-{
-  cudaFree(obj_p);
-}
-
 //Functions
 
 //set log file and open it

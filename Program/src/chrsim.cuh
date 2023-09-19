@@ -16,31 +16,6 @@ namespace mmc //Marco Mendívil Carboni
 
 using prng = curandStatePhilox4_32_10; //PRNG type
 
-//Structures
-
-struct llgrid : mngds //linked list grid
-{
-  //Variables
-
-  const float csl; //cell side length
-  const int cps; //cells per side
-
-  int *cell; //particle cell array
-  int *first; //first particle array
-  int *nxt; //next particle array
-
-  //Functions
-
-  //llgrid constructor
-  llgrid(
-    const int N, //number of particles
-    const float csl, //cell side length
-    const int cps); //cells per side
-
-  //llgrid destructor
-  ~llgrid();
-};
-
 //Classes
 
 class chrsim : public chrdat //chromatin simulation
@@ -83,9 +58,8 @@ class chrsim : public chrdat //chromatin simulation
   const float sd; //random number standard deviation
 
   float4 *rn; //random number array
-  prng *ps; //PRNG state array
 
-  llgrid *pLJg; //LJ grid pointer
+  prng *ps; //PRNG state array
 
   //Functions
 
