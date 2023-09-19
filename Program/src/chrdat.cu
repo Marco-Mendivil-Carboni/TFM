@@ -29,7 +29,7 @@ chrdat::chrdat(parmap &par) //parameters
   msg += " T = "+cnfs(T,6,'0',2);
   logger::record(msg);
 
-  //allocate managed arrays
+  //allocate arrays
   cuda_check(cudaMallocManaged(&pt,N*sizeof(ptype)));
   cuda_check(cudaMallocManaged(&r,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&f,N*sizeof(float4)));
@@ -38,7 +38,7 @@ chrdat::chrdat(parmap &par) //parameters
 //chrdat destructor
 chrdat::~chrdat()
 {
-  //deallocate managed arrays
+  //deallocate arrays
   cuda_check(cudaFree(pt));
   cuda_check(cudaFree(r));
   cuda_check(cudaFree(f));

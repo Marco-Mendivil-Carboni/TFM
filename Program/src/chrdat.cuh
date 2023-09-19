@@ -6,12 +6,6 @@
 #include "util.cuh" //general utilities
 #include "vecops.cuh" //vector operations
 
-//thrust header files
-#include <thrust/sort.h>
-#include <thrust/device_vector.h>
-
-#include <thrust/device_ptr.h>
-
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni

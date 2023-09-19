@@ -64,8 +64,8 @@ class chrsim : public chrdat //chromatin simulation
 
   int *cellidx; //grid cell index array
   int *idx; //particle index array
-
   int *cellbeg; //grid cell beginning array
+  int *cellend; //grid cell end array
 
   //Functions
 

@@ -134,6 +134,48 @@ __device__ void calc_all_fLJ(
   f[i_p] += make_float4(fLJ);
 }
 
+//calculate Lennard-Jones forces with neighbours
+__device__ void calc_fLJ_nbr(
+  const int N, //number of particles
+  float sig, //LJ particle size
+  int i_p, //particle index
+  const float csl, //grid cell side length
+  const int n_cps, //number of grid cells per side
+  int *cellidx, //grid cell index array
+  int *idx, //particle index array
+  int *cellbeg, //grid cell beginning array
+  int *cellend, //grid cell end array
+  float4 *r, //position array
+  float4 *f) //force array
+{
+  //calculate auxiliary variables
+  float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+  int iclim = n_cps/2; //integer coordinates limit
+  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+  int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
+
+  //traverse neighbouring cells
+  int3 nir; //neighbour integer coordinates
+  for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim-1,ir.x+1); ++nir.x)
+  {
+    for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim-1,ir.y+1); ++nir.y)
+    {
+      for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
+      {
+        int i_c = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps; //cell index
+        for (int j_p = idx[cellbeg[i_c]]; j_p<idx[cellend[i_c]]; ++j_p)
+        {
+          if (j_p!=i_p){ calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);}
+        }
+      }
+    }
+  }
+
+  //add result to force array
+  f[i_p] += make_float4(fLJ);
+}
+
 //Global Functions
 
 //initialize PRNG state array
@@ -150,25 +192,28 @@ __global__ void init_ps(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-// //calculate grid cell index
-// __global__ void calc_cellidx(
-//   const int N, //number of particles
-//   float4 *r, //position array
-//   const float csl, //grid cell side length
-//   const int n_cps, //number of grid cells per side
-//   int *cellidx, //grid cell index
-//   int *idx) //particle index
-// {
-//   //calculate particle index
-//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-//   if (i_p>=N){ return;}
+//calculate grid cell index
+__global__ void calc_cellidx(
+  const int N, //number of particles
+  float4 *r, //position array
+  const float csl, //grid cell side length
+  const int n_cps, //number of grid cells per side
+  int *cellidx, //grid cell index array
+  int *idx) //particle index array
+{
+  //calculate particle index
+  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  if (i_p>=N){ return;}
 
-//   //calculate grid cell index
-//   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
-//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-//   cellidx[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
-//   idx[i_p] = i_p;
-// }
+  //calculate grid cell index
+  int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+  cellidx[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
+  idx[i_p] = i_p;
+}
+
+//find beginning and end of each grid cell
+//------------------------------------------------------------------------------finish
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
@@ -250,14 +295,15 @@ chrsim::chrsim(parmap &par) //parameters
   //declare auxiliary variables
   int n_c = n_cps*n_cps*n_cps; //number of grid cells
 
-  //allocate managed arrays
-  cuda_check(cudaMallocManaged(&er,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&ef,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
+  //allocate arrays
+  cuda_check(cudaMalloc(&er,N*sizeof(float4)));
+  cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
+  cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
-  cuda_check(cudaMallocManaged(&cellidx,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&idx,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&cellbeg,n_c*sizeof(int)));
+  cuda_check(cudaMalloc(&cellidx,N*sizeof(int)));
+  cuda_check(cudaMalloc(&idx,N*sizeof(int)));
+  cuda_check(cudaMalloc(&cellbeg,n_c*sizeof(int)));
+  cuda_check(cudaMalloc(&cellend,n_c*sizeof(int)));
 
   //initialize PRNG
   init_ps<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
@@ -267,7 +313,7 @@ chrsim::chrsim(parmap &par) //parameters
 //chrsim destructor
 chrsim::~chrsim()
 {
-  //deallocate managed arrays
+  //deallocate arrays
   cuda_check(cudaFree(er));
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
@@ -275,6 +321,7 @@ chrsim::~chrsim()
   cuda_check(cudaFree(cellidx));
   cuda_check(cudaFree(idx));
   cuda_check(cudaFree(cellbeg));
+  cuda_check(cudaFree(cellend));
 }
 
 //generate a random initial condition
@@ -436,11 +483,8 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  // calc_cellidx<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx,idx);
-  // thrust::sort_by_key(
-  //   thrust::device_ptr<int>(cellidx),
-  //   thrust::device_ptr<int>(cellidx+N),
-  //   thrust::device_ptr<int>(idx));
+  calc_cellidx<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx,idx);
+  //cub radix sort pairs
   exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
   exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
 }
