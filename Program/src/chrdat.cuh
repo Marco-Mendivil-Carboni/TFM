@@ -6,6 +6,8 @@
 #include "util.cuh" //general utilities
 #include "vecops.cuh" //vector operations
 
+#include <thrust/sort.h> //thrust sorting functions
+
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni

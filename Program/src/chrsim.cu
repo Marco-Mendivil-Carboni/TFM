@@ -223,6 +223,8 @@ chrsim::chrsim(parmap &par) //parameters
   , thdpblk {par.get_val<int>("threads_per_block",256)}
   , n_blk {(N+thdpblk-1)/thdpblk}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
+  , csl {aco*sig+8*sd/xi}
+  , n_cps {2*static_cast<int>(ceilf(R/csl))}
 {
   //check parameters
   if (framepf<1){ throw error("frames_per_file out of range");}
@@ -235,13 +237,16 @@ chrsim::chrsim(parmap &par) //parameters
   logger::record(msg);
 
   //declare auxiliary variables
-  float csl = aco*sig+8*sd/xi; //cell side length
+  int n_c = n_cps*n_cps*n_cps; //number of grid cells
 
   //allocate managed arrays
   cuda_check(cudaMallocManaged(&er,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ef,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
+  cuda_check(cudaMallocManaged(&cellidx,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&idx,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&cellbeg,n_c*sizeof(int)));
 
   //initialize PRNG
   init_PRNG<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
@@ -256,6 +261,9 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
+  cuda_check(cudaFree(cellidx));
+  cuda_check(cudaFree(idx));
+  cuda_check(cudaFree(cellbeg));
 }
 
 //generate a random initial condition

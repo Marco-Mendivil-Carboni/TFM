@@ -56,10 +56,16 @@ class chrsim : public chrdat //chromatin simulation
   float4 *ef; //extra force array
 
   const float sd; //random number standard deviation
-
   float4 *rn; //random number array
-
   prng *ps; //PRNG state array
+
+  const float csl; //grid cell side length
+  const int n_cps; //number of grid cells per side
+
+  int *cellidx; //particle cell index
+  int *idx; //particle index
+
+  int *cellbeg; //cell beginning
 
   //Functions
 
