@@ -7,6 +7,8 @@
 
 #include <curand_kernel.h> //cuRAND device functions
 
+#include <cub/device/device_radix_sort.cuh> //cub parallel radix sort
+
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni
@@ -15,6 +17,10 @@ namespace mmc //Marco Mendívil Carboni
 //Aliases
 
 using prng = curandStatePhilox4_32_10; //PRNG type
+
+//Structures
+
+//make struct for grid stuff ----------------------------------------------------
 
 //Classes
 
@@ -62,10 +68,12 @@ class chrsim : public chrdat //chromatin simulation
   const float csl; //grid cell side length
   const int n_cps; //number of grid cells per side
 
-  int *cellidx; //grid cell index array
-  int *idx; //particle index array
+  cub::DoubleBuffer<int> cellidx; //grid cell index array
+  cub::DoubleBuffer<int> idx; //particle index array
   int *cellbeg; //grid cell beginning array
   int *cellend; //grid cell end array
+  void *tmp_b; //temporary buffer
+  size_t tmp_s; //temporary buffer size
 
   //Functions
 

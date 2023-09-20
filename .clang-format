@@ -1,0 +1,8 @@
+BasedOnStyle: GNU
+ColumnLimit: 0
+AlignTrailingComments: Never
+SpaceBeforeParens: ControlStatements
+EmptyLineAfterAccessModifier: Always
+AccessModifierOffset: 0
+SpacesInLineCommentPrefix:
+  Maximum: 0
