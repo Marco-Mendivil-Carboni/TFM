@@ -187,25 +187,22 @@ __global__ void init_ps(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-// //calculate grid cell index
-// __global__ void calc_cellidx(
-//   const int N, //number of particles
-//   float4 *r, //position array
-//   const float csl, //grid cell side length
-//   const int n_cps, //number of grid cells per side
-//   int *cellidx, //grid cell index array
-//   int *idx) //particle index array
-// {
-//   //calculate particle index
-//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-//   if (i_p>=N){ return;}
+//calculate grid cell and particle indexes
+__global__ void calc_indexes(
+  const int N, //number of particles
+  float4 *r, //position array
+  sugrid *gp) //grid pointer
+{
+  //calculate particle index
+  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  if (i_p>=N){ return;}
 
-//   //calculate grid cell index
-//   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
-//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-//   cellidx[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
-//   idx[i_p] = i_p;
-// }
+  //calculate grid cell index
+  int iofst = (gp->n_cps/2)*(1+gp->n_cps+gp->n_cps*gp->n_cps); //index offset
+  int3 ir = floorf(make_float3(r[i_p])/gp->csl); //integer coordinates
+  gp->ci[0][i_p] = iofst+ir.x+ir.y*gp->n_cps+ir.z*gp->n_cps*gp->n_cps;
+  gp->pi[0][i_p] = i_p;
+}
 
 // //find beginning and end of each grid cell---------------------------not finished, check better
 // __global__ void find_beg_end(
@@ -304,7 +301,8 @@ sugrid::sugrid(
     const int N, //number of particles
     const float csl, //grid cell side length
     const int n_cps) //number of grid cells per side
-  : csl {csl}
+  : N {N}
+  , csl {csl}
   , n_cps {n_cps}
 {
   //check parameters
@@ -319,32 +317,39 @@ sugrid::sugrid(
   int n_c = n_cps*n_cps*n_cps; //number of cells
 
   //allocate arrays
-  // cuda_check(cudaMallocManaged(&i_c[0],N*sizeof(int)));
-  // cuda_check(cudaMallocManaged(&i_c[1],N*sizeof(int)));
-  // cuda_check(cudaMallocManaged(&i_p[0],N*sizeof(int)));
-  // cuda_check(cudaMallocManaged(&i_p[1],N*sizeof(int)));
-  // cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));//check this arrays are this size
-  // cuda_check(cudaMallocManaged(&end,n_c*sizeof(int)));
+  cuda_check(cudaMallocManaged(&ci[0],N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&ci[1],N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&pi[0],N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&pi[1],N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));//check this 2 arrays are this size
+  cuda_check(cudaMallocManaged(&end,n_c*sizeof(int)));
 
   //allocate extra buffer
-  // cub::DeviceRadixSort::SortPairs(nullptr,ebs,i_c[0],i_c[1],i_p[0],i_p[1],N);
-  // cuda_check(cudaMalloc(&eb,ebs));
+  cub::DeviceRadixSort::SortPairs(nullptr,ebs,ci[0],ci[1],pi[0],pi[1],N);
+  cuda_check(cudaMalloc(&eb,ebs));
+
 }
 
 //sugrid destructor
 sugrid::~sugrid()
 {
   //deallocate arrays
-  // cuda_check(cudaFree(i_c[0]));
-  // cuda_check(cudaFree(i_c[1]));
-  // cuda_check(cudaFree(i_p[0]));
-  // cuda_check(cudaFree(i_p[1]));
-  // cuda_check(cudaFree(beg));
-  // cuda_check(cudaFree(end));
+  cuda_check(cudaFree(ci[0]));
+  cuda_check(cudaFree(ci[1]));
+  cuda_check(cudaFree(pi[0]));
+  cuda_check(cudaFree(pi[1]));
+  cuda_check(cudaFree(beg));
+  cuda_check(cudaFree(end));
 
   //deallocate extra buffer
-  // cuda_check(cudaFree(eb));
+  cuda_check(cudaFree(eb));
 }
+
+// //sort pairs of indexes
+// void sugrid::sort_indexes()
+// {
+//   cub::DeviceRadixSort::SortPairs(eb,ebs,i_c[0],i_c[1],i_p[0],i_p[1],N);
+// }
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
@@ -354,6 +359,8 @@ chrsim::chrsim(parmap &par) //parameters
   , thdpblk {par.get_val<int>("threads_per_block",256)}
   , n_blk {(N+thdpblk-1)/thdpblk}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
+  , ljcsl {aco*sig+8*sd/xi}
+  , ljg(N,ljcsl,2*ceilf(R/ljcsl))
 {
   //check parameters
   if (framepf<1){ throw error("frames_per_file out of range");}
@@ -365,17 +372,15 @@ chrsim::chrsim(parmap &par) //parameters
   msg += " thdpblk = "+cnfs(thdpblk,5,'0');
   logger::record(msg);
 
-  //declare auxiliary variables
-  const float csl = aco*sig+8*sd/xi; //grid cell side length
-
   //allocate arrays
   cuda_check(cudaMalloc(&er,N*sizeof(float4)));
   cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
 
-  //allocate structures
-  gp = new sugrid(N,csl,2*ceilf(R/csl));
+  //copy LJ grid to device
+  cuda_check(cudaMalloc(&gp,sizeof(sugrid)));
+  cuda_check(cudaMemcpy(gp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
 
   //initialize PRNG
   init_ps<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
@@ -391,8 +396,8 @@ chrsim::~chrsim()
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
 
-  //deallocate structures
-  delete gp;
+  //deallocate device grid
+  cuda_check(cudaFree(gp));
 }
 
 //generate a random initial condition
@@ -558,9 +563,9 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  // calc_cellidx<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx.Current(),idx.Current());
-  // cub::DeviceRadixSort::SortPairs(tmp_b,tmp_s,cellidx,idx,N);
-  // find_beg_end<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx.Current(),idx.Current(),cellbeg,cellend);
+  calc_indexes<<<n_blk,thdpblk>>>(N,r,gp);
+  // (*gp).sort_indexes();
+  // find_beg_end<<<n_blk,thdpblk>>>(N,r,...);
   exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
   exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
 }

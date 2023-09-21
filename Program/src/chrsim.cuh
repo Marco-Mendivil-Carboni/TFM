@@ -20,16 +20,16 @@ using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Structures
 
-struct sugrid : dev_s //sorted uniform grid
+struct sugrid //sorted uniform grid
 {
   //Variables
 
+  const int N; //number of particles
   const float csl; //grid cell side length
   const int n_cps; //number of grid cells per side
 
-  int *i_c[2]; //grid cell index arrays
-  int *i_p[2]; //particle index arrays
-
+  int *ci[2]; //grid cell index arrays
+  int *pi[2]; //particle index arrays
   int *beg; //grid cell beginning array
   int *end; //grid cell end array
 
@@ -91,6 +91,8 @@ class chrsim : public chrdat //chromatin simulation
   float4 *rn; //random number array
   prng *ps; //PRNG state array
 
+  const float ljcsl; //LJ grid cell side length
+  sugrid ljg; //LJ grid
   sugrid *gp; //grid pointer
 
   //Functions
