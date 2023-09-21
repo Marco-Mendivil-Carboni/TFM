@@ -196,12 +196,16 @@ __global__ void calc_indexes(
   //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
+  gp->pi[0][i_p] = i_p;
+
+  //calculate auxiliary variables
+  float csl = gp->csl; //grid cell side length
+  int n_cps = gp->n_cps; //number of grid cells per side
+  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+  int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
 
   //calculate grid cell index
-  int iofst = (gp->n_cps/2)*(1+gp->n_cps+gp->n_cps*gp->n_cps); //index offset
-  int3 ir = floorf(make_float3(r[i_p])/gp->csl); //integer coordinates
-  gp->ci[0][i_p] = iofst+ir.x+ir.y*gp->n_cps+ir.z*gp->n_cps*gp->n_cps;
-  gp->pi[0][i_p] = i_p;
+  gp->ci[0][i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
 }
 
 // //find beginning and end of each grid cell---------------------------not finished, check better
@@ -345,11 +349,11 @@ sugrid::~sugrid()
   cuda_check(cudaFree(eb));
 }
 
-// //sort pairs of indexes
-// void sugrid::sort_indexes()
-// {
-//   cub::DeviceRadixSort::SortPairs(eb,ebs,i_c[0],i_c[1],i_p[0],i_p[1],N);
-// }
+//sort pairs of indexes
+void sugrid::sort_indexes()
+{
+  cub::DeviceRadixSort::SortPairs(eb,ebs,ci[0],ci[1],pi[0],pi[1],N);
+}
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
@@ -378,9 +382,11 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
 
+  //allocate structures
+  cuda_check(cudaMalloc(&ljgp,sizeof(sugrid)));
+
   //copy LJ grid to device
-  cuda_check(cudaMalloc(&gp,sizeof(sugrid)));
-  cuda_check(cudaMemcpy(gp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(ljgp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
 
   //initialize PRNG
   init_ps<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
@@ -396,8 +402,8 @@ chrsim::~chrsim()
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
 
-  //deallocate device grid
-  cuda_check(cudaFree(gp));
+  //deallocate structures
+  cuda_check(cudaFree(ljgp));
 }
 
 //generate a random initial condition
@@ -467,12 +473,12 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
       make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
-    // if (ffi==0) for(int i = 0; i<512; ++i)//tmp---------------------------------for debug
-    // {
-    //   printf("%d %d %d %d %d\n",i,gp->i_c[1][i],gp->i_p[1][i],gp->beg[i],gp->end[i]);
-    // }
     ++i_f; t += spframe*dt;
     write_frame_bin(bin_out_f);
+  }
+  for(int i = 0; i<512; ++i)//tmp-----------------------------------------------for debug
+  {
+    printf("%d %d %d %d %d\n",i,ljg.ci[1][i],ljg.pi[1][i],ljg.beg[i],ljg.end[i]);
   }
 }
 
@@ -563,8 +569,8 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  calc_indexes<<<n_blk,thdpblk>>>(N,r,gp);
-  // (*gp).sort_indexes();
+  calc_indexes<<<n_blk,thdpblk>>>(N,r,ljgp);
+  ljg.sort_indexes();
   // find_beg_end<<<n_blk,thdpblk>>>(N,r,...);
   exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
   exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);

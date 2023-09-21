@@ -30,6 +30,7 @@ struct sugrid //sorted uniform grid
 
   int *ci[2]; //grid cell index arrays
   int *pi[2]; //particle index arrays
+
   int *beg; //grid cell beginning array
   int *end; //grid cell end array
 
@@ -46,6 +47,9 @@ struct sugrid //sorted uniform grid
 
   //sugrid destructor
   ~sugrid();
+
+  //sort pairs of indexes
+  void sort_indexes();
 };
 
 //Classes
@@ -93,7 +97,7 @@ class chrsim : public chrdat //chromatin simulation
 
   const float ljcsl; //LJ grid cell side length
   sugrid ljg; //LJ grid
-  sugrid *gp; //grid pointer
+  sugrid *ljgp; //LJ grid pointer
 
   //Functions
 
