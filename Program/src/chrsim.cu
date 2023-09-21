@@ -208,39 +208,43 @@ __global__ void calc_indexes(
   gp->ci[0][i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
 }
 
-// //find beginning and end of each grid cell---------------------------not finished, check better
-// __global__ void find_beg_end(
-//   const int N, //number of particles
-//   float4 *r, //position array
-//   const float csl, //grid cell side length
-//   const int n_cps, //number of grid cells per side
-//   int *cellidx, //grid cell index array
-//   int *idx, //particle index array
-//   int *cellbeg, //grid cell beginning array
-//   int *cellend) //grid cell end array
-// {
-//   //calculate particle index
-//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //index
-//   if (i_p>=N){ return;}
+//set grid cells empty
+__global__ void set_cells_empty(
+  sugrid *gp) //grid pointer
+{
+  //calculate array index
+  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
+  if (i_a>=gp->n_c){ return;}
 
-//   //set beginning and end of cell
-//   int cellidx_curr = cellidx[i_p]; //current cell index
-//   int idx_curr = idx[i_p]; //current particle index
-//   if (idx_curr==0)
-//   {
-//     cellbeg[cellidx_curr] = i_p; return;
-//   }
-//   if (idx_curr==N-1)
-//   {
-//     cellend[cellidx_curr] = i_p+1; return;
-//   }
-//   int cellidx_prev = cellidx[i_p-1]; //previous cell index
-//   if (cellidx_prev!=cellidx_curr)
-//   {
-//     cellbeg[cellidx_curr] = i_p;
-//     cellend[cellidx_prev] = i_p;
-//   }
-// }
+  gp->beg[i_a] = 0xffffffff;
+}
+
+//find beginning and end of each grid cell
+__global__ void find_cell_range(
+  const int N, //number of particles
+  sugrid *gp) //grid pointer
+{
+  //calculate array index
+  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
+  if (i_a>=N){ return;}
+
+  //set beginning and end of cells
+  int ci_curr = gp->ci[1][i_a]; //current cell index
+  if (i_a==0)
+  {
+    gp->beg[ci_curr] = i_a; return;
+  }
+  if (i_a==N-1)
+  {
+    gp->end[ci_curr] = i_a+1; return;
+  }
+  int ci_prev = gp->ci[1][i_a-1]; //previous cell index
+  if (ci_prev!=ci_curr)
+  {
+    gp->beg[ci_curr] = i_a;
+    gp->end[ci_prev] = i_a;
+  }
+}
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
@@ -304,10 +308,10 @@ __global__ void exec_RK_2(
 sugrid::sugrid(
     const int N, //number of particles
     const float csl, //grid cell side length
-    const int n_cps) //number of grid cells per side
-  : N {N}
-  , csl {csl}
+    const uint n_cps) //number of grid cells per side
+  : csl {csl}
   , n_cps {n_cps}
+  , n_c {n_cps*n_cps*n_cps}
 {
   //check parameters
   if (csl<0.0){ throw error("grid_cell_side_length out of range");}
@@ -315,17 +319,15 @@ sugrid::sugrid(
   std::string msg = "sugrid:"; //message
   msg += " csl = "+cnfs(csl,6,'0',2);
   msg += " n_cps = "+cnfs(n_cps,5,'0');
+  msg += " n_c = "+cnfs(n_c,5,'0');
   logger::record(msg);
-
-  //declare auxiliary variables
-  int n_c = n_cps*n_cps*n_cps; //number of cells
 
   //allocate arrays
   cuda_check(cudaMallocManaged(&ci[0],N*sizeof(int)));
   cuda_check(cudaMallocManaged(&ci[1],N*sizeof(int)));
   cuda_check(cudaMallocManaged(&pi[0],N*sizeof(int)));
   cuda_check(cudaMallocManaged(&pi[1],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));//check this 2 arrays are this size
+  cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));
   cuda_check(cudaMallocManaged(&end,n_c*sizeof(int)));
 
   //allocate extra buffer
@@ -350,7 +352,7 @@ sugrid::~sugrid()
 }
 
 //sort pairs of indexes
-void sugrid::sort_indexes()
+void sugrid::sort_indexes(int N) //number of particles
 {
   cub::DeviceRadixSort::SortPairs(eb,ebs,ci[0],ci[1],pi[0],pi[1],N);
 }
@@ -478,7 +480,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
   }
   for(int i = 0; i<512; ++i)//tmp-----------------------------------------------for debug
   {
-    printf("%d %d %d %d %d\n",i,ljg.ci[1][i],ljg.pi[1][i],ljg.beg[i],ljg.end[i]);
+    printf("%d %u %u %u %u\n",i,ljg.ci[1][i],ljg.pi[1][i],ljg.beg[i],ljg.end[i]);
   }
 }
 
@@ -570,8 +572,9 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 void chrsim::make_RK_iteration()
 {
   calc_indexes<<<n_blk,thdpblk>>>(N,r,ljgp);
-  ljg.sort_indexes();
-  // find_beg_end<<<n_blk,thdpblk>>>(N,r,...);
+  ljg.sort_indexes(N);
+  set_cells_empty<<<(ljg.n_c+thdpblk-1)/thdpblk,thdpblk>>>(ljgp);
+  find_cell_range<<<n_blk,thdpblk>>>(N,ljgp);
   exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
   exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
 }

@@ -24,15 +24,15 @@ struct sugrid //sorted uniform grid
 {
   //Variables
 
-  const int N; //number of particles
   const float csl; //grid cell side length
-  const int n_cps; //number of grid cells per side
+  const uint n_cps; //number of grid cells per side
+  const uint n_c; //number of cells
 
-  int *ci[2]; //grid cell index arrays
-  int *pi[2]; //particle index arrays
+  uint *ci[2]; //grid cell index arrays
+  uint *pi[2]; //particle index arrays
 
-  int *beg; //grid cell beginning array
-  int *end; //grid cell end array
+  uint *beg; //grid cell beginning array
+  uint *end; //grid cell end array
 
   void *eb; //extra buffer
   size_t ebs; //extra buffer size
@@ -43,13 +43,13 @@ struct sugrid //sorted uniform grid
   sugrid(
     const int N, //number of particles
     const float csl, //grid cell side length
-    const int n_cps); //number of grid cells per side
+    const uint n_cps); //number of grid cells per side
 
   //sugrid destructor
   ~sugrid();
 
   //sort pairs of indexes
-  void sort_indexes();
+  void sort_indexes(int N); //number of particles
 };
 
 //Classes
