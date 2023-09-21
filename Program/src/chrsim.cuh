@@ -20,7 +20,33 @@ using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Structures
 
-//make struct for grid stuff ----------------------------------------------------
+struct sugrid : dev_s //sorted uniform grid
+{
+  //Variables
+
+  const float csl; //grid cell side length
+  const int n_cps; //number of grid cells per side
+
+  int *i_c[2]; //grid cell index arrays
+  int *i_p[2]; //particle index arrays
+
+  int *beg; //grid cell beginning array
+  int *end; //grid cell end array
+
+  void *eb; //extra buffer
+  size_t ebs; //extra buffer size
+
+  //Functions
+
+  //sugrid constructor
+  sugrid(
+    const int N, //number of particles
+    const float csl, //grid cell side length
+    const int n_cps); //number of grid cells per side
+
+  //sugrid destructor
+  ~sugrid();
+};
 
 //Classes
 
@@ -65,15 +91,7 @@ class chrsim : public chrdat //chromatin simulation
   float4 *rn; //random number array
   prng *ps; //PRNG state array
 
-  const float csl; //grid cell side length
-  const int n_cps; //number of grid cells per side
-
-  cub::DoubleBuffer<int> cellidx; //grid cell index array
-  cub::DoubleBuffer<int> idx; //particle index array
-  int *cellbeg; //grid cell beginning array
-  int *cellend; //grid cell end array
-  void *tmp_b; //temporary buffer
-  size_t tmp_s; //temporary buffer size
+  sugrid *gp; //grid pointer
 
   //Functions
 

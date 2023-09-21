@@ -134,48 +134,42 @@ __device__ void calc_all_fLJ(
   f[i_p] += make_float4(fLJ);
 }
 
-//calculate Lennard-Jones forces with neighbours
-__device__ void calc_fLJ_nbr(
-  const int N, //number of particles
-  float sig, //LJ particle size
-  int i_p, //particle index
-  const float csl, //grid cell side length
-  const int n_cps, //number of grid cells per side
-  int *cellidx, //grid cell index array
-  int *idx, //particle index array
-  int *cellbeg, //grid cell beginning array
-  int *cellend, //grid cell end array
-  float4 *r, //position array
-  float4 *f) //force array
-{
-  //calculate auxiliary variables
-  float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
-  int iclim = n_cps/2; //integer coordinates limit
-  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-  int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+// //calculate Lennard-Jones forces with neighbours
+// __device__ void calc_fLJ_nbr(
+//   const int N, //number of particles
+//   float sig, //LJ particle size
+//   int i_p, //particle index
+//   float4 *r, //position array
+//   float4 *f) //force array
+// {
+//   //calculate auxiliary variables
+//   float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+//   int iclim = n_cps/2; //integer coordinates limit
+//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+//   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
 
-  //traverse neighbouring cells
-  int3 nir; //neighbour integer coordinates
-  for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim-1,ir.x+1); ++nir.x)
-  {
-    for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim-1,ir.y+1); ++nir.y)
-    {
-      for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
-      {
-        int i_c = iofst+nir.x+nir.y*n_cps+nir.z*n_cps*n_cps; //neighbour cell index
-        int j_p; //secondary particle index
-        for (int cpi = cellbeg[i_c]; cpi<cellend[i_c]; ++cpi) //cell particle index
-        {
-        //   j_p = idx[cpi];
-        //   if (j_p!=i_p){ calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);}
-        }
-      }
-    }
-  }
+//   //traverse neighbouring cells
+//   int3 nir; //neighbour integer coordinates
+//   for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim-1,ir.x+1); ++nir.x)
+//   {
+//     for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim-1,ir.y+1); ++nir.y)
+//     {
+//       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
+//       {
+//         int i_c = iofst+nir.x+nir.y*n_cps+nir.z*n_cps*n_cps; //neighbour cell index
+//         int j_p; //secondary particle index
+//         for (int cpi = cellbeg[i_c]; cpi<cellend[i_c]; ++cpi) //cell particle index
+//         {
+//         //   j_p = idx[cpi];
+//         //   if (j_p!=i_p){ calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);}
+//         }
+//       }
+//     }
+//   }
 
-  //add result to force array
-  f[i_p] += make_float4(fLJ);
-}
+//   //add result to force array
+//   f[i_p] += make_float4(fLJ);
+// }
 
 //Global Functions
 
@@ -193,59 +187,59 @@ __global__ void init_ps(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-//calculate grid cell index
-__global__ void calc_cellidx(
-  const int N, //number of particles
-  float4 *r, //position array
-  const float csl, //grid cell side length
-  const int n_cps, //number of grid cells per side
-  int *cellidx, //grid cell index array
-  int *idx) //particle index array
-{
-  //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p>=N){ return;}
+// //calculate grid cell index
+// __global__ void calc_cellidx(
+//   const int N, //number of particles
+//   float4 *r, //position array
+//   const float csl, //grid cell side length
+//   const int n_cps, //number of grid cells per side
+//   int *cellidx, //grid cell index array
+//   int *idx) //particle index array
+// {
+//   //calculate particle index
+//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+//   if (i_p>=N){ return;}
 
-  //calculate grid cell index
-  int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
-  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-  cellidx[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
-  idx[i_p] = i_p;
-}
+//   //calculate grid cell index
+//   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+//   cellidx[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
+//   idx[i_p] = i_p;
+// }
 
-//find beginning and end of each grid cell---------------------------not finished ,check better
-__global__ void find_beg_end(
-  const int N, //number of particles
-  float4 *r, //position array
-  const float csl, //grid cell side length
-  const int n_cps, //number of grid cells per side
-  int *cellidx, //grid cell index array
-  int *idx, //particle index array
-  int *cellbeg, //grid cell beginning array
-  int *cellend) //grid cell end array
-{
-  //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //index
-  if (i_p>=N){ return;}
+// //find beginning and end of each grid cell---------------------------not finished, check better
+// __global__ void find_beg_end(
+//   const int N, //number of particles
+//   float4 *r, //position array
+//   const float csl, //grid cell side length
+//   const int n_cps, //number of grid cells per side
+//   int *cellidx, //grid cell index array
+//   int *idx, //particle index array
+//   int *cellbeg, //grid cell beginning array
+//   int *cellend) //grid cell end array
+// {
+//   //calculate particle index
+//   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //index
+//   if (i_p>=N){ return;}
 
-  //set beginning and end of cell
-  int cellidx_curr = cellidx[i_p]; //current cell index
-  int idx_curr = idx[i_p]; //current particle index
-  if (idx_curr==0)
-  {
-    cellbeg[cellidx_curr] = i_p; return;
-  }
-  if (idx_curr==N-1)
-  {
-    cellend[cellidx_curr] = i_p+1; return;
-  }
-  int cellidx_prev = cellidx[i_p-1]; //previous cell index
-  if (cellidx_prev!=cellidx_curr)
-  {
-    cellbeg[cellidx_curr] = i_p;
-    cellend[cellidx_prev] = i_p;
-  }
-}
+//   //set beginning and end of cell
+//   int cellidx_curr = cellidx[i_p]; //current cell index
+//   int idx_curr = idx[i_p]; //current particle index
+//   if (idx_curr==0)
+//   {
+//     cellbeg[cellidx_curr] = i_p; return;
+//   }
+//   if (idx_curr==N-1)
+//   {
+//     cellend[cellidx_curr] = i_p+1; return;
+//   }
+//   int cellidx_prev = cellidx[i_p-1]; //previous cell index
+//   if (cellidx_prev!=cellidx_curr)
+//   {
+//     cellbeg[cellidx_curr] = i_p;
+//     cellend[cellidx_prev] = i_p;
+//   }
+// }
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
@@ -257,13 +251,7 @@ __global__ void exec_RK_1(
   float4 *er, //extra position array
   float sd, //random number standard deviation
   float4 *rn, //random number array
-  prng *ps, //PRNG state array
-  const float csl, //grid cell side length
-  const int n_cps, //number of grid cells per side
-  int *cellidx, //grid cell index array
-  int *idx, //particle index array
-  int *cellbeg, //grid cell beginning array
-  int *cellend) //grid cell end array
+  prng *ps) //PRNG state array
 {
   //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -277,7 +265,7 @@ __global__ void exec_RK_1(
   calc_bonded_f(N,i_p,r,f);
   calc_wall_f(N,R,sig,i_p,r,f);
   // calc_all_fLJ(N,sig,i_p,r,f);
-  calc_fLJ_nbr(N,sig,i_p,csl,n_cps,cellidx,idx,cellbeg,cellend,r,f);
+  // calc_fLJ_nbr(N,sig,i_p,r,f);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -292,13 +280,7 @@ __global__ void exec_RK_2(
   float sig, //LJ particle size
   float4 *er, //extra position array
   float4 *ef, //extra force array
-  float4 *rn, //random number array
-  const float csl, //grid cell side length
-  const int n_cps, //number of grid cells per side
-  int *cellidx, //grid cell index array
-  int *idx, //particle index array
-  int *cellbeg, //grid cell beginning array
-  int *cellend) //grid cell end array
+  float4 *rn) //random number array
 {
   //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -309,13 +291,60 @@ __global__ void exec_RK_2(
   calc_bonded_f(N,i_p,er,ef);
   calc_wall_f(N,R,sig,i_p,er,ef);
   // calc_all_fLJ(N,sig,i_p,er,ef);
-  calc_fLJ_nbr(N,sig,i_p,csl,n_cps,cellidx,idx,cellbeg,cellend,er,ef);
+  // calc_fLJ_nbr(N,sig,i_p,er,ef);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
 }
 
 //Host Functions
+
+//sugrid constructor
+sugrid::sugrid(
+    const int N, //number of particles
+    const float csl, //grid cell side length
+    const int n_cps) //number of grid cells per side
+  : csl {csl}
+  , n_cps {n_cps}
+{
+  //check parameters
+  if (csl<0.0){ throw error("grid_cell_side_length out of range");}
+  if (n_cps<1){ throw error("number_of_grid_cells_per_side out of range");}
+  std::string msg = "sugrid:"; //message
+  msg += " csl = "+cnfs(csl,6,'0',2);
+  msg += " n_cps = "+cnfs(n_cps,5,'0');
+  logger::record(msg);
+
+  //declare auxiliary variables
+  int n_c = n_cps*n_cps*n_cps; //number of cells
+
+  //allocate arrays
+  // cuda_check(cudaMallocManaged(&i_c[0],N*sizeof(int)));
+  // cuda_check(cudaMallocManaged(&i_c[1],N*sizeof(int)));
+  // cuda_check(cudaMallocManaged(&i_p[0],N*sizeof(int)));
+  // cuda_check(cudaMallocManaged(&i_p[1],N*sizeof(int)));
+  // cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));//check this arrays are this size
+  // cuda_check(cudaMallocManaged(&end,n_c*sizeof(int)));
+
+  //allocate extra buffer
+  // cub::DeviceRadixSort::SortPairs(nullptr,ebs,i_c[0],i_c[1],i_p[0],i_p[1],N);
+  // cuda_check(cudaMalloc(&eb,ebs));
+}
+
+//sugrid destructor
+sugrid::~sugrid()
+{
+  //deallocate arrays
+  // cuda_check(cudaFree(i_c[0]));
+  // cuda_check(cudaFree(i_c[1]));
+  // cuda_check(cudaFree(i_p[0]));
+  // cuda_check(cudaFree(i_p[1]));
+  // cuda_check(cudaFree(beg));
+  // cuda_check(cudaFree(end));
+
+  //deallocate extra buffer
+  // cuda_check(cudaFree(eb));
+}
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
@@ -325,8 +354,6 @@ chrsim::chrsim(parmap &par) //parameters
   , thdpblk {par.get_val<int>("threads_per_block",256)}
   , n_blk {(N+thdpblk-1)/thdpblk}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , csl {aco*sig+8*sd/xi}
-  , n_cps {2*static_cast<int>(ceilf(R/csl))}
 {
   //check parameters
   if (framepf<1){ throw error("frames_per_file out of range");}
@@ -339,28 +366,20 @@ chrsim::chrsim(parmap &par) //parameters
   logger::record(msg);
 
   //declare auxiliary variables
-  int n_c = n_cps*n_cps*n_cps; //number of grid cells
+  const float csl = aco*sig+8*sd/xi; //grid cell side length
 
   //allocate arrays
   cuda_check(cudaMalloc(&er,N*sizeof(float4)));
   cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
-  cuda_check(cudaMallocManaged(&cellidx.d_buffers[0],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&idx.d_buffers[0],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&cellidx.d_buffers[1],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&idx.d_buffers[1],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&cellbeg,n_c*sizeof(int)));
-  cuda_check(cudaMallocManaged(&cellend,n_c*sizeof(int)));
+
+  //allocate structures
+  gp = new sugrid(N,csl,2*ceilf(R/csl));
 
   //initialize PRNG
   init_ps<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
-
-  // Determine temporary device storage requirements
-  cub::DeviceRadixSort::SortPairs(nullptr,tmp_s,cellidx,idx,N);
-  // Allocate temporary storage
-  cuda_check(cudaMalloc(&tmp_b,tmp_s));
 }
 
 //chrsim destructor
@@ -371,12 +390,9 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
-  cuda_check(cudaFree(cellidx.d_buffers[0]));
-  cuda_check(cudaFree(idx.d_buffers[0]));
-  cuda_check(cudaFree(cellidx.d_buffers[1]));
-  cuda_check(cudaFree(idx.d_buffers[1]));
-  cuda_check(cudaFree(cellbeg));
-  cuda_check(cudaFree(cellend));
+
+  //deallocate structures
+  delete gp;
 }
 
 //generate a random initial condition
@@ -446,10 +462,10 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
       make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
-    if (ffi==0) for(int i = 0; i<512; ++i)//tmp---------------------------------for debug
-    {
-      printf("%d %d %d %d %d\n",i,cellidx.Current()[i],idx.Current()[i],cellbeg[i],cellend[i]);
-    }
+    // if (ffi==0) for(int i = 0; i<512; ++i)//tmp---------------------------------for debug
+    // {
+    //   printf("%d %d %d %d %d\n",i,gp->i_c[1][i],gp->i_p[1][i],gp->beg[i],gp->end[i]);
+    // }
     ++i_f; t += spframe*dt;
     write_frame_bin(bin_out_f);
   }
@@ -542,11 +558,11 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  calc_cellidx<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx.Current(),idx.Current());
-  cub::DeviceRadixSort::SortPairs(tmp_b,tmp_s,cellidx,idx,N);
-  find_beg_end<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx.Current(),idx.Current(),cellbeg,cellend);
-  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps,csl,n_cps,cellidx.Current(),idx.Current(),cellbeg,cellend);
-  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn,csl,n_cps,cellidx.Current(),idx.Current(),cellbeg,cellend);
+  // calc_cellidx<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx.Current(),idx.Current());
+  // cub::DeviceRadixSort::SortPairs(tmp_b,tmp_s,cellidx,idx,N);
+  // find_beg_end<<<n_blk,thdpblk>>>(N,r,csl,n_cps,cellidx.Current(),idx.Current(),cellbeg,cellend);
+  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
+  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
 }
 
 } //namespace mmc
