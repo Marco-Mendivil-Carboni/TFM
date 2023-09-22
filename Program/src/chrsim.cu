@@ -18,7 +18,7 @@ static constexpr float aco = 2.713283; //LJ attractive cutoff
 //Device Functions
 
 //calculate bonded forces
-inline __device__ void calc_bonded_f(
+inline __device__ void calc_bf(
   const int N, //number of particles
   int i_p, //particle index
   float4 *r, //position array
@@ -28,7 +28,7 @@ inline __device__ void calc_bonded_f(
   float3 vec[4]; //bond vectors
   float il[4]; //bond inverse lengths
   float cos[3]; //bond angle cosines
-  float3 f_b = {0.0,0.0,0.0}; //bonded forces
+  float3 bf = {0.0,0.0,0.0}; //bonded forces
 
   //calculate bond vectors, inverse lengths and angle cosines
   for (int i_b = 0; i_b<4; ++i_b) //bond index
@@ -50,20 +50,20 @@ inline __device__ void calc_bonded_f(
   }
 
   //calculate elastic potential force
-  f_b += k_e*(+(1.0-l_0*il[2])*vec[2]-(1.0-l_0*il[1])*vec[1]);
+  bf += k_e*(+(1.0-l_0*il[2])*vec[2]-(1.0-l_0*il[1])*vec[1]);
 
   //calculate bending potential force
-  f_b += k_b*(+il[1]*il[0]*vec[0]-cos[0]*vec[1]*il[1]*il[1]);
-  f_b += k_b*(+il[1]*il[2]*vec[2]-cos[1]*vec[1]*il[1]*il[1]);
-  f_b += k_b*(-il[2]*il[1]*vec[1]+cos[1]*vec[2]*il[2]*il[2]);
-  f_b += k_b*(-il[2]*il[3]*vec[3]+cos[2]*vec[2]*il[2]*il[2]);
+  bf += k_b*(+il[1]*il[0]*vec[0]-cos[0]*vec[1]*il[1]*il[1]);
+  bf += k_b*(+il[1]*il[2]*vec[2]-cos[1]*vec[1]*il[1]*il[1]);
+  bf += k_b*(-il[2]*il[1]*vec[1]+cos[1]*vec[2]*il[2]*il[2]);
+  bf += k_b*(-il[2]*il[3]*vec[3]+cos[2]*vec[2]*il[2]*il[2]);
 
   //add result to force array
-  f[i_p] += make_float4(f_b);
+  f[i_p] += make_float4(bf);
 }
 
 //calculate confinement force
-inline __device__ void calc_wall_f(
+inline __device__ void calc_cf(
   const int N, //number of particles
   const float R, //confinement radius
   float sig, //LJ particle size
@@ -78,23 +78,23 @@ inline __device__ void calc_wall_f(
   if (dwp>(rco*sig)){ return;}
 
   //calculate confinement force
-  float3 f_c = make_float3(-r[i_p]/d_r); //confinement force
+  float3 cf = make_float3(-r[i_p]/d_r); //confinement force
   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
   float d6 = dwp*dwp*dwp*dwp*dwp*dwp; //dwp to the sixth power
-  f_c *= 4.0*(12.0*(s6*s6)/(d6*d6*dwp)-6.0*(s6)/(d6*dwp));
+  cf *= 4.0*(12.0*(s6*s6)/(d6*d6*dwp)-6.0*(s6)/(d6*dwp));
 
   //add result to force array
-  f[i_p] += make_float4(f_c);
+  f[i_p] += make_float4(cf);
 }
 
 //calculate single Lennard-Jones force
-inline __device__ int calc_single_fLJ(
+inline __device__ int calc_single_ljf(
   const int N, //number of particles
   float sig, //LJ particle size
   int i_p, //particle index
   int j_p, //secondary particle index
   float4 *r, //position array
-  float3 &fLJ) //Lennard-Jones force
+  float3 &ljf) //Lennard-Jones forces
 {
   //calculate particle particle distance
   float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector
@@ -104,12 +104,12 @@ inline __device__ int calc_single_fLJ(
   //calculate Lennard-Jones force
   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
   float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
-  fLJ += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+  ljf += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
   return 0;
 }
 
 //calculate all Lennard-Jones forces
-__device__ void calc_all_fLJ(
+__device__ void calc_all_ljf(
   const int N, //number of particles
   float sig, //LJ particle size
   int i_p, //particle index
@@ -118,32 +118,33 @@ __device__ void calc_all_fLJ(
 {
   //declare auxiliary variables
   int n_skp; //number of skippable particle
-  float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+  float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
 
   //traverse polymer both ways
   for( int j_p = i_p-2; j_p>=0; j_p -= 1+n_skp) //secondary particle index
   {
-    n_skp = calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);
+    n_skp = calc_single_ljf(N,sig,i_p,j_p,r,ljf);
   }
   for( int j_p = i_p+2; j_p<N; j_p += 1+n_skp) //secondary particle index
   {
-    n_skp = calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);
+    n_skp = calc_single_ljf(N,sig,i_p,j_p,r,ljf);
   }
 
   //add result to force array
-  f[i_p] += make_float4(fLJ);
+  f[i_p] += make_float4(ljf);
 }
 
 // //calculate Lennard-Jones forces with neighbours
-// __device__ void calc_fLJ_nbr(
+// __device__ void calc_all_ljf(
 //   const int N, //number of particles
 //   float sig, //LJ particle size
 //   int i_p, //particle index
 //   float4 *r, //position array
-//   float4 *f) //force array
+//   float4 *f, //force array
+  // sugrid *gp) //grid pointer
 // {
 //   //calculate auxiliary variables
-//   float3 fLJ = {0.0,0.0,0.0}; //Lennard-Jones forces
+//   float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
 //   int iclim = n_cps/2; //integer coordinates limit
 //   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
 //   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
@@ -161,14 +162,14 @@ __device__ void calc_all_fLJ(
 //         for (int cpi = cellbeg[i_c]; cpi<cellend[i_c]; ++cpi) //cell particle index
 //         {
 //         //   j_p = idx[cpi];
-//         //   if (j_p!=i_p){ calc_single_fLJ(N,sig,i_p,j_p,r,fLJ);}
+//         //   if (j_p!=i_p){ calc_single_ljf(N,sig,i_p,j_p,r,ljf);}
 //         }
 //       }
 //     }
 //   }
 
 //   //add result to force array
-//   f[i_p] += make_float4(fLJ);
+//   f[i_p] += make_float4(ljf);
 // }
 
 //Global Functions
@@ -196,7 +197,7 @@ __global__ void calc_indexes(
   //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
-  gp->pi[0][i_p] = i_p;
+  gp->upi[i_p] = i_p;
 
   //calculate auxiliary variables
   float csl = gp->csl; //grid cell side length
@@ -205,7 +206,7 @@ __global__ void calc_indexes(
   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
 
   //calculate grid cell index
-  gp->ci[0][i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
+  gp->uci[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
 }
 
 //set grid cells empty
@@ -216,11 +217,13 @@ __global__ void set_cells_empty(
   int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
   if (i_a>=gp->n_c){ return;}
 
+  //beginning and end of grid cells
   gp->beg[i_a] = 0xffffffff;
+  gp->end[i_a] = 0;
 }
 
 //find beginning and end of each grid cell
-__global__ void find_cell_range(
+__global__ void find_cells(
   const int N, //number of particles
   sugrid *gp) //grid pointer
 {
@@ -229,7 +232,7 @@ __global__ void find_cell_range(
   if (i_a>=N){ return;}
 
   //set beginning and end of cells
-  int ci_curr = gp->ci[1][i_a]; //current cell index
+  int ci_curr = gp->sci[i_a]; //current cell index
   if (i_a==0)
   {
     gp->beg[ci_curr] = i_a; return;
@@ -238,7 +241,7 @@ __global__ void find_cell_range(
   {
     gp->end[ci_curr] = i_a+1; return;
   }
-  int ci_prev = gp->ci[1][i_a-1]; //previous cell index
+  int ci_prev = gp->sci[i_a-1]; //previous cell index
   if (ci_prev!=ci_curr)
   {
     gp->beg[ci_curr] = i_a;
@@ -267,10 +270,10 @@ __global__ void exec_RK_1(
 
   //calculate forces
   f[i_p] = {0.0,0.0,0.0,0.0};
-  calc_bonded_f(N,i_p,r,f);
-  calc_wall_f(N,R,sig,i_p,r,f);
-  // calc_all_fLJ(N,sig,i_p,r,f);
-  // calc_fLJ_nbr(N,sig,i_p,r,f);
+  calc_bf(N,i_p,r,f);
+  calc_cf(N,R,sig,i_p,r,f);
+  // calc_all_ljf(N,sig,i_p,r,f);
+  // calc_all_ljf(N,sig,i_p,r,f,g);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -293,10 +296,10 @@ __global__ void exec_RK_2(
 
   //calculate forces
   ef[i_p] = {0.0,0.0,0.0,0.0};
-  calc_bonded_f(N,i_p,er,ef);
-  calc_wall_f(N,R,sig,i_p,er,ef);
-  // calc_all_fLJ(N,sig,i_p,er,ef);
-  // calc_fLJ_nbr(N,sig,i_p,er,ef);
+  calc_bf(N,i_p,er,ef);
+  calc_cf(N,R,sig,i_p,er,ef);
+  // calc_all_ljf(N,sig,i_p,er,ef);
+  // calc_all_ljf(N,sig,i_p,er,ef,g);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
@@ -323,15 +326,15 @@ sugrid::sugrid(
   logger::record(msg);
 
   //allocate arrays
-  cuda_check(cudaMallocManaged(&ci[0],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&ci[1],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&pi[0],N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&pi[1],N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&uci,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&sci,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&upi,N*sizeof(int)));
+  cuda_check(cudaMallocManaged(&spi,N*sizeof(int)));
   cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));
   cuda_check(cudaMallocManaged(&end,n_c*sizeof(int)));
 
   //allocate extra buffer
-  cub::DeviceRadixSort::SortPairs(nullptr,ebs,ci[0],ci[1],pi[0],pi[1],N);
+  cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,N);
   cuda_check(cudaMalloc(&eb,ebs));
 
 }
@@ -340,10 +343,10 @@ sugrid::sugrid(
 sugrid::~sugrid()
 {
   //deallocate arrays
-  cuda_check(cudaFree(ci[0]));
-  cuda_check(cudaFree(ci[1]));
-  cuda_check(cudaFree(pi[0]));
-  cuda_check(cudaFree(pi[1]));
+  cuda_check(cudaFree(uci));
+  cuda_check(cudaFree(sci));
+  cuda_check(cudaFree(upi));
+  cuda_check(cudaFree(spi));
   cuda_check(cudaFree(beg));
   cuda_check(cudaFree(end));
 
@@ -354,28 +357,28 @@ sugrid::~sugrid()
 //sort pairs of indexes
 void sugrid::sort_indexes(int N) //number of particles
 {
-  cub::DeviceRadixSort::SortPairs(eb,ebs,ci[0],ci[1],pi[0],pi[1],N);
+  cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,upi,spi,N);
 }
 
 //chrsim constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
-  , framepf {par.get_val<int>("frames_per_file",100)}
-  , spframe {par.get_val<int>("steps_per_frame",1*2048)}
-  , thdpblk {par.get_val<int>("threads_per_block",256)}
-  , n_blk {(N+thdpblk-1)/thdpblk}
+  , fpf {par.get_val<int>("frames_per_file",100)}
+  , spf {par.get_val<int>("steps_per_frame",1*2048)}
+  , tpb {par.get_val<int>("threads_per_block",256)}
+  , n_blk {(N+tpb-1)/tpb}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
   , ljcsl {aco*sig+8*sd/xi}
   , ljg(N,ljcsl,2*ceilf(R/ljcsl))
 {
   //check parameters
-  if (framepf<1){ throw error("frames_per_file out of range");}
-  if (spframe<1){ throw error("steps_per_frame out of range");}
-  if (thdpblk<1){ throw error("threads_per_block out of range");}
+  if (fpf<1){ throw error("frames_per_file out of range");}
+  if (spf<1){ throw error("steps_per_frame out of range");}
+  if (tpb<1){ throw error("threads_per_block out of range");}
   std::string msg = "chrsim:"; //message
-  msg += " framepf = "+cnfs(framepf,5,'0');
-  msg += " spframe = "+cnfs(spframe,5,'0');
-  msg += " thdpblk = "+cnfs(thdpblk,5,'0');
+  msg += " fpf = "+cnfs(fpf,5,'0');
+  msg += " spf = "+cnfs(spf,5,'0');
+  msg += " tpb = "+cnfs(tpb,5,'0');
   logger::record(msg);
 
   //allocate arrays
@@ -391,7 +394,7 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMemcpy(ljgp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
 
   //initialize PRNG
-  init_ps<<<n_blk,thdpblk>>>(N,ps,time(nullptr));
+  init_ps<<<n_blk,tpb>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
@@ -466,21 +469,21 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 //run simulation and trajectory to binary file
 void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 {
-  for (int ffi = 0; ffi<framepf; ++ffi) //file frame index
+  for (int ffi = 0; ffi<fpf; ++ffi) //file frame index
   {
-    float prog_pc = (100.0*ffi)/(framepf); //progress percentage
+    float prog_pc = (100.0*ffi)/(fpf); //progress percentage
     logger::show_prog_pc(prog_pc);
-    for (int fsi = 0; fsi<spframe; ++fsi) //frame step index
+    for (int fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       make_RK_iteration();
     }
     cuda_check(cudaDeviceSynchronize());
-    ++i_f; t += spframe*dt;
+    ++i_f; t += spf*dt;
     write_frame_bin(bin_out_f);
   }
   for(int i = 0; i<512; ++i)//tmp-----------------------------------------------for debug
   {
-    printf("%d %u %u %u %u\n",i,ljg.ci[1][i],ljg.pi[1][i],ljg.beg[i],ljg.end[i]);
+    printf("%d %u %u %u %u\n",i,ljg.sci[i],ljg.spi[i],ljg.beg[i],ljg.end[i]);
   }
 }
 
@@ -571,12 +574,12 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  calc_indexes<<<n_blk,thdpblk>>>(N,r,ljgp);
+  calc_indexes<<<n_blk,tpb>>>(N,r,ljgp);
   ljg.sort_indexes(N);
-  set_cells_empty<<<(ljg.n_c+thdpblk-1)/thdpblk,thdpblk>>>(ljgp);
-  find_cell_range<<<n_blk,thdpblk>>>(N,ljgp);
-  exec_RK_1<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,sd,rn,ps);
-  exec_RK_2<<<n_blk,thdpblk>>>(N,R,r,f,sig,er,ef,rn);
+  set_cells_empty<<<(ljg.n_c+tpb-1)/tpb,tpb>>>(ljgp);
+  find_cells<<<n_blk,tpb>>>(N,ljgp);
+  exec_RK_1<<<n_blk,tpb>>>(N,R,r,f,sig,er,sd,rn,ps);
+  exec_RK_2<<<n_blk,tpb>>>(N,R,r,f,sig,er,ef,rn);
 }
 
 } //namespace mmc

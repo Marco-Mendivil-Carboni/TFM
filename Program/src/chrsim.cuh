@@ -26,10 +26,12 @@ struct sugrid //sorted uniform grid
 
   const float csl; //grid cell side length
   const uint n_cps; //number of grid cells per side
-  const uint n_c; //number of cells
+  const uint n_c; //number of grid cells
 
-  uint *ci[2]; //grid cell index arrays
-  uint *pi[2]; //particle index arrays
+  uint *uci; //unsorted grid cell index array
+  uint *sci; //sorted grid cell index array
+  uint *upi; //unsorted particle index array
+  uint *spi; //sorted particle index array
 
   uint *beg; //grid cell beginning array
   uint *end; //grid cell end array
@@ -82,10 +84,10 @@ class chrsim : public chrdat //chromatin simulation
 
   //Parameters and Variables
 
-  const int framepf; //frames per file
-  const int spframe; //steps per frame
+  const int fpf; //frames per file
+  const int spf; //steps per frame
 
-  const int thdpblk; //threads per block
+  const int tpb; //threads per block
   const int n_blk; //number of blocks
 
   float4 *er; //extra position array
