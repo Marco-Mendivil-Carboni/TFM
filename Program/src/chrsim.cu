@@ -87,7 +87,7 @@ inline __device__ void calc_cf(
 }
 
 //calculate single Lennard-Jones force
-inline __device__ int calc_single_ljf(
+inline __device__ float calc_single_ljf(
   float sig, //LJ particle size
   int i_p, //particle index
   int j_p, //secondary particle index
@@ -106,88 +106,87 @@ inline __device__ int calc_single_ljf(
   return 0;
 }
 
-//calculate all Lennard-Jones forces
-__device__ void calc_all_ljf(
-  const int N, //number of particles
-  float sig, //LJ particle size
-  int i_p, //particle index
-  float4 *r, //position array
-  float4 *f) //force array
-{
-  //declare auxiliary variables
-  int n_skp; //number of skippable particle
-  float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
-
-  //traverse polymer both ways
-  for( int j_p = i_p-2; j_p>=0; j_p -= 1+n_skp) //secondary particle index
-  {
-    n_skp = calc_single_ljf(sig,i_p,j_p,r,ljf);
-  }
-  for( int j_p = i_p+2; j_p<N; j_p += 1+n_skp) //secondary particle index
-  {
-    n_skp = calc_single_ljf(sig,i_p,j_p,r,ljf);
-  }
-
-  //add result to force array
-  f[i_p] += make_float4(ljf);
-}
-
-// //calculate cell Lennard-Jones forces
-// inline __device__ void calc_cell_ljf(
+// //calculate all Lennard-Jones forces
+// __device__ void calc_all_ljf(
+//   const int N, //number of particles
 //   float sig, //LJ particle size
 //   int i_p, //particle index
-//   int i_c, //cell index
 //   float4 *r, //position array
-//   sugrid *gp, //grid pointer
-//   float3 &ljf) //Lennard-Jones forces
+//   float4 *f) //force array
 // {
 //   //declare auxiliary variables
-//   uint j_p; //secondary particle index
-
-//   //check cell isn't empty
-//   if (gp->beg[i_c]==0xffffffff){ return;}
-
-//   //range over particles in cell
-//   for (int i_a = gp->beg[i_c]; i_a<gp->end[i_c]; ++i_a) //array index
-//   {
-//     j_p = gp->spi[i_a];
-//     if (j_p!=i_p){ calc_single_ljf(sig,i_p,j_p,r,ljf);}
-//   }
-// }
-
-// //calculate all Lennard-Jones forces
-// inline __device__ void calc_all_ljf(
-//   float sig, //LJ particle size
-//   int i_p, //particle index
-//   float4 *r, //position array
-//   float4 *f, //force array
-//   sugrid *gp) //grid pointer
-// {
-//   //calculate auxiliary variables
-//   const float csl = gp->csl; //grid cell side length
-//   const int cps = gp->cps; //grid cells per side
-//   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-//   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
-//   int iclim = cps/2; //integer coordinates limit
+//   int n_skp; //number of skippable particle
 //   float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
 
-//   //range over neighbouring cells
-//   int3 nir; //neighbour integer coordinates
-//   for (nir.x = max(-iclim,ir.x-1); nir.x<min(iclim-1,ir.x+1); ++nir.x)
+//   //traverse polymer both ways
+//   for( int j_p = i_p-2; j_p>=0; j_p -= 1+n_skp) //secondary particle index
 //   {
-//     for (nir.y = max(-iclim,ir.y-1); nir.y<min(iclim-1,ir.y+1); ++nir.y)
-//     {
-//       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
-//       {
-//         int nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps; //neighbour cell index
-//         calc_cell_ljf(sig,i_p,nci,r,gp,ljf);
-//       }
-//     }
+//     n_skp = calc_single_ljf(sig,i_p,j_p,r,ljf);
+//   }
+//   for( int j_p = i_p+2; j_p<N; j_p += 1+n_skp) //secondary particle index
+//   {
+//     n_skp = calc_single_ljf(sig,i_p,j_p,r,ljf);
 //   }
 
 //   //add result to force array
 //   f[i_p] += make_float4(ljf);
 // }
+
+//calculate cell Lennard-Jones forces
+inline __device__ void calc_cell_ljf(
+  float sig, //LJ particle size
+  int i_p, //particle index
+  int i_c, //cell index
+  float4 *r, //position array
+  sugrid *gp, //grid pointer
+  float3 &ljf) //Lennard-Jones forces
+{
+  //declare auxiliary variables
+  int j_p; //secondary particle index
+
+  //check cell isn't empty
+  if (gp->beg[i_c]==0xffffffff){ return;}
+
+  //range over particles in cell
+  for (int i_a = gp->beg[i_c]; i_a<gp->end[i_c]; ++i_a) //array index
+  {
+    j_p = gp->spi[i_a];
+    if ((j_p-i_p)>1||(j_p-i_p)<(-1)){ calc_single_ljf(sig,i_p,j_p,r,ljf);}
+  }
+}
+
+//calculate all Lennard-Jones forces
+inline __device__ void calc_all_ljf(
+  float sig, //LJ particle size
+  int i_p, //particle index
+  float4 *r, //position array
+  float4 *f, //force array
+  sugrid *gp) //grid pointer
+{
+  //calculate auxiliary variables
+  const float csl = gp->csl; //grid cell side length
+  const int cps = gp->cps; //grid cells per side
+  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
+  int iofst = (cps/2)*(1+cps+cps*cps); //index offset
+  float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
+
+  //range over neighbouring cells
+  int3 nir; //neighbour integer coordinates
+  for (nir.x = ir.x-1; nir.x<ir.x+2; ++nir.x)
+  {
+    for (nir.y = ir.y-1; nir.y<ir.y+2; ++nir.y)
+    {
+      for (nir.z = ir.z-1; nir.z<ir.z+2; ++nir.z)
+      {
+        int nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps; //neighbour cell index
+        if( nci>0 && nci<cps*cps*cps) calc_cell_ljf(sig,i_p,nci,r,gp,ljf);
+      }
+    }
+  }
+
+  //add result to force array
+  f[i_p] += make_float4(ljf);
+}
 
 //Global Functions
 
@@ -291,7 +290,7 @@ __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
   calc_cf(R,sig,i_p,r,f);
-  calc_all_ljf(N,sig,i_p,r,f);
+  calc_all_ljf(sig,i_p,r,f,ljp);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -317,7 +316,7 @@ __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,sig,i_p,er,ef);
-  calc_all_ljf(N,sig,i_p,er,ef);
+  calc_all_ljf(sig,i_p,er,ef,ljp);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
@@ -345,12 +344,12 @@ sugrid::sugrid(
   const uint gc = cps*cps*cps; //number of grid cells
 
   //allocate arrays
-  cuda_check(cudaMallocManaged(&uci,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&sci,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&upi,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&spi,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&beg,gc*sizeof(int)));
-  cuda_check(cudaMallocManaged(&end,gc*sizeof(int)));
+  cuda_check(cudaMalloc(&uci,N*sizeof(int)));
+  cuda_check(cudaMalloc(&sci,N*sizeof(int)));
+  cuda_check(cudaMalloc(&upi,N*sizeof(int)));
+  cuda_check(cudaMalloc(&spi,N*sizeof(int)));
+  cuda_check(cudaMalloc(&beg,gc*sizeof(int)));
+  cuda_check(cudaMalloc(&end,gc*sizeof(int)));
 
   //allocate extra buffer
   cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,N);
@@ -498,10 +497,6 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     ++i_f; t += spf*dt;
     write_frame_bin(bin_out_f);
   }
-  for(int i = 0; i<512; ++i)//tmp-----------------------------------------------for debug
-  {
-    printf("%d %u %u %u %u\n",i,ljg.sci[i],ljg.spi[i],ljg.beg[i],ljg.end[i]);
-  }
 }
 
 //set random particle types
@@ -599,6 +594,12 @@ void chrsim::make_RK_iteration()
 
   //calculate forces and update positions
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps,ljp);
+
+  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,er,ljp);
+  ljg.sort_indexes(N);
+  set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);
+  find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);
+
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn,ljp);
 }
 

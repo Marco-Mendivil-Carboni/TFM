@@ -27,6 +27,8 @@ struct sugrid //sorted uniform grid
   const float csl; //grid cell side length
   const uint cps; //grid cells per side
 
+  // int3 *pir; //particle integer coordinates
+
   uint *uci; //unsorted grid cell index array
   uint *sci; //sorted grid cell index array
   uint *upi; //unsorted particle index array
