@@ -35,10 +35,10 @@ class chrdat //chromatin data
 
   //Functions
 
-  //chrdat constructor
+  //chromatin data constructor
   chrdat(parmap &par); //parameters
 
-  //chrdat destructor
+  //chromatin data destructor
   ~chrdat();
 
   //write frame to text file

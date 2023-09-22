@@ -145,9 +145,9 @@ __device__ void calc_all_ljf(
 // {
 //   //calculate auxiliary variables
 //   float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
-//   int iclim = n_cps/2; //integer coordinates limit
+//   int iclim = cps/2; //integer coordinates limit
 //   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-//   int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+//   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
 //   //traverse neighbouring cells
 //   int3 nir; //neighbour integer coordinates
@@ -157,7 +157,7 @@ __device__ void calc_all_ljf(
 //     {
 //       for (nir.z = max(-iclim,ir.z-1); nir.z<min(iclim-1,ir.z+1); ++nir.z)
 //       {
-//         int i_c = iofst+nir.x+nir.y*n_cps+nir.z*n_cps*n_cps; //neighbour cell index
+//         int i_c = iofst+nir.x+nir.y*cps+nir.z*cps*cps; //neighbour cell index
 //         int j_p; //secondary particle index
 //         for (int cpi = cellbeg[i_c]; cpi<cellend[i_c]; ++cpi) //cell particle index
 //         {
@@ -200,22 +200,23 @@ __global__ void calc_indexes(
   gp->upi[i_p] = i_p;
 
   //calculate auxiliary variables
-  float csl = gp->csl; //grid cell side length
-  int n_cps = gp->n_cps; //number of grid cells per side
+  const float csl = gp->csl; //grid cell side length
+  const int cps = gp->cps; //grid cells per side
   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-  int iofst = (n_cps/2)*(1+n_cps+n_cps*n_cps); //index offset
+  int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
   //calculate grid cell index
-  gp->uci[i_p] = iofst+ir.x+ir.y*n_cps+ir.z*n_cps*n_cps;
+  gp->uci[i_p] = iofst+ir.x+ir.y*cps+ir.z*cps*cps;
 }
 
 //set grid cells empty
 __global__ void set_cells_empty(
+  const uint gc, //number of grid cells
   sugrid *gp) //grid pointer
 {
   //calculate array index
   int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
-  if (i_a>=gp->n_c){ return;}
+  if (i_a>=gc){ return;}
 
   //beginning and end of grid cells
   gp->beg[i_a] = 0xffffffff;
@@ -223,7 +224,7 @@ __global__ void set_cells_empty(
 }
 
 //find beginning and end of each grid cell
-__global__ void find_cells(
+__global__ void find_cells_limits(
   const int N, //number of particles
   sugrid *gp) //grid pointer
 {
@@ -307,40 +308,39 @@ __global__ void exec_RK_2(
 
 //Host Functions
 
-//sugrid constructor
+//sorted uniform grid constructor
 sugrid::sugrid(
     const uint N, //number of particles
     const float csl, //grid cell side length
-    const uint n_cps) //number of grid cells per side
-  : N {N}
-  , csl {csl}
-  , n_cps {n_cps}
-  , n_c {n_cps*n_cps*n_cps}
+    const uint cps) //grid cells per side
+  : csl {csl}
+  , cps {cps}
 {
   //check parameters
   if (csl<0.0){ throw error("grid_cell_side_length out of range");}
-  if (n_cps<1){ throw error("number_of_grid_cells_per_side out of range");}
+  if (cps<1){ throw error("grid_cells_per_side out of range");}
   std::string msg = "sugrid:"; //message
   msg += " csl = "+cnfs(csl,6,'0',2);
-  msg += " n_cps = "+cnfs(n_cps,5,'0');
-  msg += " n_c = "+cnfs(n_c,5,'0');
+  msg += " cps = "+cnfs(cps,5,'0');
   logger::record(msg);
+
+  //calculate auxiliary variables
+  const uint gc = cps*cps*cps; //number of grid cells
 
   //allocate arrays
   cuda_check(cudaMallocManaged(&uci,N*sizeof(int)));
   cuda_check(cudaMallocManaged(&sci,N*sizeof(int)));
   cuda_check(cudaMallocManaged(&upi,N*sizeof(int)));
   cuda_check(cudaMallocManaged(&spi,N*sizeof(int)));
-  cuda_check(cudaMallocManaged(&beg,n_c*sizeof(int)));
-  cuda_check(cudaMallocManaged(&end,n_c*sizeof(int)));
+  cuda_check(cudaMallocManaged(&beg,gc*sizeof(int)));
+  cuda_check(cudaMallocManaged(&end,gc*sizeof(int)));
 
   //allocate extra buffer
   cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,N);
   cuda_check(cudaMalloc(&eb,ebs));
-
 }
 
-//sugrid destructor
+//sorted uniform grid destructor
 sugrid::~sugrid()
 {
   //deallocate arrays
@@ -361,15 +361,15 @@ void sugrid::sort_indexes(int N) //number of particles
   cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,upi,spi,N);
 }
 
-//chrsim constructor
+//chromatin simulation constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
   , fpf {par.get_val<int>("frames_per_file",100)}
   , spf {par.get_val<int>("steps_per_frame",1*2048)}
   , tpb {par.get_val<int>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , ljcsl {aco*sig+8*sd/xi}
-  , ljg(N,ljcsl,2*ceilf(R/ljcsl))
+  , ljg(N,aco*sig+8*sd/xi,2*ceilf(R/aco*sig+8*sd/xi))
+  , ljc {ljg.cps*ljg.cps*ljg.cps}
 {
   //check parameters
   if (fpf<1){ throw error("frames_per_file out of range");}
@@ -388,17 +388,17 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
 
   //allocate structures
-  cuda_check(cudaMalloc(&ljgp,sizeof(sugrid)));
+  cuda_check(cudaMalloc(&ljp,sizeof(sugrid)));
 
   //copy LJ grid to device
-  cuda_check(cudaMemcpy(ljgp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(ljp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
 
   //initialize PRNG
   init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
-//chrsim destructor
+//chromatin simulation destructor
 chrsim::~chrsim()
 {
   //deallocate arrays
@@ -408,7 +408,7 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ps));
 
   //deallocate structures
-  cuda_check(cudaFree(ljgp));
+  cuda_check(cudaFree(ljp));
 }
 
 //generate a random initial condition
@@ -574,10 +574,13 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljgp);
+  //generate LJ grid lists
+  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);
   ljg.sort_indexes(N);
-  set_cells_empty<<<(ljg.n_c+tpb-1)/tpb,tpb>>>(ljgp);
-  find_cells<<<(N+tpb-1)/tpb,tpb>>>(N,ljgp);
+  set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);
+  find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);
+
+  //calculate forces and update positions
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps);
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn);
 }

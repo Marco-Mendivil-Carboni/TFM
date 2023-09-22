@@ -40,10 +40,10 @@ class logger //basic logger
 
   //Functions
 
-  //logger constructor
+  //basic logger constructor
   logger();
 
-  //logger destructor
+  //basic logger destructor
   ~logger();
 
   //return singleton instance
@@ -56,7 +56,7 @@ class error : public std::runtime_error //generic exception type
 
   //Functions
 
-  //error constructor
+  //generic exception type constructor
   error(const std::string &msg); //error message
 };
 

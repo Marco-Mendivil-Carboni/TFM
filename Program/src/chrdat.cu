@@ -9,7 +9,7 @@ namespace mmc //Marco Mendívil Carboni
 
 //Functions
 
-//chrdat constructor
+//chromatin data constructor
 chrdat::chrdat(parmap &par) //parameters
   : N {par.get_val<int>("number_of_particles",0)}
   , R {par.get_val<float>("confinement_radius",-1.0)}
@@ -35,7 +35,7 @@ chrdat::chrdat(parmap &par) //parameters
   cuda_check(cudaMallocManaged(&f,N*sizeof(float4)));
 }
 
-//chrdat destructor
+//chromatin data destructor
 chrdat::~chrdat()
 {
   //deallocate arrays

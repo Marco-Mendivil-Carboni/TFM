@@ -57,10 +57,10 @@ void logger::show_prog_pc(float prog_pc) //progress percentage
   std::cout<<"\r"; std::cout.flush();
 }
 
-//logger constructor
+//basic logger constructor
 logger::logger() {}
 
-//logger destructor
+//basic logger destructor
 logger::~logger()
 {
   log_f.close();
@@ -73,7 +73,7 @@ logger &logger::get_instance()
   return sin;
 }
 
-//error constructor
+//generic exception type constructor
 error::error(const std::string &msg) //error message
   : std::runtime_error(msg) {}
 
