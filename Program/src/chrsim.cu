@@ -237,15 +237,15 @@ __global__ void find_cells(
   {
     gp->beg[ci_curr] = i_a; return;
   }
-  if (i_a==N-1)
-  {
-    gp->end[ci_curr] = i_a+1; return;
-  }
   int ci_prev = gp->sci[i_a-1]; //previous cell index
   if (ci_prev!=ci_curr)
   {
     gp->beg[ci_curr] = i_a;
     gp->end[ci_prev] = i_a;
+  }
+  if (i_a==N-1)
+  {
+    gp->end[ci_curr] = i_a+1;
   }
 }
 
@@ -309,10 +309,11 @@ __global__ void exec_RK_2(
 
 //sugrid constructor
 sugrid::sugrid(
-    const int N, //number of particles
+    const uint N, //number of particles
     const float csl, //grid cell side length
     const uint n_cps) //number of grid cells per side
-  : csl {csl}
+  : N {N}
+  , csl {csl}
   , n_cps {n_cps}
   , n_c {n_cps*n_cps*n_cps}
 {
@@ -366,7 +367,6 @@ chrsim::chrsim(parmap &par) //parameters
   , fpf {par.get_val<int>("frames_per_file",100)}
   , spf {par.get_val<int>("steps_per_frame",1*2048)}
   , tpb {par.get_val<int>("threads_per_block",256)}
-  , n_blk {(N+tpb-1)/tpb}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
   , ljcsl {aco*sig+8*sd/xi}
   , ljg(N,ljcsl,2*ceilf(R/ljcsl))
@@ -394,7 +394,7 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMemcpy(ljgp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
 
   //initialize PRNG
-  init_ps<<<n_blk,tpb>>>(N,ps,time(nullptr));
+  init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
   cuda_check(cudaDeviceSynchronize());
 }
 
@@ -574,12 +574,12 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  calc_indexes<<<n_blk,tpb>>>(N,r,ljgp);
+  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljgp);
   ljg.sort_indexes(N);
   set_cells_empty<<<(ljg.n_c+tpb-1)/tpb,tpb>>>(ljgp);
-  find_cells<<<n_blk,tpb>>>(N,ljgp);
-  exec_RK_1<<<n_blk,tpb>>>(N,R,r,f,sig,er,sd,rn,ps);
-  exec_RK_2<<<n_blk,tpb>>>(N,R,r,f,sig,er,ef,rn);
+  find_cells<<<(N+tpb-1)/tpb,tpb>>>(N,ljgp);
+  exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps);
+  exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn);
 }
 
 } //namespace mmc
