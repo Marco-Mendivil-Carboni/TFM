@@ -229,14 +229,14 @@ __global__ void find_cells_limits(
 __global__ void sort_positions(
   const int N, //number of particles
   float4 *r, //position array
-  sugrid *gp) //grid pointer
+  sugrid *ljp) //LJ grid pointer
 {
   //calculate array index
   int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
   if (i_a>=N){ return;}
 
   //fill sorted position array
-  gp->sr[i_a] = r[gp->spi[i_a]];
+  ljp->sr[i_a] = r[ljp->spi[i_a]];
 }
 
 //calculate all Lennard-Jones forces
@@ -328,7 +328,7 @@ __global__ void exec_RK_2(
 
 //Host Functions
 
-//sorted uniform grid constructor
+//sorted uniform grid constructor//remove----------------------------------------
 sugrid::sugrid(
     const uint N, //number of particles
     const float csl, //grid cell side length
@@ -374,7 +374,7 @@ sugrid::sugrid(
   // cudaCreateTextureObject(&srt,&resDesc,&texDesc,NULL);
 }
 
-//sorted uniform grid destructor
+//sorted uniform grid destructor//remove-----------------------------------------
 sugrid::~sugrid()
 {
   //deallocate arrays
@@ -400,8 +400,8 @@ chrsim::chrsim(parmap &par) //parameters
   , spf {par.get_val<int>("steps_per_frame",1*2048)}
   , tpb {par.get_val<int>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , ljg(N,rco*sig+4*sd/xi,2*ceilf(R/(rco*sig+4*sd/xi)))//tmp----------------------------
-  , ljc {ljg.cps*ljg.cps*ljg.cps}
+  , ljg(N,rco*sig+4*sd/xi,2*ceilf(R/(rco*sig+4*sd/xi)))//tmp--------------------change to aco
+  , ljc {ljg.cps*ljg.cps*ljg.cps}//remove----------------------------------------
 {
   //check parameters
   if (fpf<1){ throw error("frames_per_file out of range");}
@@ -603,10 +603,11 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 void chrsim::make_RK_iteration()
 {
   //generate LJ grid
-  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);
-  sa::SortPairs(ljg.eb,ljg.ebs,ljg.uci,ljg.sci,ljg.upi,ljg.spi,N);
-  set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);
-  find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);
+  // ljg.generate_lists(tpb,r);//add---------------------------------------------
+  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);//remove--------------------------
+  sa::SortPairs(ljg.eb,ljg.ebs,ljg.uci,ljg.sci,ljg.upi,ljg.spi,N);//remove-------
+  set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);//remove---------------------
+  find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);//remove---------------------
 
   //calculate forces and update positions
   begin_iter<<<(N+tpb-1)/tpb,tpb>>>(N,f,ef,sd,rn,ps);
