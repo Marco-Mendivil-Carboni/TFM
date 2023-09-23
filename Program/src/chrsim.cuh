@@ -18,6 +18,8 @@ namespace mmc //Marco Mendívil Carboni
 
 using prng = curandStatePhilox4_32_10; //PRNG type
 
+using sa = cub::DeviceRadixSort; //sorting algorithm
+
 //Structures
 
 struct sugrid //sorted uniform grid
@@ -37,6 +39,8 @@ struct sugrid //sorted uniform grid
 
   float4 *sr; //sorted position array
 
+  // cudaTextureObject_t srt; //sorted position texture
+
   void *eb; //extra buffer
   size_t ebs; //extra buffer size
 
@@ -50,9 +54,6 @@ struct sugrid //sorted uniform grid
 
   //sorted uniform grid destructor
   ~sugrid();
-
-  //sort pairs of indexes
-  void sort_indexes(int N); //number of particles
 };
 
 //Classes
@@ -107,9 +108,6 @@ class chrsim : public chrdat //chromatin simulation
 
   //perform a confined random walk
   void perform_random_walk(curandGenerator_t &gen); //host PRNG
-
-  // //generate LJ grid data
-  // void generate_ljg(float4 *r); //position array
 
   //make one Runge-Kutta iteration
   void make_RK_iteration();
