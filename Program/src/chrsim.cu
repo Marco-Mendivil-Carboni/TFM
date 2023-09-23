@@ -86,25 +86,25 @@ inline __device__ void calc_cf(
   f[i_p] += make_float4(cf);
 }
 
-//calculate single Lennard-Jones force
-inline __device__ float calc_single_ljf(
-  float sig, //LJ particle size
-  int i_p, //particle index
-  int j_p, //secondary particle index
-  float4 *r, //position array
-  float3 &ljf) //Lennard-Jones forces
-{
-  //calculate particle particle distance
-  float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector
-  float dpp = length(vpp); //particle particle distance
-  if (dpp>(rco*sig)){ return ((dpp-rco*sig)/(1.25*l_0));}//tmp------------------change to aco
+// //calculate single Lennard-Jones force
+// inline __device__ float calc_single_ljf(
+//   float sig, //LJ particle size
+//   int i_p, //particle index
+//   int j_p, //secondary particle index
+//   float4 *r, //position array
+//   float3 &ljf) //Lennard-Jones forces
+// {
+//   //calculate particle particle distance
+//   float3 vpp = make_float3(r[i_p]-r[j_p]);//particle particle vector
+//   float dpp = length(vpp); //particle particle distance
+//   if (dpp>(rco*sig)){ return ((dpp-rco*sig)/(1.25*l_0));}//tmp------------------change to aco
 
-  //calculate Lennard-Jones force
-  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
-  float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
-  ljf += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
-  return 0;
-}
+//   //calculate Lennard-Jones force
+//   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
+//   float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
+//   ljf += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+//   return 0;
+// }
 
 // //calculate all Lennard-Jones forces
 // __device__ void calc_all_ljf(
@@ -132,26 +132,37 @@ inline __device__ float calc_single_ljf(
 //   f[i_p] += make_float4(ljf);
 // }
 
-//calculate cell Lennard-Jones forces
+//calculate Lennard-Jones forces with cell's particles
 inline __device__ void calc_cell_ljf(
   float sig, //LJ particle size
   int i_p, //particle index
   int i_c, //cell index
   float4 *r, //position array
-  sugrid *gp, //grid pointer
+  sugrid *ljp, //LJ grid pointer
   float3 &ljf) //Lennard-Jones forces
 {
   //declare auxiliary variables
   int j_p; //secondary particle index
+  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
 
   //check cell isn't empty
-  if (gp->beg[i_c]==0xffffffff){ return;}
+  if (ljp->beg[i_c]==0xffffffff){ return;}
 
-  //range over particles in cell
-  for (int i_a = gp->beg[i_c]; i_a<gp->end[i_c]; ++i_a) //array index
+  //range over cell's particles
+  for (int i_a = ljp->beg[i_c]; i_a<ljp->end[i_c]; ++i_a) //array index
   {
-    j_p = gp->spi[i_a];
-    if ((j_p-i_p)>1||(j_p-i_p)<(-1)){ calc_single_ljf(sig,i_p,j_p,r,ljf);}
+    j_p = ljp->spi[i_a];
+    if (abs(j_p-i_p)>1)
+    {
+      //calculate particle particle distance
+      float3 vpp = make_float3(r[i_p]-r[j_p]); //particle particle vector
+      float dpp = length(vpp); //particle particle distance
+      if (dpp>(rco*sig)){ continue;}//tmp---------------------------------------change to aco
+
+      //calculate Lennard-Jones force
+      float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
+      ljf += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+    }
   }
 }
 
@@ -161,11 +172,11 @@ inline __device__ void calc_all_ljf(
   int i_p, //particle index
   float4 *r, //position array
   float4 *f, //force array
-  sugrid *gp) //grid pointer
+  sugrid *ljp) //LJ grid pointer
 {
   //calculate auxiliary variables
-  const float csl = gp->csl; //grid cell side length
-  const int cps = gp->cps; //grid cells per side
+  const float csl = ljp->csl; //grid cell side length
+  const int cps = ljp->cps; //grid cells per side
   int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
   float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
@@ -179,7 +190,8 @@ inline __device__ void calc_all_ljf(
       for (nir.z = ir.z-1; nir.z<ir.z+2; ++nir.z)
       {
         int nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps; //neighbour cell index
-        if( nci>0 && nci<cps*cps*cps) calc_cell_ljf(sig,i_p,nci,r,gp,ljf);
+        if( nci<0 || nci>=cps*cps*cps){ continue;}
+        calc_cell_ljf(sig,i_p,nci,r,ljp,ljf);
       }
     }
   }
@@ -350,6 +362,7 @@ sugrid::sugrid(
   cuda_check(cudaMalloc(&spi,N*sizeof(int)));
   cuda_check(cudaMalloc(&beg,gc*sizeof(int)));
   cuda_check(cudaMalloc(&end,gc*sizeof(int)));
+  cuda_check(cudaMalloc(&sr,N*sizeof(float4)));
 
   //allocate extra buffer
   cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,N);
@@ -366,6 +379,7 @@ sugrid::~sugrid()
   cuda_check(cudaFree(spi));
   cuda_check(cudaFree(beg));
   cuda_check(cudaFree(end));
+  cuda_check(cudaFree(sr));
 
   //deallocate extra buffer
   cuda_check(cudaFree(eb));
@@ -384,7 +398,7 @@ chrsim::chrsim(parmap &par) //parameters
   , spf {par.get_val<int>("steps_per_frame",1*2048)}
   , tpb {par.get_val<int>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , ljg(N,aco*sig+8*sd/xi,2*ceilf(R/aco*sig+8*sd/xi))
+  , ljg(N,aco*sig,2*ceilf(R/(aco*sig)))
   , ljc {ljg.cps*ljg.cps*ljg.cps}
 {
   //check parameters
@@ -583,23 +597,27 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
   }
 }
 
+// //generate LJ grid data
+// void chrsim::generate_ljg(float4 *r) //position array
+// {
+//   calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);
+//   ljg.sort_indexes(N);
+//   set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);
+//   find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);
+// }
+
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  //generate LJ grid lists
   calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);
   ljg.sort_indexes(N);
   set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);
   find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);
-
-  //calculate forces and update positions
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps,ljp);
-
   calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,er,ljp);
   ljg.sort_indexes(N);
   set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);
   find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);
-
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn,ljp);
 }
 

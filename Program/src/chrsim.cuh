@@ -27,14 +27,15 @@ struct sugrid //sorted uniform grid
   const float csl; //grid cell side length
   const uint cps; //grid cells per side
 
-  // int3 *pir; //particle integer coordinates
-
   uint *uci; //unsorted grid cell index array
   uint *sci; //sorted grid cell index array
   uint *upi; //unsorted particle index array
   uint *spi; //sorted particle index array
+
   uint *beg; //grid cell beginning array
   uint *end; //grid cell end array
+
+  float4 *sr; //sorted position array
 
   void *eb; //extra buffer
   size_t ebs; //extra buffer size
@@ -106,6 +107,9 @@ class chrsim : public chrdat //chromatin simulation
 
   //perform a confined random walk
   void perform_random_walk(curandGenerator_t &gen); //host PRNG
+
+  // //generate LJ grid data
+  // void generate_ljg(float4 *r); //position array
 
   //make one Runge-Kutta iteration
   void make_RK_iteration();
