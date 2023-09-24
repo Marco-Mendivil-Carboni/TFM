@@ -178,68 +178,6 @@ __global__ void init_ps(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-//calculate grid cell and particle indexes
-__global__ void calc_indexes(
-  const int N, //number of particles
-  float4 *r, //position array
-  sugrid *gp) //grid pointer
-{
-  //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p>=N){ return;}
-  gp->upi[i_p] = i_p;
-
-  //calculate auxiliary variables
-  const float csl = gp->csl; //grid cell side length
-  const int cps = gp->cps; //grid cells per side
-  int3 ir = floorf(make_float3(r[i_p])/csl); //integer coordinates
-  int iofst = (cps/2)*(1+cps+cps*cps); //index offset
-
-  //calculate grid cell index
-  gp->uci[i_p] = iofst+ir.x+ir.y*cps+ir.z*cps*cps;
-}
-
-//set grid cells empty
-__global__ void set_cells_empty(
-  const uint gc, //number of grid cells
-  sugrid *gp) //grid pointer
-{
-  //calculate array index
-  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
-  if (i_a>=gc){ return;}
-
-  //beginning and end of grid cells
-  gp->beg[i_a] = 0xffffffff;
-  gp->end[i_a] = 0;
-}
-
-//find beginning and end of each grid cell
-__global__ void find_cells_limits(
-  const int N, //number of particles
-  sugrid *gp) //grid pointer
-{
-  //calculate array index
-  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
-  if (i_a>=N){ return;}
-
-  //set beginning and end of cells
-  int ci_curr = gp->sci[i_a]; //current cell index
-  if (i_a==0)
-  {
-    gp->beg[ci_curr] = i_a; return;
-  }
-  int ci_prev = gp->sci[i_a-1]; //previous cell index
-  if (ci_prev!=ci_curr)
-  {
-    gp->beg[ci_curr] = i_a;
-    gp->end[ci_prev] = i_a;
-  }
-  if (i_a==N-1)
-  {
-    gp->end[ci_curr] = i_a+1;
-  }
-}
-
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
   const int N, //number of particles
@@ -506,11 +444,7 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  // ljg.generate_lists(tpb,r);//add---------------------------------------------
-  calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);//remove--------------------------
-  sa::SortPairs(ljg.eb,ljg.ebs,ljg.uci,ljg.sci,ljg.upi,ljg.spi,N);//remove-------
-  set_cells_empty<<<(ljg.n_c+tpb-1)/tpb,tpb>>>(ljg.n_c,ljp);//remove---------------------
-  find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);//remove-----------------------
+  ljg.generate_arrays(tpb,r);
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps,ljp);
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn,ljp);
 }
