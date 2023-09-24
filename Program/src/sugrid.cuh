@@ -12,10 +12,10 @@ struct sugrid //sorted uniform grid
 {
   //Variables
 
-  const int n_o; //number of objects
+  const uint n_o; //number of objects
   const float csl; //grid cell side length
   const uint cps; //grid cells per side
-  const int n_c; //number of grid cells
+  const uint n_c; //number of grid cells
 
   uint *uci; //unsorted grid cell index array
   uint *sci; //sorted grid cell index array
@@ -24,8 +24,6 @@ struct sugrid //sorted uniform grid
 
   uint *beg; //grid cell beginning array
   uint *end; //grid cell end array
-
-  float4 *sr; //sorted position array
 
   void *eb; //extra buffer
   size_t ebs; //extra buffer size
@@ -41,8 +39,8 @@ struct sugrid //sorted uniform grid
   //sorted uniform grid destructor
   ~sugrid();
 
-  //generate grid lists
-  void generate_lists(
+  //generate grid arrays
+  void generate_arrays(
     int tpb, //threads per block
     float4 *r); //position array
 };

@@ -16,7 +16,7 @@ namespace mmc //Marco Mendívil Carboni
 
 //calculate grid cell and particle indexes
 __global__ void calc_indexes(
-  const int n_o, //number of objects
+  const uint n_o, //number of objects
   const float csl, //grid cell side length
   const uint cps, //grid cells per side
   uint *uci, //unsorted grid cell index array
@@ -39,42 +39,46 @@ __global__ void calc_indexes(
 
 //set grid cells empty
 __global__ void set_cells_empty(
-  const uint gc, //number of grid cells
-  sugrid *gp) //grid pointer
+  const uint n_c, //number of grid cells
+  uint *beg, //grid cell beginning array
+  uint *end) //grid cell end array
 {
   //calculate array index
-  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
-  if (i_a>=gc){ return;}
+  int lai = blockIdx.x*blockDim.x+threadIdx.x; //limit array index
+  if (lai>=n_c){ return;}
 
   //set beginning and end of grid cells
-  gp->beg[i_a] = 0xffffffff; gp->end[i_a] = 0;
+  beg[lai] = 0xffffffff;
+  end[lai] = 0;
 }
 
 //find beginning and end of each grid cell
 __global__ void find_cells_limits(
-  const int N, //number of particles
-  float4 *r, //position array
-  sugrid *gp) //grid pointer
+  const uint n_o, //number of objects
+  uint *sci, //sorted grid cell index array
+  uint *beg, //grid cell beginning array
+  uint *end) //grid cell end array
 {
   //calculate array index
-  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
-  if (i_a>=N){ return;}
+  int lai = blockIdx.x*blockDim.x+threadIdx.x; //limit array index
+  if (lai>=n_o){ return;}
 
-  //set beginning and end of cells
-  int ci_curr = gp->sci[i_a]; //current cell index
-  if (i_a==0)
+  //set beginning and end of grid cells
+  int ci_curr = sci[lai]; //current cell index
+  if (lai==0)
   {
-    gp->beg[ci_curr] = i_a; return;
+    beg[ci_curr] = lai;
+    return;
   }
-  int ci_prev = gp->sci[i_a-1]; //previous cell index
+  int ci_prev = sci[lai-1]; //previous cell index
   if (ci_prev!=ci_curr)
   {
-    gp->beg[ci_curr] = i_a;
-    gp->end[ci_prev] = i_a;
+    beg[ci_curr] = lai;
+    end[ci_prev] = lai;
   }
-  if (i_a==N-1)
+  if (lai==n_o-1)
   {
-    gp->end[ci_curr] = i_a+1;
+    end[ci_curr] = lai+1;
   }
 }
 
@@ -105,7 +109,6 @@ sugrid::sugrid(
   cuda_check(cudaMalloc(&spi,n_o*sizeof(uint)));
   cuda_check(cudaMalloc(&beg,n_c*sizeof(uint)));
   cuda_check(cudaMalloc(&end,n_c*sizeof(uint)));
-  cuda_check(cudaMalloc(&sr,n_o*sizeof(float4)));
 
   //allocate extra buffer
   cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,n_o);
@@ -122,21 +125,20 @@ sugrid::~sugrid()
   cuda_check(cudaFree(spi));
   cuda_check(cudaFree(beg));
   cuda_check(cudaFree(end));
-  cuda_check(cudaFree(sr));
 
   //deallocate extra buffer
   cuda_check(cudaFree(eb));
 }
 
-//generate grid lists
-void sugrid::generate_lists(
+//generate grid arrays
+void sugrid::generate_arrays(
   int tpb, //threads per block
   float4 *r) //position array
 {
   calc_indexes<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,csl,cps,uci,upi,r);
   cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,upi,spi,n_o);
-  set_cells_empty<<<(n_c+tpb-1)/tpb,tpb>>>(ljc,ljp);
-  find_cells_limits<<<(n_o+tpb-1)/tpb,tpb>>>(N,r,ljp);
+  set_cells_empty<<<(n_c+tpb-1)/tpb,tpb>>>(n_c,beg,end);
+  find_cells_limits<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,sci,beg,end);
 }
 
 } //namespace mmc
