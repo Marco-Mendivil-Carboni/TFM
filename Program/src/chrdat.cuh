@@ -14,7 +14,7 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float xi = 1.000000; //damping coefficient
-static constexpr float k_B = 0.001120; //Boltzmann constant
+static constexpr float k_B = 0.003356; //Boltzmann constant
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
@@ -65,10 +65,12 @@ class chrdat //chromatin data
   double t; //time
 
   ptype *pt; //particle type array
+
   float4 *r; //position array
   float4 *f; //force array
 
   float sig; //LJ particle size
+  const float eps; //LJ particle energy
 };
 
 } //namespace mmc

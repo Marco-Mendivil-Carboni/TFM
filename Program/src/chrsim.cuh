@@ -8,8 +8,6 @@
 
 #include <curand_kernel.h> //cuRAND device functions
 
-#include <cub/device/device_radix_sort.cuh> //cub parallel radix sort//remove----
-
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni
@@ -18,8 +16,6 @@ namespace mmc //Marco Mendívil Carboni
 //Aliases
 
 using prng = curandStatePhilox4_32_10; //PRNG type
-
-using sa = cub::DeviceRadixSort; //sorting algorithm//remove---------------------
 
 //Classes
 

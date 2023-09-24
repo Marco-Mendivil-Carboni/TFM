@@ -13,7 +13,7 @@ namespace mmc //Marco Mendívil Carboni
 
 static constexpr float dt = 1.0/2048; //timestep
 static constexpr float rco = 1.122462; //LJ repulsive cutoff
-static constexpr float aco = 2.713283; //LJ attractive cutoff
+static constexpr float aco = 2.518192; //LJ attractive cutoff
 
 //Device Functions
 
@@ -89,6 +89,7 @@ inline __device__ void calc_cf(
 //calculate Lennard-Jones forces with cell's particles
 inline __device__ void calc_cell_ljf(
   float sig, //LJ particle size
+  const float eps, //LJ particle energy
   int i_c, //cell index
   int i_p, //particle index
   float3 r_i, //particle position
@@ -116,11 +117,11 @@ inline __device__ void calc_cell_ljf(
       r_j = make_float3(r[j_p]);
       float3 vpp = r_i-r_j; //particle particle vector
       float dpp = length(vpp); //particle particle distance
-      if (dpp>(rco*sig)){ continue;}//tmp---------------------------------------change to aco
+      if (dpp>(aco*sig)){ continue;}
 
       //calculate Lennard-Jones force
       float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
-      ljf += 4.0*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+      ljf += 4.0*eps*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
     }
   }
 }
@@ -128,6 +129,7 @@ inline __device__ void calc_cell_ljf(
 //calculate all Lennard-Jones forces
 inline __device__ void calc_all_ljf(
   float sig, //LJ particle size
+  const float eps, //LJ particle energy
   int i_p, //particle index
   float4 *r, //position array
   float4 *f, //force array
@@ -153,7 +155,7 @@ inline __device__ void calc_all_ljf(
       {
         nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps;
         if( nci<0 || nci>=n_c){ continue;}
-        calc_cell_ljf(sig,nci,i_p,r_i,r,ljp,ljf);
+        calc_cell_ljf(sig,eps,nci,i_p,r_i,r,ljp,ljf);
       }
     }
   }
@@ -185,6 +187,7 @@ __global__ void exec_RK_1(
   float4 *r, //position array
   float4 *f, //force array
   float sig, //LJ particle size
+  const float eps, //LJ particle energy
   float4 *er, //extra position array
   float sd, //random number standard deviation
   float4 *rn, //random number array
@@ -202,7 +205,7 @@ __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
   calc_cf(R,sig,i_p,r,f);
-  calc_all_ljf(sig,i_p,r,f,ljp);
+  calc_all_ljf(sig,eps,i_p,r,f,ljp);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -215,6 +218,7 @@ __global__ void exec_RK_2(
   float4 *r, //position array
   float4 *f, //force array
   float sig, //LJ particle size
+  const float eps, //LJ particle energy
   float4 *er, //extra position array
   float4 *ef, //extra force array
   float4 *rn, //random number array
@@ -228,7 +232,7 @@ __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,sig,i_p,er,ef);
-  calc_all_ljf(sig,i_p,er,ef,ljp);
+  calc_all_ljf(sig,eps,i_p,er,ef,ljp);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
@@ -243,7 +247,7 @@ chrsim::chrsim(parmap &par) //parameters
   , spf {par.get_val<int>("steps_per_frame",1*2048)}
   , tpb {par.get_val<int>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , ljg(N,rco*sig+4*sd/xi,2*ceilf(R/(rco*sig+4*sd/xi)))//tmp--------------------change to aco
+  , ljg(N,aco*sig+4*sd/xi,2*ceilf(R/(aco*sig+4*sd/xi)))
 {
   //check parameters
   if (fpf<1){ throw error("frames_per_file out of range");}
@@ -297,7 +301,7 @@ void chrsim::generate_initial_condition()
   set_particle_types(gen);
 
   //reduce sigma for random walk
-  sig = 1.0/2;
+  sig = 0.8;
 
   //perform a confined random walk
   perform_random_walk(gen);
@@ -306,7 +310,7 @@ void chrsim::generate_initial_condition()
   while (sig<1.0)
   {
     make_RK_iteration();
-    sig += dt/(32*sig*sig);
+    sig += dt/(64*sig*sig);
   }
   cuda_check(cudaDeviceSynchronize());
 
@@ -445,8 +449,8 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 void chrsim::make_RK_iteration()
 {
   ljg.generate_arrays(tpb,r);
-  exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps,ljp);
-  exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn,ljp);
+  exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,sd,rn,ps,ljp);
+  exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,ef,rn,ljp);
 }
 
 } //namespace mmc

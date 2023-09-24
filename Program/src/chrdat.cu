@@ -15,18 +15,20 @@ chrdat::chrdat(parmap &par) //parameters
   , R {par.get_val<float>("confinement_radius",-1.0)}
   , T {par.get_val<float>("temperature",298.0)}
   , i_f {0}, t {0.0}
-  , sig {1.0}
+  , sig {1.0}, eps {par.get_val<float>("epsilon",0.5)}
 {
   //check parameters
   if (N<1){ throw error("number_of_particles out of range");}
   if (R<0.0){ throw error("confinement_radius out of range");}
   if (T<0.0){ throw error("temperature out of range");}
+  if (eps<0.2){ throw error("epsilon out of range");}
   float cvf = N*pow(0.5*sig/R,3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   std::string msg = "chrdat:"; //message
   msg += " N = "+cnfs(N,5,'0');
   msg += " R = "+cnfs(R,6,'0',2);
   msg += " T = "+cnfs(T,6,'0',2);
+  msg += " eps = "+cnfs(eps,6,'0',2);
   logger::record(msg);
 
   //allocate arrays
