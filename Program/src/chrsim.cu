@@ -310,7 +310,7 @@ void chrsim::generate_initial_condition()
   while (sig<1.0)
   {
     make_RK_iteration();
-    sig += dt/(64*sig*sig);
+    sig += dt/(32*sig*sig);
   }
   cuda_check(cudaDeviceSynchronize());
 
