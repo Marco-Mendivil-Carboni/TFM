@@ -38,10 +38,6 @@ struct sugrid //sorted uniform grid//remove-------------------------------------
   uint *beg; //grid cell beginning array
   uint *end; //grid cell end array
 
-  float4 *sr; //sorted position array
-
-  // cudaTextureObject_t srt; //sorted position texture
-
   void *eb; //extra buffer
   size_t ebs; //extra buffer size
 
