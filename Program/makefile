@@ -1,15 +1,17 @@
 NVCC = nvcc
-NVCCFLAGS = -gencode arch=compute_35,code=sm_35 \
-	-Wno-deprecated-gpu-targets -g
+NVCCFLAGS = -gencode arch=compute_35,code=sm_35 -Wno-deprecated-gpu-targets -g
 NVCCLINKS = -lcurand
 
-bin/simulate: bin/util.o bin/chrdat.o bin/chrsim.o bin/simulate.o
+bin/simulate: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o bin/simulate.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
 bin/simulate.o: src/simulate.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/chrsim.o: src/chrsim.cu src/chrsim.cuh bin/chrdat.o
+bin/chrsim.o: src/chrsim.cu src/chrsim.cuh bin/chrdat.o bin/sugrid.o
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+bin/sugrid.o: src/sugrid.cu src/sugrid.cuh bin/util.o src/vecops.cuh
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/chrdat.o: src/chrdat.cu src/chrdat.cuh bin/util.o src/vecops.cuh
@@ -19,4 +21,4 @@ bin/util.o: src/util.cu src/util.cuh
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 clean:
-	rm bin/util.o bin/chrdat.o bin/chrsim.o bin/simulate.o
+	rm bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o bin/simulate.o

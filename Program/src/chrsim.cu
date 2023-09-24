@@ -296,53 +296,6 @@ __global__ void exec_RK_2(
 
 //Host Functions
 
-//sorted uniform grid constructor//remove----------------------------------------
-sugrid::sugrid(
-    const uint N, //number of particles
-    const float csl, //grid cell side length
-    const uint cps) //grid cells per side
-  : csl {csl}
-  , cps {cps}
-{
-  //check parameters
-  if (csl<0.0){ throw error("grid_cell_side_length out of range");}
-  if (cps<1){ throw error("grid_cells_per_side out of range");}
-  std::string msg = "sugrid:"; //message
-  msg += " csl = "+cnfs(csl,6,'0',2);
-  msg += " cps = "+cnfs(cps,5,'0');
-  logger::record(msg);
-
-  //calculate auxiliary variables
-  const uint gc = cps*cps*cps; //number of grid cells
-
-  //allocate arrays
-  cuda_check(cudaMalloc(&uci,N*sizeof(int)));
-  cuda_check(cudaMalloc(&sci,N*sizeof(int)));
-  cuda_check(cudaMalloc(&upi,N*sizeof(int)));
-  cuda_check(cudaMalloc(&spi,N*sizeof(int)));
-  cuda_check(cudaMalloc(&beg,gc*sizeof(int)));
-  cuda_check(cudaMalloc(&end,gc*sizeof(int)));
-
-  //allocate extra buffer
-  sa::SortPairs(nullptr,ebs,uci,sci,upi,spi,N);
-  cuda_check(cudaMalloc(&eb,ebs));
-}
-
-//sorted uniform grid destructor//remove-----------------------------------------
-sugrid::~sugrid()
-{
-  //deallocate arrays
-  cuda_check(cudaFree(uci));
-  cuda_check(cudaFree(sci));
-  cuda_check(cudaFree(upi));
-  cuda_check(cudaFree(spi));
-  cuda_check(cudaFree(beg));
-  cuda_check(cudaFree(end));
-
-  //deallocate extra buffer
-  cuda_check(cudaFree(eb));
-}
-
 //chromatin simulation constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
@@ -351,7 +304,6 @@ chrsim::chrsim(parmap &par) //parameters
   , tpb {par.get_val<int>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
   , ljg(N,rco*sig+4*sd/xi,2*ceilf(R/(rco*sig+4*sd/xi)))//tmp--------------------change to aco
-  , ljc {ljg.cps*ljg.cps*ljg.cps}//remove----------------------------------------
 {
   //check parameters
   if (fpf<1){ throw error("frames_per_file out of range");}
@@ -555,7 +507,7 @@ void chrsim::make_RK_iteration()
   // ljg.generate_lists(tpb,r);//add---------------------------------------------
   calc_indexes<<<(N+tpb-1)/tpb,tpb>>>(N,r,ljp);//remove--------------------------
   sa::SortPairs(ljg.eb,ljg.ebs,ljg.uci,ljg.sci,ljg.upi,ljg.spi,N);//remove-------
-  set_cells_empty<<<(ljc+tpb-1)/tpb,tpb>>>(ljc,ljp);//remove---------------------
+  set_cells_empty<<<(ljg.n_c+tpb-1)/tpb,tpb>>>(ljg.n_c,ljp);//remove---------------------
   find_cells_limits<<<(N+tpb-1)/tpb,tpb>>>(N,ljp);//remove-----------------------
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,sd,rn,ps,ljp);
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,er,ef,rn,ljp);

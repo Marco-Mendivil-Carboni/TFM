@@ -4,7 +4,7 @@
 //Includes
 
 #include "chrdat.cuh" //chromatin data
-// #include "sugrid.cuh" //sorted uniform grid//add------------------------------
+#include "sugrid.cuh" //sorted uniform grid
 
 #include <curand_kernel.h> //cuRAND device functions
 
@@ -20,38 +20,6 @@ namespace mmc //Marco Mendívil Carboni
 using prng = curandStatePhilox4_32_10; //PRNG type
 
 using sa = cub::DeviceRadixSort; //sorting algorithm//remove---------------------
-
-//Structures
-
-struct sugrid //sorted uniform grid//remove--------------------------------------
-{
-  //Variables
-
-  const float csl; //grid cell side length
-  const uint cps; //grid cells per side
-
-  uint *uci; //unsorted grid cell index array
-  uint *sci; //sorted grid cell index array
-  uint *upi; //unsorted particle index array
-  uint *spi; //sorted particle index array
-
-  uint *beg; //grid cell beginning array
-  uint *end; //grid cell end array
-
-  void *eb; //extra buffer
-  size_t ebs; //extra buffer size
-
-  //Functions
-
-  //sorted uniform grid constructor
-  sugrid(
-    const uint N, //number of particles
-    const float csl, //grid cell side length
-    const uint cps); //grid cells per side
-
-  //sorted uniform grid destructor
-  ~sugrid();
-};
 
 //Classes
 
@@ -96,7 +64,6 @@ class chrsim : public chrdat //chromatin simulation
 
   sugrid ljg; //LJ grid
   sugrid *ljp; //LJ grid pointer
-  const uint ljc; //number of LJ grid cells//remove------------------------------
 
   //Functions
 
