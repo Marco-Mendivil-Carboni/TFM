@@ -43,7 +43,7 @@ __global__ void set_cells_empty(
   uint *beg, //grid cell beginning array
   uint *end) //grid cell end array
 {
-  //calculate array index
+  //calculate limit array index
   int lai = blockIdx.x*blockDim.x+threadIdx.x; //limit array index
   if (lai>=n_c){ return;}
 
@@ -59,26 +59,26 @@ __global__ void find_cells_limits(
   uint *beg, //grid cell beginning array
   uint *end) //grid cell end array
 {
-  //calculate array index
-  int lai = blockIdx.x*blockDim.x+threadIdx.x; //limit array index
-  if (lai>=n_o){ return;}
+  //calculate sorted array index
+  int sai = blockIdx.x*blockDim.x+threadIdx.x; //sorted array index
+  if (sai>=n_o){ return;}
 
   //set beginning and end of grid cells
-  int ci_curr = sci[lai]; //current cell index
-  if (lai==0)
+  int ci_curr = sci[sai]; //current cell index
+  if (sai==0)
   {
-    beg[ci_curr] = lai;
+    beg[ci_curr] = sai;
     return;
   }
-  int ci_prev = sci[lai-1]; //previous cell index
+  int ci_prev = sci[sai-1]; //previous cell index
   if (ci_prev!=ci_curr)
   {
-    beg[ci_curr] = lai;
-    end[ci_prev] = lai;
+    beg[ci_curr] = sai;
+    end[ci_prev] = sai;
   }
-  if (lai==n_o-1)
+  if (sai==n_o-1)
   {
-    end[ci_curr] = lai+1;
+    end[ci_curr] = sai+1;
   }
 }
 

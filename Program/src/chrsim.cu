@@ -107,9 +107,9 @@ inline __device__ void calc_cell_ljf(
   if (beg==0xffffffff){ return;}
 
   //range over cell's particles
-  for (int lai = beg; lai<end; ++lai) //limit array index
+  for (int sai = beg; sai<end; ++sai) //sorted array index
   {
-    j_p = ljp->spi[lai];
+    j_p = ljp->spi[sai];
     if (abs(j_p-i_p)>1)
     {
       //calculate particle particle distance
