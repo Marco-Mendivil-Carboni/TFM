@@ -136,21 +136,23 @@ inline __device__ void calc_all_ljf(
   //calculate auxiliary variables
   float3 r_i = make_float3(r[i_p]); //particle position
   const float csl = ljp->csl; //grid cell side length
-  const int cps = ljp->cps; //grid cells per side
+  const uint cps = ljp->cps; //grid cells per side
+  const uint n_c = ljp->n_c; //number of grid cells
   int3 ir = floorf(r_i/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
   float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
 
   //range over neighbouring cells
+  int nci; //neighbour cell index
   int3 nir; //neighbour integer coordinates
-  for (nir.x = ir.x-1; nir.x<ir.x+2; ++nir.x)
+  for (nir.x = ir.x-1; nir.x<=ir.x+1; ++nir.x)
   {
-    for (nir.y = ir.y-1; nir.y<ir.y+2; ++nir.y)
+    for (nir.y = ir.y-1; nir.y<=ir.y+1; ++nir.y)
     {
-      for (nir.z = ir.z-1; nir.z<ir.z+2; ++nir.z)
+      for (nir.z = ir.z-1; nir.z<=ir.z+1; ++nir.z)
       {
-        int nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps; //neighbour cell index
-        if( nci<0 || nci>=cps*cps*cps){ continue;}
+        nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps;
+        if( nci<0 || nci>=n_c){ continue;}
         calc_cell_ljf(sig,nci,i_p,r_i,r,ljp,ljf);
       }
     }
