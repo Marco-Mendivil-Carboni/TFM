@@ -250,13 +250,13 @@ chrsim::chrsim(parmap &par) //parameters
   , ljg(N,aco*sig+4*sd/xi,2*ceilf(R/(aco*sig+4*sd/xi)))
 {
   //check parameters
-  if (fpf<1){ throw error("frames_per_file out of range");}
-  if (spf<1){ throw error("steps_per_frame out of range");}
-  if (tpb<1){ throw error("threads_per_block out of range");}
+  if (!within(fpf,1,9'999)){ throw error("frames_per_file out of range");}
+  if (!within(spf,1,9'999)){ throw error("steps_per_frame out of range");}
+  if (!within(tpb,1,1'024)){ throw error("threads_per_block out of range");}
   std::string msg = "chrsim:"; //message
-  msg += " fpf = "+cnfs(fpf,5,'0');
-  msg += " spf = "+cnfs(spf,5,'0');
-  msg += " tpb = "+cnfs(tpb,5,'0');
+  msg += " fpf = "+cnfs(fpf,4,'0');
+  msg += " spf = "+cnfs(spf,4,'0');
+  msg += " tpb = "+cnfs(tpb,4,'0');
   logger::record(msg);
 
   //allocate arrays

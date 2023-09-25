@@ -111,6 +111,16 @@ std::string cnfs(
   return num_str.str();
 }
 
+//check if a number is within a range
+template <typename T1, typename T2, typename T3>
+bool within(
+  T1 num, //number
+  T2 min, //lower limit
+  T3 max) //upper limit
+{
+  return min<=num && num<=max;
+}
+
 //check file is open or else throw
 template <typename T>
 void check_file(

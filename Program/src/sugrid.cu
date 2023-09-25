@@ -14,12 +14,12 @@ namespace mmc //Marco Mendívil Carboni
 
 //Global Functions
 
-//calculate grid cell and particle indexes
+//calculate cell and particle indexes
 __global__ void calc_indexes(
   const uint n_o, //number of objects
-  const float csl, //grid cell side length
-  const uint cps, //grid cells per side
-  uint *uci, //unsorted grid cell index array
+  const float csl, //cell side length
+  const uint cps, //cells per side
+  uint *uci, //unsorted cell index array
   uint *upi, //unsorted particle index array
   float4 *r) //position array
 {
@@ -33,37 +33,37 @@ __global__ void calc_indexes(
   int3 ir = floorf(r_i/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
-  //calculate grid cell index
+  //calculate cell index
   uci[i_p] = iofst+ir.x+ir.y*cps+ir.z*cps*cps;
 }
 
-//set grid cells empty
+//set cells empty
 __global__ void set_cells_empty(
-  const uint n_c, //number of grid cells
-  uint *beg, //grid cell beginning array
-  uint *end) //grid cell end array
+  const uint n_c, //number of cells
+  uint *beg, //cell beginning array
+  uint *end) //cell end array
 {
   //calculate limit array index
   int lai = blockIdx.x*blockDim.x+threadIdx.x; //limit array index
   if (lai>=n_c){ return;}
 
-  //set beginning and end of grid cells
+  //set beginning and end of cells
   beg[lai] = 0xffffffff;
   end[lai] = 0;
 }
 
-//find beginning and end of each grid cell
+//find beginning and end of each cell
 __global__ void find_cells_limits(
   const uint n_o, //number of objects
-  uint *sci, //sorted grid cell index array
-  uint *beg, //grid cell beginning array
-  uint *end) //grid cell end array
+  uint *sci, //sorted cell index array
+  uint *beg, //cell beginning array
+  uint *end) //cell end array
 {
   //calculate sorted array index
   int sai = blockIdx.x*blockDim.x+threadIdx.x; //sorted array index
   if (sai>=n_o){ return;}
 
-  //set beginning and end of grid cells
+  //set beginning and end of cells
   int ci_curr = sci[sai]; //current cell index
   if (sai==0)
   {
@@ -87,19 +87,19 @@ __global__ void find_cells_limits(
 //sorted uniform grid constructor
 sugrid::sugrid(
     const uint n_o, //number of objects
-    const float csl, //grid cell side length
-    const uint cps) //grid cells per side
+    const float csl, //cell side length
+    const uint cps) //cells per side
   : n_o {n_o}
   , csl {csl}
   , cps {cps}
   , n_c {cps*cps*cps}
 {
   //check parameters
-  if (csl<0.0){ throw error("grid_cell_side_length out of range");}
-  if (cps<1){ throw error("grid_cells_per_side out of range");}
+  if (!within(csl,0.1,9.9)){ throw error("cell_side_length out of range");}
+  if (!within(cps,1,999)){ throw error("cells_per_side out of range");}
   std::string msg = "sugrid:"; //message
-  msg += " csl = "+cnfs(csl,6,'0',2);
-  msg += " cps = "+cnfs(cps,5,'0');
+  msg += " csl = "+cnfs(csl,3,'0',1);
+  msg += " cps = "+cnfs(cps,3,'0');
   logger::record(msg);
 
   //allocate arrays
