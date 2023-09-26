@@ -95,8 +95,8 @@ sugrid::sugrid(
   , n_c {cps*cps*cps}
 {
   //check parameters
-  if (!within(csl,0.1,9.9)){ throw error("cell_side_length out of range");}
-  if (!within(cps,1,999)){ throw error("cells_per_side out of range");}
+  if (!within(csl,0.0,10.0)){ throw error("cell_side_length out of range");}
+  if (!within(cps,1,1'000)){ throw error("cells_per_side out of range");}
   std::string msg = "sugrid:"; //message
   msg += " csl = "+cnfs(csl,3,'0',1);
   msg += " cps = "+cnfs(cps,3,'0');

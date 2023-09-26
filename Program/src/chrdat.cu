@@ -18,9 +18,9 @@ chrdat::chrdat(parmap &par) //parameters
   , sig {1.0}, eps {par.get_val<float>("epsilon",0.5)}
 {
   //check parameters
-  if (!within(N,1,99'999)){ throw error("number_of_particles out of range");}
-  if (!within(R,0.1,99.99)){ throw error("confinement_radius out of range");}
-  if (!within(T,0.0,999.9)){ throw error("temperature out of range");}
+  if (!within(N,1,100'000)){ throw error("number_of_particles out of range");}
+  if (!within(R,0.0,100.0)){ throw error("confinement_radius out of range");}
+  if (!within(T,0.0,1'000.0)){ throw error("temperature out of range");}
   if (!within(eps,0.125,2.0)){ throw error("epsilon out of range");}
   float cvf = N*pow(0.5*sig/R,3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
@@ -69,6 +69,7 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
 //read frame from text file
 void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
 {
+
 }
 
 //write frame to binary file
@@ -93,6 +94,7 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
 //read frame from binary file
 void chrdat::read_frame_bin(std::ifstream &bin_inp_f) //binary input file
 {
+
 }
 
 } //namespace mmc

@@ -69,8 +69,6 @@ class parmap : public std::map<std::string,std::string> //parameter map
   //parmap constructor
   parmap(std::ifstream &par_f); //parameter file
 
-  //Templates
-
   //get parameter value
   template <typename T>
   T get_val(
@@ -118,7 +116,7 @@ bool within(
   T2 min, //lower limit
   T3 max) //upper limit
 {
-  return min<=num && num<=max;
+  return min<=num && num<max;
 }
 
 //check file is open or else throw
