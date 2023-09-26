@@ -47,9 +47,9 @@ class chrsim : public chrdat //chromatin simulation
 
   //Parameters and Variables
 
-  const int fpf; //frames per file
-  const int spf; //steps per frame
-  const int tpb; //threads per block
+  const uint fpf; //frames per file
+  const uint spf; //steps per frame
+  const uint tpb; //threads per block
 
   float4 *er; //extra position array
   float4 *ef; //extra force array

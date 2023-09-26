@@ -91,7 +91,7 @@ class parmap : public std::map<std::string,std::string> //parameter map
 void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 
 //count files matching pattern
-int glob_count(const std::string &pathpat); //file path pattern
+uint glob_count(const std::string &pathpat); //file path pattern
 
 //convert number to formatted string
 template <typename T>
@@ -107,16 +107,6 @@ std::string cnfs(
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
   num_str<<num;
   return num_str.str();
-}
-
-//check if a number is within a range
-template <typename T1, typename T2, typename T3>
-bool within(
-  T1 num, //number
-  T2 min, //lower limit
-  T3 max) //upper limit
-{
-  return min<=num && num<max;
 }
 
 //check file is open or else throw

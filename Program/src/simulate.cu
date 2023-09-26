@@ -22,8 +22,8 @@ int main(
   std::ofstream out_f; //output file
   std::string pathstr; //file path string
   std::string pathpat; //file path pathpat
-  int sim_idx; //simulation index
-  int t_f_idx; //trajectory file index
+  uint sim_idx; //simulation index
+  uint t_f_idx; //trajectory file index
 
   //open log file inside simulation directory
   pathstr = sim_dir+"/all-messages.log";

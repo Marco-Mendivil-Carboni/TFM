@@ -116,5 +116,9 @@ inline __host__ __device__ int3 floorf(float3 v)
 {
   return make_int3(floorf(v.x),floorf(v.y),floorf(v.z));
 }
+inline __host__ __device__ int4 floorf(float4 v)
+{
+  return make_int4(floorf(v.x),floorf(v.y),floorf(v.z),floorf(v.w));
+}
 
 #endif //VECOPS_H

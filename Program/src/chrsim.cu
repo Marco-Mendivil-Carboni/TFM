@@ -19,8 +19,8 @@ static constexpr float aco = 2.518192; //LJ attractive cutoff
 
 //calculate bonded forces
 inline __device__ void calc_bf(
-  const int N, //number of particles
-  int i_p, //particle index
+  const uint N, //number of particles
+  uint i_p, //particle index
   float4 *r, //position array
   float4 *f) //force array
 {
@@ -31,7 +31,7 @@ inline __device__ void calc_bf(
   float3 bf = {0.0,0.0,0.0}; //bonded forces
 
   //calculate bond vectors, inverse lengths and angle cosines
-  for (int i_b = 0; i_b<4; ++i_b) //bond index
+  for (uint i_b = 0; i_b<4; ++i_b) //bond index
   {
     if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate variables if bond exists
     {
@@ -44,7 +44,7 @@ inline __device__ void calc_bf(
       il[i_b] = 0.0;
     }
   }
-  for (int i_c = 0; i_c<3; ++i_c) //cosine index
+  for (uint i_c = 0; i_c<3; ++i_c) //cosine index
   {
     cos[i_c] = dot(vec[i_c+1],vec[i_c])*il[i_c+1]*il[i_c];
   }
@@ -66,7 +66,7 @@ inline __device__ void calc_bf(
 inline __device__ void calc_cf(
   const float R, //confinement radius
   float sig, //LJ particle size
-  int i_p, //particle index
+  uint i_p, //particle index
   float4 *r, //position array
   float4 *f) //force array
 {
@@ -90,15 +90,15 @@ inline __device__ void calc_cf(
 inline __device__ void calc_cell_ljf(
   float sig, //LJ particle size
   const float eps, //LJ particle energy
-  int i_c, //cell index
-  int i_p, //particle index
+  uint i_c, //cell index
+  uint i_p, //particle index
   float3 r_i, //particle position
   float4 *r, //position array
   sugrid *ljp, //LJ grid pointer
   float3 &ljf) //Lennard-Jones forces
 {
   //declare auxiliary variables
-  int j_p; //secondary particle index
+  uint j_p; //secondary particle index
   float3 r_j; //secondary particle position
   float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
   uint beg = ljp->beg[i_c]; //cell beginning
@@ -108,10 +108,13 @@ inline __device__ void calc_cell_ljf(
   if (beg==0xffffffff){ return;}
 
   //range over cell's particles
-  for (int sai = beg; sai<end; ++sai) //sorted array index
+  for (uint sai = beg; sai<end; ++sai) //sorted array index
   {
+    //get secondary particle index
     j_p = ljp->spi[sai];
-    if (abs(j_p-i_p)>1)
+
+    //calculate force only between non-bonded particles
+    if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
     {
       //calculate particle particle distance
       r_j = make_float3(r[j_p]);
@@ -130,7 +133,7 @@ inline __device__ void calc_cell_ljf(
 inline __device__ void calc_all_ljf(
   float sig, //LJ particle size
   const float eps, //LJ particle energy
-  int i_p, //particle index
+  uint i_p, //particle index
   float4 *r, //position array
   float4 *f, //force array
   sugrid *ljp) //LJ grid pointer
@@ -141,11 +144,11 @@ inline __device__ void calc_all_ljf(
   const uint cps = ljp->cps; //grid cells per side
   const uint n_c = ljp->n_c; //number of grid cells
   int3 ir = floorf(r_i/csl); //integer coordinates
-  int iofst = (cps/2)*(1+cps+cps*cps); //index offset
+  uint iofst = (cps/2)*(1+cps+cps*cps); //index offset
   float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
 
   //range over neighbouring cells
-  int nci; //neighbour cell index
+  uint nci; //neighbour cell index
   int3 nir; //neighbour integer coordinates
   for (nir.x = ir.x-1; nir.x<=ir.x+1; ++nir.x)
   {
@@ -153,8 +156,11 @@ inline __device__ void calc_all_ljf(
     {
       for (nir.z = ir.z-1; nir.z<=ir.z+1; ++nir.z)
       {
+        //calculate neighbour cell index
         nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps;
-        if( nci<0 || nci>=n_c){ continue;}
+        if (nci>=n_c){ continue;}
+
+        //calculate Lennard-Jones forces with cell's particles
         calc_cell_ljf(sig,eps,nci,i_p,r_i,r,ljp,ljf);
       }
     }
@@ -168,12 +174,12 @@ inline __device__ void calc_all_ljf(
 
 //initialize PRNG state array
 __global__ void init_ps(
-  const int N, //number of particles
+  const uint N, //number of particles
   prng *ps, //PRNG state array
-  int pseed) //PRNG seed
+  uint pseed) //PRNG seed
 {
   //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
 
   //initialize PRNG state
@@ -182,7 +188,7 @@ __global__ void init_ps(
 
 //execute 1st stage of the Runge-Kutta method
 __global__ void exec_RK_1(
-  const int N, //number of particles
+  const uint N, //number of particles
   const float R, //confinement radius
   float4 *r, //position array
   float4 *f, //force array
@@ -195,7 +201,7 @@ __global__ void exec_RK_1(
   sugrid *ljp) //LJ grid pointer
 {
   //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
 
   //calculate random numbers
@@ -213,7 +219,7 @@ __global__ void exec_RK_1(
 
 //execute 2nd stage of the Runge-Kutta method
 __global__ void exec_RK_2(
-  const int N, //number of particles
+  const uint N, //number of particles
   const float R, //confinement radius
   float4 *r, //position array
   float4 *f, //force array
@@ -225,7 +231,7 @@ __global__ void exec_RK_2(
   sugrid *ljp) //LJ grid pointer
 {
   //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
   if (i_p>=N){ return;}
 
   //calculate forces
@@ -243,16 +249,16 @@ __global__ void exec_RK_2(
 //chromatin simulation constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
-  , fpf {par.get_val<int>("frames_per_file",100)}
-  , spf {par.get_val<int>("steps_per_frame",1*2048)}
-  , tpb {par.get_val<int>("threads_per_block",256)}
+  , fpf {par.get_val<uint>("frames_per_file",100)}
+  , spf {par.get_val<uint>("steps_per_frame",1*2048)}
+  , tpb {par.get_val<uint>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
   , ljg(N,aco*sig+4*sd/xi,2*ceilf(R/(aco*sig+4*sd/xi)))
 {
   //check parameters
-  if (!within(fpf,1,10'000)){ throw error("frames_per_file out of range");}
-  if (!within(spf,1,10'000)){ throw error("steps_per_frame out of range");}
-  if (!within(tpb,1,1'025)){ throw error("threads_per_block out of range");}
+  if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}
+  if (!(1<=spf&&spf<10'000)){ throw error("steps_per_frame out of range");}
+  if (!(1<=tpb&&tpb<1'025)){ throw error("threads_per_block out of range");}
   std::string msg = "chrsim:"; //message
   msg += " fpf = "+cnfs(fpf,4,'0');
   msg += " spf = "+cnfs(spf,4,'0');
@@ -347,11 +353,11 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 //run simulation and trajectory to binary file
 void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 {
-  for (int ffi = 0; ffi<fpf; ++ffi) //file frame index
+  for (uint ffi = 0; ffi<fpf; ++ffi) //file frame index
   {
     float prog_pc = (100.0*ffi)/(fpf); //progress percentage
     logger::show_prog_pc(prog_pc);
-    for (int fsi = 0; fsi<spf; ++fsi) //frame step index
+    for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       make_RK_iteration();
     }
@@ -365,7 +371,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
 {
   float ran; //random number in (0,1]
-  for (int i_p = 0; i_p<N; ++i_p) //particle index
+  for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     curandGenerateUniform(gen,&ran,1);
     if (ran<0.5){ pt[i_p] = LAD;}
@@ -396,8 +402,8 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
   old_dir = ran_dir;
 
   //place the rest of particles
-  int att = 0; //number of attempts
-  for (int i_p = 1; i_p<N; ++i_p) //particle index
+  uint att = 0; //number of attempts
+  for (uint i_p = 1; i_p<N; ++i_p) //particle index
   {
     //generate random direction perpendicular to old direction
     curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
@@ -421,7 +427,7 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
     if (!isfinite(r[i_p].x)){ p_a = false;}
     if (!isfinite(r[i_p].y)){ p_a = false;}
     if (!isfinite(r[i_p].z)){ p_a = false;}
-    for (int j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
+    for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
     {
       float dpp; //particle-particle distance
       dpp = length(make_float3(r[j_p]-r[i_p]));

@@ -57,11 +57,11 @@ class chrdat //chromatin data
 
   //Parameters and Variables
 
-  const int N; //number of particles
+  const uint N; //number of particles
   const float R; //confinement radius
   const float T; //temperature
 
-  int i_f; //frame index
+  uint i_f; //frame index
   double t; //time
 
   ptype *pt; //particle type array
