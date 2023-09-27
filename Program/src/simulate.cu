@@ -17,7 +17,7 @@ int main(
 
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory
-  bool new_sim = (argc==2) ? true : false; //make new simulation
+  bool new_sim = (argc==2)?true:false; //make new simulation
   std::ifstream inp_f; //input file
   std::ofstream out_f; //output file
   std::string pathstr; //file path string

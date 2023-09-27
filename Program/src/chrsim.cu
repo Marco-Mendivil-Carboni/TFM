@@ -195,7 +195,7 @@ __global__ void exec_RK_1(
   float sig, //LJ particle size
   const float eps, //LJ particle energy
   float4 *er, //extra position array
-  float sd, //random number standard deviation
+  float sd, //standard deviation
   float4 *rn, //random number array
   prng *ps, //PRNG state array
   sugrid *ljp) //LJ grid pointer
@@ -205,7 +205,13 @@ __global__ void exec_RK_1(
   if (i_p>=N){ return;}
 
   //calculate random numbers
-  rn[i_p] = sd*curand_normal4(&ps[i_p]);
+  float3 az; //absolute z-score
+  do
+  {
+    rn[i_p] = sd*curand_normal4(&ps[i_p]);
+    az = fabs(make_float3(rn[i_p])/sd);
+  }
+  while (az.x>5||az.y>5||az.z>5);
 
   //calculate forces
   f[i_p] = {0.0,0.0,0.0,0.0};
@@ -253,7 +259,7 @@ chrsim::chrsim(parmap &par) //parameters
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , ljg(N,aco*sig+4*sd/xi,2*ceilf(R/(aco*sig+4*sd/xi)))
+  , ljg(N,aco*sig+5*sd/xi,2*ceilf(R/(aco*sig+5*sd/xi)))
 {
   //check parameters
   if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}

@@ -14,8 +14,8 @@ chrdat::chrdat(parmap &par) //parameters
   : N {par.get_val<uint>("number_of_particles",0)}
   , R {par.get_val<float>("confinement_radius",-1.0)}
   , T {par.get_val<float>("temperature",298.0)}
+  , eps {par.get_val<float>("epsilon",1.0)}, sig {1.0}
   , i_f {0}, t {0.0}
-  , sig {1.0}, eps {par.get_val<float>("epsilon",0.5)}
 {
   //check parameters
   if (!(1<=N&&N<100'000)){ throw error("number_of_particles out of range");}
@@ -81,7 +81,7 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
   //frame header, for more information on its contents see chemfiles
   uint32_t header[18] = {1993, 1, 0, 
     0, 0, 0, 0, 0, 0, 0, 3*N*4, 0, 0, N, i_f, 0, 
-    *(reinterpret_cast<uint32_t *>(&t)), 0};
+    0, 0};
   bin_out_f.write(reinterpret_cast<char *>(header),sizeof(header));
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {

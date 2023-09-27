@@ -54,7 +54,7 @@ class chrsim : public chrdat //chromatin simulation
   float4 *er; //extra position array
   float4 *ef; //extra force array
 
-  const float sd; //random number standard deviation
+  const float sd; //standard deviation
   float4 *rn; //random number array
   prng *ps; //PRNG state array
 

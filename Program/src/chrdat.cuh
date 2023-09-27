@@ -61,6 +61,9 @@ class chrdat //chromatin data
   const float R; //confinement radius
   const float T; //temperature
 
+  const float eps; //LJ particle energy
+  float sig; //LJ particle size
+
   uint i_f; //frame index
   double t; //time
 
@@ -68,9 +71,6 @@ class chrdat //chromatin data
 
   float4 *r; //position array
   float4 *f; //force array
-
-  float sig; //LJ particle size
-  const float eps; //LJ particle energy
 };
 
 } //namespace mmc
