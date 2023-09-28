@@ -31,19 +31,27 @@ chrdat::chrdat(parmap &par) //parameters
   msg += " eps = "+cnfs(eps,5,'0',3);
   logger::record(msg);
 
-  //allocate arrays
-  cuda_check(cudaMallocManaged(&pt,N*sizeof(ptype)));
-  cuda_check(cudaMallocManaged(&r,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&f,N*sizeof(float4)));
+  //allocate device memory
+  cuda_check(cudaMalloc(&pt,N*sizeof(ptype)));
+  cuda_check(cudaMalloc(&r,N*sizeof(float4)));
+  cuda_check(cudaMalloc(&f,N*sizeof(float4)));
+
+  //allocate host memory
+  cuda_check(cudaMallocHost(&hpt,N*sizeof(ptype)));
+  cuda_check(cudaMallocHost(&hr,N*sizeof(float4)));
 }
 
 //chromatin data destructor
 chrdat::~chrdat()
 {
-  //deallocate arrays
+  //deallocate device memory
   cuda_check(cudaFree(pt));
   cuda_check(cudaFree(r));
   cuda_check(cudaFree(f));
+
+  //deallocate host memory
+  cuda_check(cudaFreeHost(hpt));
+  cuda_check(cudaFreeHost(hr));
 }
 
 //write frame to text file
@@ -55,9 +63,9 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
   {
     txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X";
     txt_out_f<<std::right<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
-    txt_out_f<<cnfs(r[i_p].x,8,' ',3);
-    txt_out_f<<cnfs(r[i_p].y,8,' ',3);
-    txt_out_f<<cnfs(r[i_p].z,8,' ',3);
+    txt_out_f<<cnfs(hr[i_p].x,8,' ',3);
+    txt_out_f<<cnfs(hr[i_p].y,8,' ',3);
+    txt_out_f<<cnfs(hr[i_p].z,8,' ',3);
     txt_out_f<<"\n";
   }
   txt_out_f<<cnfs(0.0,10,' ',5);
@@ -85,9 +93,9 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
   bin_out_f.write(reinterpret_cast<char *>(header),sizeof(header));
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    bin_out_f.write(reinterpret_cast<char *>(&(r[i_p].x)),4);
-    bin_out_f.write(reinterpret_cast<char *>(&(r[i_p].y)),4);
-    bin_out_f.write(reinterpret_cast<char *>(&(r[i_p].z)),4);
+    bin_out_f.write(reinterpret_cast<char *>(&(hr[i_p].x)),4);
+    bin_out_f.write(reinterpret_cast<char *>(&(hr[i_p].y)),4);
+    bin_out_f.write(reinterpret_cast<char *>(&(hr[i_p].z)),4);
   }
 }
 

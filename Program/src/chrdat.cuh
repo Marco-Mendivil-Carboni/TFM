@@ -68,9 +68,11 @@ class chrdat //chromatin data
   double t; //time
 
   ptype *pt; //particle type array
-
   float4 *r; //position array
   float4 *f; //force array
+
+  ptype *hpt; //host particle type array
+  float4 *hr; //host position array
 };
 
 } //namespace mmc

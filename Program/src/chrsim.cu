@@ -130,7 +130,7 @@ inline __device__ void calc_cell_ljf(
 }
 
 //calculate all Lennard-Jones forces
-inline __device__ void calc_all_ljf(
+inline __device__ void calc_ljf(
   float sig, //LJ particle size
   const float eps, //LJ particle energy
   uint i_p, //particle index
@@ -217,7 +217,7 @@ __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
   calc_cf(R,sig,i_p,r,f);
-  calc_all_ljf(sig,eps,i_p,r,f,ljp);
+  calc_ljf(sig,eps,i_p,r,f,ljp);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -244,7 +244,7 @@ __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,sig,i_p,er,ef);
-  calc_all_ljf(sig,eps,i_p,er,ef,ljp);
+  calc_ljf(sig,eps,i_p,er,ef,ljp);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
@@ -271,34 +271,36 @@ chrsim::chrsim(parmap &par) //parameters
   msg += " tpb = "+cnfs(tpb,4,'0');
   logger::record(msg);
 
-  //allocate arrays
+  //allocate device memory
   cuda_check(cudaMalloc(&er,N*sizeof(float4)));
   cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
-  cuda_check(cudaMallocManaged(&ps,N*sizeof(prng)));
-
-  //allocate structures
+  cuda_check(cudaMalloc(&ps,N*sizeof(prng)));
   cuda_check(cudaMalloc(&ljp,sizeof(sugrid)));
+
+  //allocate host memory
+  cuda_check(cudaMallocHost(&hps,N*sizeof(prng)));
 
   //copy LJ grid to device
   cuda_check(cudaMemcpy(ljp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
 
   //initialize PRNG
   init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
-  cuda_check(cudaDeviceSynchronize());
+  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDefault));
 }
 
 //chromatin simulation destructor
 chrsim::~chrsim()
 {
-  //deallocate arrays
+  //deallocate device memory
   cuda_check(cudaFree(er));
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
-
-  //deallocate structures
   cuda_check(cudaFree(ljp));
+
+  //deallocate host memory
+  cuda_check(cudaFreeHost(hps));
 }
 
 //generate a random initial condition
@@ -324,7 +326,7 @@ void chrsim::generate_initial_condition()
     make_RK_iteration();
     sig += dt/(32*sig*sig);
   }
-  cuda_check(cudaDeviceSynchronize());
+  cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDefault));
 
   //reset sigma
   sig = 1.0;
@@ -341,8 +343,8 @@ void chrsim::save_checkpoint(std::ofstream &bin_out_f) //binary output file
 {
   bin_out_f.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_out_f.write(reinterpret_cast<char *>(&t),sizeof(t));
-  bin_out_f.write(reinterpret_cast<char *>(r),N*sizeof(float4));
-  bin_out_f.write(reinterpret_cast<char *>(ps),N*sizeof(prng));
+  bin_out_f.write(reinterpret_cast<char *>(hr),N*sizeof(float4));
+  bin_out_f.write(reinterpret_cast<char *>(hps),N*sizeof(prng));
   logger::record("simulation checkpoint saved");
 }
 
@@ -351,26 +353,30 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 {
   bin_inp_f.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
-  bin_inp_f.read(reinterpret_cast<char *>(r),N*sizeof(float4));
-  bin_inp_f.read(reinterpret_cast<char *>(ps),N*sizeof(prng));
+  bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(float4));
+  cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyDefault));
+  bin_inp_f.read(reinterpret_cast<char *>(hps),N*sizeof(prng));
+  cuda_check(cudaMemcpy(ps,hps,N*sizeof(prng),cudaMemcpyDefault));
   logger::record("simulation checkpoint loaded");
 }
 
-//run simulation and trajectory to binary file
+//run simulation and write trajectory to binary file
 void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 {
+  float prog_pc; //progress percentage
   for (uint ffi = 0; ffi<fpf; ++ffi) //file frame index
   {
-    float prog_pc = (100.0*ffi)/(fpf); //progress percentage
+    prog_pc = (100.0*ffi)/(fpf);
     logger::show_prog_pc(prog_pc);
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       make_RK_iteration();
     }
-    cuda_check(cudaDeviceSynchronize());
+    cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDefault));
     ++i_f; t += spf*dt;
     write_frame_bin(bin_out_f);
   }
+  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDefault));
 }
 
 //set random particle types
@@ -380,9 +386,10 @@ void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     curandGenerateUniform(gen,&ran,1);
-    if (ran<0.5){ pt[i_p] = LAD;}
-    else{ pt[i_p] = non_LAD;}
+    if (ran<0.5){ hpt[i_p] = LAD;}
+    else{ hpt[i_p] = non_LAD;}
   }
+  cuda_check(cudaMemcpy(pt,hpt,N*sizeof(ptype),cudaMemcpyDefault));
 }
 
 //perform a confined random walk
@@ -401,7 +408,7 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
   float3 per_dir; //perpendicular direction
 
   //place first particle
-  r[0] = {0.0,0.0,0.0,0.0};
+  hr[0] = {0.0,0.0,0.0,0.0};
   curandGenerateUniform(gen,&ran,1); theta = acos(1.0-2.0*ran);
   curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
   ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
@@ -426,21 +433,21 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
     //calculate position of next particle
     curandGenerateUniform(gen,&ran,1);
     len_b = l_0+sqrt(2.0/(k_e*iT))*erfinv(2.0*ran-1.0);
-    r[i_p] = make_float4(len_b*new_dir)+r[i_p-1];
+    hr[i_p] = make_float4(len_b*new_dir)+hr[i_p-1];
 
     //check if new position is acceptable
     bool p_a = true; //position is acceptable
-    if (!isfinite(r[i_p].x)){ p_a = false;}
-    if (!isfinite(r[i_p].y)){ p_a = false;}
-    if (!isfinite(r[i_p].z)){ p_a = false;}
+    if (!isfinite(hr[i_p].x)){ p_a = false;}
+    if (!isfinite(hr[i_p].y)){ p_a = false;}
+    if (!isfinite(hr[i_p].z)){ p_a = false;}
     for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
     {
       float dpp; //particle-particle distance
-      dpp = length(make_float3(r[j_p]-r[i_p]));
+      dpp = length(make_float3(hr[j_p]-hr[i_p]));
       if (dpp<sig){ p_a = false; break;}
     }
     float d_r; //radial distance to origin
-    d_r = length(make_float3(r[i_p]));
+    d_r = length(make_float3(hr[i_p]));
     if (((R+sig/2)-d_r)<sig){ p_a = false;}
 
     if (p_a) //continue
@@ -452,9 +459,12 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
     {
       ++att;
       if (att>1024){ i_p = 1;}
-      else{ i_p--;}
+      else{ --i_p;}
     }
   }
+
+  //copy host position array to device
+  cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyDefault));
 }
 
 //make one iteration of the Runge-Kutta method
