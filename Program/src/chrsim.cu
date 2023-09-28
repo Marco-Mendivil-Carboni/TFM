@@ -321,12 +321,14 @@ void chrsim::generate_initial_condition()
   perform_random_walk(gen);
 
   //expand beads
+  logger::record("bead expansion begun");
   while (sig<1.0)
   {
     make_RK_iteration();
     sig += dt/(32*sig*sig);
   }
   cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDefault));
+  logger::record("bead expansion ended");
 
   //reset sigma
   sig = 1.0;
@@ -363,11 +365,10 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 //run simulation and write trajectory to binary file
 void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 {
-  float prog_pc; //progress percentage
+  logger::record("simulation begun");
   for (uint ffi = 0; ffi<fpf; ++ffi) //file frame index
   {
-    prog_pc = (100.0*ffi)/(fpf);
-    logger::show_prog_pc(prog_pc);
+    logger::show_prog_pc(100.0*ffi/fpf);
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       make_RK_iteration();
@@ -377,6 +378,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     write_frame_bin(bin_out_f);
   }
   cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDefault));
+  logger::record("simulation ended");
 }
 
 //set random particle types
