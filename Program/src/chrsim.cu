@@ -117,7 +117,7 @@ inline __device__ void calc_cell_ljf(
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
     {
       //calculate particle particle distance
-      r_j = make_float3(tex1D<float4>(ljp->tex,j_p));
+      r_j = make_float3(r[j_p]);
       float3 vpp = r_i-r_j; //particle particle vector
       float dpp = length(vpp); //particle particle distance
       if (dpp>(aco*sig)){ continue;}
@@ -473,9 +473,7 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 void chrsim::make_RK_iteration()
 {
   ljg.generate_arrays(tpb,r);
-  cudaMemcpy2DToArray(ljg.arr,0,0,r,N*sizeof(float4),N*sizeof(float4),1,cudaMemcpyDeviceToDevice);
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,sd,rn,ps,ljp);
-  cudaMemcpy2DToArray(ljg.arr,0,0,er,N*sizeof(float4),N*sizeof(float4),1,cudaMemcpyDeviceToDevice);
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,ef,rn,ljp);
 }
 

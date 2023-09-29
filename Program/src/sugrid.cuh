@@ -28,9 +28,6 @@ struct sugrid //sorted uniform grid
   void *eb; //extra buffer
   size_t ebs; //extra buffer size
 
-  cudaArray_t arr;
-  cudaTextureObject_t tex;
-
   //Functions
 
   //sorted uniform grid constructor
