@@ -117,7 +117,7 @@ inline __device__ void calc_cell_ljf(
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
     {
       //calculate particle particle distance
-      r_j = make_float3(r[j_p]);
+      r_j = make_float3(tex1D<float4>(ljp->tex,j_p));
       float3 vpp = r_i-r_j; //particle particle vector
       float dpp = length(vpp); //particle particle distance
       if (dpp>(aco*sig)){ continue;}
@@ -282,11 +282,11 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMallocHost(&hps,N*sizeof(prng)));
 
   //copy LJ grid to device
-  cuda_check(cudaMemcpy(ljp,&ljg,sizeof(sugrid),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(ljp,&ljg,sizeof(sugrid),cudaMemcpyHostToDevice));
 
   //initialize PRNG
   init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
-  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDeviceToHost));
 }
 
 //chromatin simulation destructor
@@ -327,7 +327,7 @@ void chrsim::generate_initial_condition()
     make_RK_iteration();
     sig += dt/(32*sig*sig);
   }
-  cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
   logger::record("bead expansion ended");
 
   //reset sigma
@@ -356,9 +356,9 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
   bin_inp_f.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
   bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(float4));
-  cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyHostToDevice));
   bin_inp_f.read(reinterpret_cast<char *>(hps),N*sizeof(prng));
-  cuda_check(cudaMemcpy(ps,hps,N*sizeof(prng),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(ps,hps,N*sizeof(prng),cudaMemcpyHostToDevice));
   logger::record("simulation checkpoint loaded");
 }
 
@@ -373,11 +373,11 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     {
       make_RK_iteration();
     }
-    cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDefault));
+    cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
     ++i_f; t += spf*dt;
     write_frame_bin(bin_out_f);
   }
-  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDeviceToHost));
   logger::record("simulation ended");
 }
 
@@ -391,7 +391,7 @@ void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
     if (ran<0.5){ hpt[i_p] = LAD;}
     else{ hpt[i_p] = non_LAD;}
   }
-  cuda_check(cudaMemcpy(pt,hpt,N*sizeof(ptype),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(pt,hpt,N*sizeof(ptype),cudaMemcpyHostToDevice));
 }
 
 //perform a confined random walk
@@ -466,14 +466,16 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
   }
 
   //copy host position array to device
-  cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyDefault));
+  cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyHostToDevice));
 }
 
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
   ljg.generate_arrays(tpb,r);
+  cudaMemcpy2DToArray(ljg.arr,0,0,r,N*sizeof(float4),N*sizeof(float4),1,cudaMemcpyDeviceToDevice);
   exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,sd,rn,ps,ljp);
+  cudaMemcpy2DToArray(ljg.arr,0,0,er,N*sizeof(float4),N*sizeof(float4),1,cudaMemcpyDeviceToDevice);
   exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,ef,rn,ljp);
 }
 

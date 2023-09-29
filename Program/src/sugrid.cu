@@ -113,6 +113,19 @@ sugrid::sugrid(
   //allocate extra buffer
   cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,n_o);
   cuda_check(cudaMalloc(&eb,ebs));
+
+  cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float4>();
+  cudaMallocArray(&arr,&channelDesc,n_o,1);
+  cudaResourceDesc resDesc;
+  memset(&resDesc,0,sizeof(resDesc));
+  resDesc.resType = cudaResourceTypeArray;
+  resDesc.res.array.array = arr;
+  cudaTextureDesc texDesc;
+  memset(&texDesc,0,sizeof(texDesc));
+  texDesc.filterMode = cudaFilterModePoint;
+  texDesc.readMode = cudaReadModeElementType;
+  texDesc.normalizedCoords = 0;
+  cudaCreateTextureObject(&tex,&resDesc,&texDesc,nullptr);
 }
 
 //sorted uniform grid destructor
@@ -128,6 +141,9 @@ sugrid::~sugrid()
 
   //deallocate extra buffer
   cuda_check(cudaFree(eb));
+
+  cudaDestroyTextureObject(tex);
+  cudaFreeArray(arr);
 }
 
 //generate grid arrays
