@@ -12,11 +12,16 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
-static constexpr float rco = 1.154701*sig; //WF repulsive cutoff
-static constexpr float aco = 2.000000*sig; //WF attractive cutoff
-static constexpr float wf1 = 18*sig*sig; //1st WF constant
-static constexpr float wf2 = 96*sig*sig*sig*sig; //2nd WF constant
-static constexpr float wf3 = 96*sig*sig*sig*sig*sig*sig; //3rd WF constant
+static constexpr float rco = 1.154701; //WF repulsive cutoff
+static constexpr float aco = 2.000000; //WF attractive cutoff
+
+//Enumerations
+
+enum srint //short-range interaction
+{
+  WFI, //Wang-Frenkel interaction
+  SRI //Soft-Repulsive interaction
+};
 
 //Device Functions
 
@@ -75,21 +80,49 @@ inline __device__ void calc_cf(
   //calculate auxiliary variables
   float d_r; //radial distance to origin
   d_r = length(make_float3(r[i_p]));
-  float dwp = (R+sig/2)-d_r; //wall-particle distance
+  float dwp = (R+0.5)-d_r; //wall-particle distance
   if (dwp>rco){ return;}
 
   //calculate confinement force
   float3 cf = make_float3(-r[i_p]/d_r); //confinement force
   float d2 = dwp*dwp; //dwp squared
-  cf *= (wf1*d2*d2-wf2*d2+wf3)/(d2*d2*d2*d2);
+  cf *= (18*d2*d2-96*d2+96)/(d2*d2*d2*d2);
 
   //add result to force array
   f[i_p] += make_float4(cf);
 }
 
+//calculate short-range force
+template <srint I> inline __device__ void calc_srf(
+  const float eps, //particle energy
+  float3 vpp, //particle particle vector
+  float dpp, //particle particle distance
+  float3 &srf); //short-range forces
+
+//calculate Wang-Frenkel force
+template <> inline __device__ void calc_srf<WFI>(
+  const float eps, //particle energy
+  float3 vpp, //particle particle vector
+  float dpp, //particle particle distance
+  float3 &srf) //short-range forces
+{
+  float d2 = dpp*dpp; //dpp squared
+  srf += eps*(18*d2*d2-96*d2+96)/(d2*d2*d2*d2)*vpp;
+}
+
+//calculate Soft-Repulsive force
+template <> inline __device__ void calc_srf<SRI>(
+  const float eps, //particle energy
+  float3 vpp, //particle particle vector
+  float dpp, //particle particle distance
+  float3 &srf) //short-range forces
+{
+  srf += (12-6*dpp)*vpp;
+}
+
 //calculate short-range forces with cell's particles
-inline __device__ void calc_cell_srf(
-  const float eps, //WF particle energy
+template <srint I> inline __device__ void calc_cell_srf(
+  const float eps, //particle energy
   uint i_c, //cell index
   uint i_p, //particle index
   float3 r_i, //particle position
@@ -122,15 +155,14 @@ inline __device__ void calc_cell_srf(
       if (dpp>aco){ continue;}
 
       //calculate short-range force
-      float d2 = dpp*dpp; //dpp squared
-      srf += eps*(wf1*d2*d2-wf2*d2+wf3)/(d2*d2*d2*d2)*vpp;
+      calc_srf<I>(eps,vpp,dpp,srf);
     }
   }
 }
 
 //calculate all short-range forces
-inline __device__ void calc_srf(
-  const float eps, //WF particle energy
+template <srint I> inline __device__ void calc_all_srf(
+  const float eps, //particle energy
   uint i_p, //particle index
   float4 *r, //position array
   float4 *f, //force array
@@ -159,7 +191,7 @@ inline __device__ void calc_srf(
         if (nci>=n_c){ continue;}
 
         //calculate short-range forces with cell's particles
-        calc_cell_srf(eps,nci,i_p,r_i,r,srg_p,srf);
+        calc_cell_srf<I>(eps,nci,i_p,r_i,r,srg_p,srf);
       }
     }
   }
@@ -185,10 +217,10 @@ __global__ void init_ps(
 }
 
 //execute 1st stage of the Runge-Kutta method
-__global__ void exec_RK_1(
+template <srint I> __global__ void exec_RK_1(
   const uint N, //number of particles
   const float R, //confinement radius
-  const float eps, //WF particle energy
+  const float eps, //particle energy
   float4 *r, //position array
   float4 *f, //force array
   float4 *er, //extra position array
@@ -214,17 +246,17 @@ __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
   calc_cf(R,i_p,r,f);
-  calc_srf(eps,i_p,r,f,srg_p);
+  calc_all_srf<I>(eps,i_p,r,f,srg_p);
 
   //calculate extra position
-  er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
+  er[i_p] = r[i_p]+f[i_p]*dt+rn[i_p];
 }
 
 //execute 2nd stage of the Runge-Kutta method
-__global__ void exec_RK_2(
+template <srint I> __global__ void exec_RK_2(
   const uint N, //number of particles
   const float R, //confinement radius
-  const float eps, //WF particle energy
+  const float eps, //particle energy
   float4 *r, //position array
   float4 *f, //force array
   float4 *er, //extra position array
@@ -240,10 +272,10 @@ __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,i_p,er,ef);
-  calc_srf(eps,i_p,er,ef,srg_p);
+  calc_all_srf<I>(eps,i_p,er,ef,srg_p);
 
   //calculate new position
-  r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
+  r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt+rn[i_p];
 }
 
 //Host Functions
@@ -254,7 +286,7 @@ chrsim::chrsim(parmap &par) //parameters
   , fpf {par.get_val<uint>("frames_per_file",100)}
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",256)}
-  , sd {sqrtf(2.0*xi*k_B*T*dt)}
+  , sd {sqrtf(2.0*k_B*T*dt)}
   , srg(N,aco,2*ceil(R/aco))
 {
   //check parameters
@@ -274,15 +306,11 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMalloc(&ps,N*sizeof(prng)));
   cuda_check(cudaMalloc(&srg_p,sizeof(sugrid)));
 
-  //allocate host memory
-  cuda_check(cudaMallocHost(&hps,N*sizeof(prng)));
-
   //copy short-range grid to device
   cuda_check(cudaMemcpy(srg_p,&srg,sizeof(sugrid),cudaMemcpyHostToDevice));
 
   //initialize PRNG
   init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
-  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDeviceToHost));
 }
 
 //chromatin simulation destructor
@@ -294,9 +322,6 @@ chrsim::~chrsim()
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
   cuda_check(cudaFree(srg_p));
-
-  //deallocate host memory
-  cuda_check(cudaFreeHost(hps));
 }
 
 //generate a random initial condition
@@ -335,7 +360,6 @@ void chrsim::save_checkpoint(std::ofstream &bin_out_f) //binary output file
   bin_out_f.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_out_f.write(reinterpret_cast<char *>(&t),sizeof(t));
   bin_out_f.write(reinterpret_cast<char *>(hr),N*sizeof(float4));
-  bin_out_f.write(reinterpret_cast<char *>(hps),N*sizeof(prng));
   logger::record("simulation checkpoint saved");
 }
 
@@ -346,8 +370,6 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
   bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(float4));
   cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyHostToDevice));
-  bin_inp_f.read(reinterpret_cast<char *>(hps),N*sizeof(prng));
-  cuda_check(cudaMemcpy(ps,hps,N*sizeof(prng),cudaMemcpyHostToDevice));
   logger::record("simulation checkpoint loaded");
 }
 
@@ -366,7 +388,6 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     ++i_f; t += spf*dt;
     write_frame_bin(bin_out_f);
   }
-  cuda_check(cudaMemcpy(hps,ps,N*sizeof(prng),cudaMemcpyDeviceToHost));
   logger::record("simulation ended");
 }
 
@@ -378,7 +399,7 @@ void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
   {
     curandGenerateUniform(gen,&ran,1);
     if (ran<0.5){ hpt[i_p] = LAD;}
-    else{ hpt[i_p] = non_LAD;}
+    else{ hpt[i_p] = LND;}
   }
   cuda_check(cudaMemcpy(pt,hpt,N*sizeof(ptype),cudaMemcpyHostToDevice));
 }
@@ -435,11 +456,11 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
     {
       float dpp; //particle-particle distance
       dpp = length(make_float3(hr[j_p]-hr[i_p]));
-      if (dpp<sig){ p_a = false; break;}
+      if (dpp<1.0){ p_a = false; break;}
     }
     float d_r; //radial distance to origin
     d_r = length(make_float3(hr[i_p]));
-    if (((R+sig/2)-d_r)<sig){ p_a = false;}
+    if (((R+0.5)-d_r)<1.0){ p_a = false;}
 
     if (p_a) //continue
     {
@@ -462,9 +483,9 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 void chrsim::make_RK_iteration()
 {
   srg.generate_arrays(tpb,r);
-  exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,ps,srg_p);
+  exec_RK_1<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,ps,srg_p);
   srg.generate_arrays(tpb,er);
-  exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
+  exec_RK_2<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
 }
 
 } //namespace mmc

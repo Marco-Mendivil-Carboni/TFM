@@ -61,8 +61,6 @@ class chrsim : public chrdat //chromatin simulation
   sugrid srg; //short-range grid
   sugrid *srg_p; //short-range grid pointer
 
-  prng *hps; //host PRNG state array
-
   //Functions
 
   //set random particle types

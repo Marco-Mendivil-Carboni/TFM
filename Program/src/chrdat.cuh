@@ -13,18 +13,16 @@ namespace mmc //Marco Mendívil Carboni
 
 //Constants
 
-static constexpr float xi = 1.000000; //damping coefficient
 static constexpr float k_B = 0.003356; //Boltzmann constant
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
-static constexpr float sig = 1.000000; //WF particle size
 
 //Enumerations
 
 enum ptype //particle type
 {
-  non_LAD, //non lamina associated domain
+  LND, //lamina non-associated domain
   LAD //lamina associated domain
 };
 
@@ -61,8 +59,7 @@ class chrdat //chromatin data
   const uint N; //number of particles
   const float R; //confinement radius
   const float T; //temperature
-
-  const float eps; //WF particle energy
+  const float eps; //particle energy
 
   uint i_f; //frame index
   double t; //time
@@ -73,6 +70,7 @@ class chrdat //chromatin data
 
   ptype *hpt; //host particle type array
   float4 *hr; //host position array
+  float4 *hf; //host force array
 };
 
 } //namespace mmc

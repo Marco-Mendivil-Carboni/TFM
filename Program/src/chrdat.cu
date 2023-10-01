@@ -14,15 +14,15 @@ chrdat::chrdat(parmap &par) //parameters
   : N {par.get_val<uint>("number_of_particles",0)}
   , R {par.get_val<float>("confinement_radius",-1.0)}
   , T {par.get_val<float>("temperature",298.0)}
-  , eps {par.get_val<float>("epsilon",1.0)}
+  , eps {par.get_val<float>("particle_energy",1.0)}
   , i_f {0}, t {0.0}
 {
   //check parameters
   if (!(1<=N&&N<100'000)){ throw error("number_of_particles out of range");}
   if (!(0.0<R&&R<100.0)){ throw error("confinement_radius out of range");}
   if (!(0.0<T&&T<1'000.0)){ throw error("temperature out of range");}
-  if (!(0.125<eps&&eps<2.0)){ throw error("epsilon out of range");}
-  float cvf = N*pow(0.5*sig/R,3); //chromatin volume fraction
+  if (!(0.125<eps&&eps<2.0)){ throw error("particle_energy out of range");}
+  float cvf = N*pow(0.5/R,3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   std::string msg = "chrdat:"; //message
   msg += " N = "+cnfs(N,5,'0');
@@ -39,6 +39,7 @@ chrdat::chrdat(parmap &par) //parameters
   //allocate host memory
   cuda_check(cudaMallocHost(&hpt,N*sizeof(ptype)));
   cuda_check(cudaMallocHost(&hr,N*sizeof(float4)));
+  cuda_check(cudaMallocHost(&hf,N*sizeof(float4)));
 }
 
 //chromatin data destructor
@@ -52,6 +53,7 @@ chrdat::~chrdat()
   //deallocate host memory
   cuda_check(cudaFreeHost(hpt));
   cuda_check(cudaFreeHost(hr));
+  cuda_check(cudaFreeHost(hf));
 }
 
 //write frame to text file
