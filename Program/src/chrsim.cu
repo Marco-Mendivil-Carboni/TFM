@@ -4,6 +4,8 @@
 
 #include <time.h> //time utilities library
 
+#include <curand_kernel.h> //cuRAND device functions
+
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni
@@ -12,8 +14,12 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
-static constexpr float rco = 1.154701; //WF repulsive cutoff
-static constexpr float aco = 2.000000; //WF attractive cutoff
+static constexpr float rco = 1.154701; //Wang-Frenkel repulsive cutoff
+static constexpr float aco = 2.000000; //Wang-Frenkel attractive cutoff
+
+//Aliases
+
+using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Enumerations
 
@@ -205,7 +211,7 @@ template <srint I> inline __device__ void calc_all_srf(
 //initialize PRNG state array
 __global__ void init_ps(
   const uint N, //number of particles
-  prng *ps, //PRNG state array
+  void *vps, //void PRNG state array
   uint pseed) //PRNG seed
 {
   //calculate particle index
@@ -213,6 +219,7 @@ __global__ void init_ps(
   if (i_p>=N){ return;}
 
   //initialize PRNG state
+  prng *ps = static_cast<prng *>(vps); //PRNG state array
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
@@ -226,7 +233,7 @@ template <srint I> __global__ void exec_RK_1(
   float4 *er, //extra position array
   float sd, //standard deviation
   float4 *rn, //random number array
-  prng *ps, //PRNG state array
+  void *vps, //void PRNG state array
   sugrid *srg_p) //short-range grid pointer
 {
   //calculate particle index
@@ -235,6 +242,7 @@ template <srint I> __global__ void exec_RK_1(
 
   //calculate random numbers
   float3 az; //absolute z-score
+  prng *ps = static_cast<prng *>(vps); //PRNG state array
   do
   {
     rn[i_p] = sd*curand_normal4(&ps[i_p]);
@@ -303,14 +311,14 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMalloc(&er,N*sizeof(float4)));
   cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
-  cuda_check(cudaMalloc(&ps,N*sizeof(prng)));
+  cuda_check(cudaMalloc(&vps,N*sizeof(prng)));
   cuda_check(cudaMalloc(&srg_p,sizeof(sugrid)));
 
   //copy short-range grid to device
   cuda_check(cudaMemcpy(srg_p,&srg,sizeof(sugrid),cudaMemcpyHostToDevice));
 
   //initialize PRNG
-  init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
+  init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,vps,time(nullptr));
 }
 
 //chromatin simulation destructor
@@ -320,23 +328,18 @@ chrsim::~chrsim()
   cuda_check(cudaFree(er));
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
-  cuda_check(cudaFree(ps));
+  cuda_check(cudaFree(vps));
   cuda_check(cudaFree(srg_p));
 }
 
 //generate a random initial condition
 void chrsim::generate_initial_condition()
 {
-  //initialize host PRNG
-  curandGenerator_t gen; //host PRNG
-  curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
-  curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
-
   //set random particle types
-  set_particle_types(gen);
+  set_particle_types();
 
   //perform a confined random walk
-  perform_random_walk(gen);
+  perform_random_walk();
 
   //separate beads
   logger::record("bead separation begun");
@@ -346,9 +349,6 @@ void chrsim::generate_initial_condition()
   // }
   cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
   logger::record("bead separation ended");
-
-  //free host PRNG
-  curandDestroyGenerator(gen);
 
   //record success message
   logger::record("initial condition generated");
@@ -392,8 +392,14 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 }
 
 //set random particle types
-void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
+void chrsim::set_particle_types()
 {
+  //initialize host PRNG
+  curandGenerator_t gen; //host PRNG
+  curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
+  curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
+
+  //set particle types randomly
   float ran; //random number in (0,1]
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
@@ -401,12 +407,22 @@ void chrsim::set_particle_types(curandGenerator_t &gen) //host PRNG
     if (ran<0.5){ hpt[i_p] = LAD;}
     else{ hpt[i_p] = LND;}
   }
+
+  //copy host particle type array to device
   cuda_check(cudaMemcpy(pt,hpt,N*sizeof(ptype),cudaMemcpyHostToDevice));
+
+  //free host PRNG
+  curandDestroyGenerator(gen);
 }
 
 //perform a confined random walk
-void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
+void chrsim::perform_random_walk()
 {
+  //initialize host PRNG
+  curandGenerator_t gen; //host PRNG
+  curandCreateGeneratorHost(&gen,CURAND_RNG_PSEUDO_DEFAULT);
+  curandSetPseudoRandomGeneratorSeed(gen,time(nullptr));
+
   //declare auxiliary variables
   float iT = 1.0/(k_B*T); //inverse temperature
   float ran; //random number in (0,1]
@@ -477,13 +493,16 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 
   //copy host position array to device
   cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyHostToDevice));
+
+  //free host PRNG
+  curandDestroyGenerator(gen);
 }
 
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
   srg.generate_arrays(tpb,r);
-  exec_RK_1<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,ps,srg_p);
+  exec_RK_1<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,srg_p);
   srg.generate_arrays(tpb,er);
   exec_RK_2<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
 }

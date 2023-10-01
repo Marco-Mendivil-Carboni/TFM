@@ -6,16 +6,10 @@
 #include "chrdat.cuh" //chromatin data
 #include "sugrid.cuh" //sorted uniform grid
 
-#include <curand_kernel.h> //cuRAND device functions
-
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni
 {
-
-//Aliases
-
-using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Classes
 
@@ -56,7 +50,7 @@ class chrsim : public chrdat //chromatin simulation
 
   const float sd; //standard deviation
   float4 *rn; //random number array
-  prng *ps; //PRNG state array
+  void *vps; //void PRNG state array
 
   sugrid srg; //short-range grid
   sugrid *srg_p; //short-range grid pointer
@@ -64,10 +58,10 @@ class chrsim : public chrdat //chromatin simulation
   //Functions
 
   //set random particle types
-  void set_particle_types(curandGenerator_t &gen); //host PRNG
+  void set_particle_types();
 
   //perform a confined random walk
-  void perform_random_walk(curandGenerator_t &gen); //host PRNG
+  void perform_random_walk();
 
   //make one Runge-Kutta iteration
   void make_RK_iteration();
