@@ -40,9 +40,33 @@ $$
 ## Lennard-Jones potential
 
 $$
-V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 4 \varepsilon \left[\left(\frac{\sigma}{d _{ij}}\right) ^{12} - \left(\frac{\sigma}{d _{ij}}\right) ^{6}\right]
+V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 4 \varepsilon \left(\left(\frac{\sigma}{d _{ij}}\right) ^{12} - \left(\frac{\sigma}{d _{ij}}\right) ^{6}\right)
 $$
 
 $$
 -\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 4 \varepsilon \left[12 \frac{\sigma ^{12}}{d _{ij} ^{14}} - 6 \frac{\sigma ^{6}}{d _{ij} ^{8}}\right] (\bar{r} _i - \bar{r} _j)
+$$
+
+## Wang-Frenkel potential
+
+$$
+V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} \varepsilon \left(\left(\frac{\sigma}{d _{ij}}\right) ^{2} - 1\right)\left(\left(\frac{2\sigma}{d _{ij}}\right) ^{2} - 1\right) ^{2}
+$$
+
+$$
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} \varepsilon \left[\frac{18 \sigma ^{2} d _{ij} ^{4} - 96 \sigma ^{4} d _{ij} ^{2} + 96\sigma ^{6}}{d _{ij} ^{8}}\right] (\bar{r} _i - \bar{r} _j)
+$$
+
+$$
+{\tt rco} = \frac{2}{\sqrt{3}} \sigma
+$$
+
+## Soft repulsive potential
+
+$$
+V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 2 \left(\frac{d _{ij}}{\sigma} + 1\right) \left(\frac{d _{ij}}{\sigma} - 2\right) ^{2}
+$$
+
+$$
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 2 \left[\frac{3}{\sigma ^{3}} d _{ij} - \frac{6}{\sigma ^{2}} \right] (\bar{r} _i - \bar{r} _j)
 $$

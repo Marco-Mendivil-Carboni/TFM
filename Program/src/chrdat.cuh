@@ -18,6 +18,7 @@ static constexpr float k_B = 0.003356; //Boltzmann constant
 static constexpr float l_0 = 1.000000; //bond natural length
 static constexpr float k_e = 100.0000; //elastic constant
 static constexpr float k_b = 2.000000; //bending constant
+static constexpr float sig = 1.000000; //WF particle size
 
 //Enumerations
 
@@ -61,8 +62,7 @@ class chrdat //chromatin data
   const float R; //confinement radius
   const float T; //temperature
 
-  const float eps; //LJ particle energy
-  float sig; //LJ particle size
+  const float eps; //WF particle energy
 
   uint i_f; //frame index
   double t; //time

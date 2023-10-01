@@ -58,8 +58,8 @@ class chrsim : public chrdat //chromatin simulation
   float4 *rn; //random number array
   prng *ps; //PRNG state array
 
-  sugrid ljg; //LJ grid
-  sugrid *ljp; //LJ grid pointer
+  sugrid srg; //short-range grid
+  sugrid *srg_p; //short-range grid pointer
 
   prng *hps; //host PRNG state array
 

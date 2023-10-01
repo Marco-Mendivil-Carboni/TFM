@@ -12,8 +12,11 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
-static constexpr float rco = 1.122462; //LJ repulsive cutoff
-static constexpr float aco = 2.518192; //LJ attractive cutoff
+static constexpr float rco = 1.154701*sig; //WF repulsive cutoff
+static constexpr float aco = 2.000000*sig; //WF attractive cutoff
+static constexpr float wf1 = 18*sig*sig; //1st WF constant
+static constexpr float wf2 = 96*sig*sig*sig*sig; //2nd WF constant
+static constexpr float wf3 = 96*sig*sig*sig*sig*sig*sig; //3rd WF constant
 
 //Device Functions
 
@@ -65,7 +68,6 @@ inline __device__ void calc_bf(
 //calculate confinement force
 inline __device__ void calc_cf(
   const float R, //confinement radius
-  float sig, //LJ particle size
   uint i_p, //particle index
   float4 *r, //position array
   float4 *f) //force array
@@ -74,35 +76,32 @@ inline __device__ void calc_cf(
   float d_r; //radial distance to origin
   d_r = length(make_float3(r[i_p]));
   float dwp = (R+sig/2)-d_r; //wall-particle distance
-  if (dwp>(rco*sig)){ return;}
+  if (dwp>rco){ return;}
 
   //calculate confinement force
   float3 cf = make_float3(-r[i_p]/d_r); //confinement force
-  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
-  float d6 = dwp*dwp*dwp*dwp*dwp*dwp; //dwp to the sixth power
-  cf *= 4.0*(12.0*(s6*s6)/(d6*d6*dwp)-6.0*(s6)/(d6*dwp));
+  float d2 = dwp*dwp; //dwp squared
+  cf *= (wf1*d2*d2-wf2*d2+wf3)/(d2*d2*d2*d2);
 
   //add result to force array
   f[i_p] += make_float4(cf);
 }
 
-//calculate Lennard-Jones forces with cell's particles
-inline __device__ void calc_cell_ljf(
-  float sig, //LJ particle size
-  const float eps, //LJ particle energy
+//calculate short-range forces with cell's particles
+inline __device__ void calc_cell_srf(
+  const float eps, //WF particle energy
   uint i_c, //cell index
   uint i_p, //particle index
   float3 r_i, //particle position
   float4 *r, //position array
-  sugrid *ljp, //LJ grid pointer
-  float3 &ljf) //Lennard-Jones forces
+  sugrid *srg_p, //short-range grid pointer
+  float3 &srf) //short-range forces
 {
   //declare auxiliary variables
   uint j_p; //secondary particle index
   float3 r_j; //secondary particle position
-  float s6 = sig*sig*sig*sig*sig*sig; //sig to the sixth power
-  uint beg = ljp->beg[i_c]; //cell beginning
-  uint end = ljp->end[i_c]; //cell end
+  uint beg = srg_p->beg[i_c]; //cell beginning
+  uint end = srg_p->end[i_c]; //cell end
 
   //check cell isn't empty
   if (beg==0xffffffff){ return;}
@@ -111,7 +110,7 @@ inline __device__ void calc_cell_ljf(
   for (uint sai = beg; sai<end; ++sai) //sorted array index
   {
     //get secondary particle index
-    j_p = ljp->spi[sai];
+    j_p = srg_p->spi[sai];
 
     //calculate force only between non-bonded particles
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
@@ -120,32 +119,31 @@ inline __device__ void calc_cell_ljf(
       r_j = make_float3(r[j_p]);
       float3 vpp = r_i-r_j; //particle particle vector
       float dpp = length(vpp); //particle particle distance
-      if (dpp>(aco*sig)){ continue;}
+      if (dpp>aco){ continue;}
 
-      //calculate Lennard-Jones force
-      float d6 = dpp*dpp*dpp*dpp*dpp*dpp; //dpp to the sixth power
-      ljf += 4.0*eps*(12.0*(s6*s6)/(d6*d6*dpp)-6.0*(s6)/(d6*dpp))*vpp;
+      //calculate short-range force
+      float d2 = dpp*dpp; //dpp squared
+      srf += eps*(wf1*d2*d2-wf2*d2+wf3)/(d2*d2*d2*d2)*vpp;
     }
   }
 }
 
-//calculate all Lennard-Jones forces
-inline __device__ void calc_ljf(
-  float sig, //LJ particle size
-  const float eps, //LJ particle energy
+//calculate all short-range forces
+inline __device__ void calc_srf(
+  const float eps, //WF particle energy
   uint i_p, //particle index
   float4 *r, //position array
   float4 *f, //force array
-  sugrid *ljp) //LJ grid pointer
+  sugrid *srg_p) //short-range grid pointer
 {
   //calculate auxiliary variables
   float3 r_i = make_float3(r[i_p]); //particle position
-  const float csl = ljp->csl; //grid cell side length
-  const uint cps = ljp->cps; //grid cells per side
-  const uint n_c = ljp->n_c; //number of grid cells
+  const float csl = srg_p->csl; //grid cell side length
+  const uint cps = srg_p->cps; //grid cells per side
+  const uint n_c = srg_p->n_c; //number of grid cells
   int3 ir = floorf(r_i/csl); //integer coordinates
   uint iofst = (cps/2)*(1+cps+cps*cps); //index offset
-  float3 ljf = {0.0,0.0,0.0}; //Lennard-Jones forces
+  float3 srf = {0.0,0.0,0.0}; //short-range forces
 
   //range over neighbouring cells
   uint nci; //neighbour cell index
@@ -160,14 +158,14 @@ inline __device__ void calc_ljf(
         nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps;
         if (nci>=n_c){ continue;}
 
-        //calculate Lennard-Jones forces with cell's particles
-        calc_cell_ljf(sig,eps,nci,i_p,r_i,r,ljp,ljf);
+        //calculate short-range forces with cell's particles
+        calc_cell_srf(eps,nci,i_p,r_i,r,srg_p,srf);
       }
     }
   }
 
   //add result to force array
-  f[i_p] += make_float4(ljf);
+  f[i_p] += make_float4(srf);
 }
 
 //Global Functions
@@ -190,15 +188,14 @@ __global__ void init_ps(
 __global__ void exec_RK_1(
   const uint N, //number of particles
   const float R, //confinement radius
+  const float eps, //WF particle energy
   float4 *r, //position array
   float4 *f, //force array
-  float sig, //LJ particle size
-  const float eps, //LJ particle energy
   float4 *er, //extra position array
   float sd, //standard deviation
   float4 *rn, //random number array
   prng *ps, //PRNG state array
-  sugrid *ljp) //LJ grid pointer
+  sugrid *srg_p) //short-range grid pointer
 {
   //calculate particle index
   uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -216,8 +213,8 @@ __global__ void exec_RK_1(
   //calculate forces
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
-  calc_cf(R,sig,i_p,r,f);
-  calc_ljf(sig,eps,i_p,r,f,ljp);
+  calc_cf(R,i_p,r,f);
+  calc_srf(eps,i_p,r,f,srg_p);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt/xi+rn[i_p]/xi;
@@ -227,14 +224,13 @@ __global__ void exec_RK_1(
 __global__ void exec_RK_2(
   const uint N, //number of particles
   const float R, //confinement radius
+  const float eps, //WF particle energy
   float4 *r, //position array
   float4 *f, //force array
-  float sig, //LJ particle size
-  const float eps, //LJ particle energy
   float4 *er, //extra position array
   float4 *ef, //extra force array
   float4 *rn, //random number array
-  sugrid *ljp) //LJ grid pointer
+  sugrid *srg_p) //short-range grid pointer
 {
   //calculate particle index
   uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -243,8 +239,8 @@ __global__ void exec_RK_2(
   //calculate forces
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
-  calc_cf(R,sig,i_p,er,ef);
-  calc_ljf(sig,eps,i_p,er,ef,ljp);
+  calc_cf(R,i_p,er,ef);
+  calc_srf(eps,i_p,er,ef,srg_p);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt/xi+rn[i_p]/xi;
@@ -259,7 +255,7 @@ chrsim::chrsim(parmap &par) //parameters
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",256)}
   , sd {sqrtf(2.0*xi*k_B*T*dt)}
-  , ljg(N,aco*sig+5*sd/xi,2*ceilf(R/(aco*sig+5*sd/xi)))
+  , srg(N,aco,2*ceil(R/aco))
 {
   //check parameters
   if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}
@@ -276,13 +272,13 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
   cuda_check(cudaMalloc(&ps,N*sizeof(prng)));
-  cuda_check(cudaMalloc(&ljp,sizeof(sugrid)));
+  cuda_check(cudaMalloc(&srg_p,sizeof(sugrid)));
 
   //allocate host memory
   cuda_check(cudaMallocHost(&hps,N*sizeof(prng)));
 
-  //copy LJ grid to device
-  cuda_check(cudaMemcpy(ljp,&ljg,sizeof(sugrid),cudaMemcpyHostToDevice));
+  //copy short-range grid to device
+  cuda_check(cudaMemcpy(srg_p,&srg,sizeof(sugrid),cudaMemcpyHostToDevice));
 
   //initialize PRNG
   init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,ps,time(nullptr));
@@ -297,7 +293,7 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(ps));
-  cuda_check(cudaFree(ljp));
+  cuda_check(cudaFree(srg_p));
 
   //deallocate host memory
   cuda_check(cudaFreeHost(hps));
@@ -314,24 +310,17 @@ void chrsim::generate_initial_condition()
   //set random particle types
   set_particle_types(gen);
 
-  //reduce sigma for random walk
-  sig = 0.8;
-
   //perform a confined random walk
   perform_random_walk(gen);
 
-  //expand beads
-  logger::record("bead expansion begun");
-  while (sig<1.0)
-  {
-    make_RK_iteration();
-    sig += dt/(32*sig*sig);
-  }
+  //separate beads
+  logger::record("bead separation begun");
+  // while () //check beads are separated ---------------------------------------
+  // {
+  //   make_RK_iteration();
+  // }
   cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
-  logger::record("bead expansion ended");
-
-  //reset sigma
-  sig = 1.0;
+  logger::record("bead separation ended");
 
   //free host PRNG
   curandDestroyGenerator(gen);
@@ -442,7 +431,7 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
     if (!isfinite(hr[i_p].x)){ p_a = false;}
     if (!isfinite(hr[i_p].y)){ p_a = false;}
     if (!isfinite(hr[i_p].z)){ p_a = false;}
-    for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
+    for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index//remove ---
     {
       float dpp; //particle-particle distance
       dpp = length(make_float3(hr[j_p]-hr[i_p]));
@@ -472,9 +461,10 @@ void chrsim::perform_random_walk(curandGenerator_t &gen) //host PRNG
 //make one iteration of the Runge-Kutta method
 void chrsim::make_RK_iteration()
 {
-  ljg.generate_arrays(tpb,r);
-  exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,sd,rn,ps,ljp);
-  exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,r,f,sig,eps,er,ef,rn,ljp);
+  srg.generate_arrays(tpb,r);
+  exec_RK_1<<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,ps,srg_p);
+  srg.generate_arrays(tpb,er);
+  exec_RK_2<<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
 }
 
 } //namespace mmc

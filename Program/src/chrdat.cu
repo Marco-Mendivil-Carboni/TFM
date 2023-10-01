@@ -14,7 +14,7 @@ chrdat::chrdat(parmap &par) //parameters
   : N {par.get_val<uint>("number_of_particles",0)}
   , R {par.get_val<float>("confinement_radius",-1.0)}
   , T {par.get_val<float>("temperature",298.0)}
-  , eps {par.get_val<float>("epsilon",1.0)}, sig {1.0}
+  , eps {par.get_val<float>("epsilon",1.0)}
   , i_f {0}, t {0.0}
 {
   //check parameters
