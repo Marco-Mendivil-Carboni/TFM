@@ -63,8 +63,8 @@ class chrsim : public chrdat //chromatin simulation
   //perform a confined random walk
   void perform_random_walk();
 
-  //make one Runge-Kutta iteration
-  void make_RK_iteration();
+  //count particle overlaps
+  uint particle_overlaps();
 };
 
 } //namespace mmc

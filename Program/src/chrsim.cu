@@ -241,8 +241,8 @@ template <srint I> __global__ void exec_RK_1(
   if (i_p>=N){ return;}
 
   //calculate random numbers
-  float3 az; //absolute z-score
   prng *ps = static_cast<prng *>(vps); //PRNG state array
+  float3 az; //absolute z-score
   do
   {
     rn[i_p] = sd*curand_normal4(&ps[i_p]);
@@ -342,13 +342,21 @@ void chrsim::generate_initial_condition()
   perform_random_walk();
 
   //separate beads
-  logger::record("bead separation begun");
-  // while () //check beads are separated ---------------------------------------
-  // {
-  //   make_RK_iteration();
-  // }
-  cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
-  logger::record("bead separation ended");
+  while (particle_overlaps()>0)
+  {
+    //iterate over all steps per frame
+    for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
+    {
+      //make one Runge-Kutta iteration
+      srg.generate_arrays(tpb,r);
+      exec_RK_1<SRI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,srg_p);
+      srg.generate_arrays(tpb,er);
+      exec_RK_2<SRI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
+    }
+
+    //copy position array to host
+    cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
+  }
 
   //record success message
   logger::record("initial condition generated");
@@ -357,37 +365,58 @@ void chrsim::generate_initial_condition()
 //save simulation state to binary file
 void chrsim::save_checkpoint(std::ofstream &bin_out_f) //binary output file
 {
+  //write simulation data
   bin_out_f.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_out_f.write(reinterpret_cast<char *>(&t),sizeof(t));
   bin_out_f.write(reinterpret_cast<char *>(hr),N*sizeof(float4));
+
+  //record success message
   logger::record("simulation checkpoint saved");
 }
 
 //load simulation state from binary file
 void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 {
+  //read simulation data
   bin_inp_f.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
   bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(float4));
+
+  //copy host position array to device
   cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyHostToDevice));
+
+  //record success message
   logger::record("simulation checkpoint loaded");
 }
 
 //run simulation and write trajectory to binary file
 void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 {
-  logger::record("simulation begun");
+  //iterate over all frames per file
   for (uint ffi = 0; ffi<fpf; ++ffi) //file frame index
   {
+    //show simulation progress
     logger::show_prog_pc(100.0*ffi/fpf);
+
+    //iterate over all steps per frame
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
-      make_RK_iteration();
+      //make one Runge-Kutta iteration
+      srg.generate_arrays(tpb,r);
+      exec_RK_1<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,srg_p);
+      srg.generate_arrays(tpb,er);
+      exec_RK_2<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
     }
+
+    //copy position array to host
     cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
+
+    //write trajectory frame
     ++i_f; t += spf*dt;
     write_frame_bin(bin_out_f);
   }
+
+  //record success message
   logger::record("simulation ended");
 }
 
@@ -468,25 +497,19 @@ void chrsim::perform_random_walk()
     if (!isfinite(hr[i_p].x)){ p_a = false;}
     if (!isfinite(hr[i_p].y)){ p_a = false;}
     if (!isfinite(hr[i_p].z)){ p_a = false;}
-    for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index//remove ---
-    {
-      float dpp; //particle-particle distance
-      dpp = length(make_float3(hr[j_p]-hr[i_p]));
-      if (dpp<1.0){ p_a = false; break;}
-    }
     float d_r; //radial distance to origin
     d_r = length(make_float3(hr[i_p]));
     if (((R+0.5)-d_r)<1.0){ p_a = false;}
 
     if (p_a) //continue
     {
-      old_dir = new_dir;
       att = 0;
+      old_dir = new_dir;
     }
     else //go back
     {
       ++att;
-      if (att>1024){ i_p = 1;}
+      if (att>1024){ i_p = 1+i_p*3/4;}
       else{ --i_p;}
     }
   }
@@ -498,13 +521,26 @@ void chrsim::perform_random_walk()
   curandDestroyGenerator(gen);
 }
 
-//make one iteration of the Runge-Kutta method
-void chrsim::make_RK_iteration()
+//count particle overlaps
+uint chrsim::particle_overlaps()
 {
-  srg.generate_arrays(tpb,r);
-  exec_RK_1<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,srg_p);
-  srg.generate_arrays(tpb,er);
-  exec_RK_2<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
+  //initialize particle overlaps to zero
+  int po = 0; //particle overlaps
+
+  //iterate over all pairs of non-bonded particles
+  for (uint i_p = 1; i_p<N; ++i_p) //particle index
+  {
+    for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
+    {
+      //update particle overlaps
+      float dpp; //particle-particle distance
+      dpp = length(make_float3(hr[j_p]-hr[i_p]));
+      if (dpp<1.0){ ++po;}
+    }
+  }
+
+  //return particle overlaps
+  return po;
 }
 
 } //namespace mmc

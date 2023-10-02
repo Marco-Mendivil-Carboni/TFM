@@ -70,8 +70,7 @@ class parmap : public std::map<std::string,std::string> //parameter map
   parmap(std::ifstream &par_f); //parameter file
 
   //get parameter value
-  template <typename T>
-  T get_val(
+  template <typename T> T get_val(
     std::string key, //parameter key
     T def_val) //default value
   {
@@ -94,8 +93,7 @@ void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
 uint glob_count(const std::string &pathpat); //file path pattern
 
 //convert number to formatted string
-template <typename T>
-std::string cnfs(
+template <typename T> std::string cnfs(
   T num, //number
   int len = 0, //length
   char fillc = ' ', //filler character
@@ -105,13 +103,11 @@ std::string cnfs(
   if (len>0){ num_str<<std::setw(len);}
   if (fillc!=' '){ num_str<<std::setfill(fillc);}
   if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
-  num_str<<num;
-  return num_str.str();
+  num_str<<num; return num_str.str();
 }
 
 //check file is open or else throw
-template <typename T>
-void check_file(
+template <typename T> void check_file(
   T &s_f, //stream file 
   const std::string &pathstr) //file path string
 {
