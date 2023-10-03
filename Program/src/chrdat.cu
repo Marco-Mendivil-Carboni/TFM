@@ -24,12 +24,14 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(0.125<eps&&eps<2.0)){ throw error("particle_energy out of range");}
   float cvf = N*pow(0.5/R,3); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
-  std::string msg = "chrdat:"; //message
-  msg += " N = "+cnfs(N,5,'0');
-  msg += " R = "+cnfs(R,5,'0',2);
-  msg += " T = "+cnfs(T,5,'0',1);
-  msg += " eps = "+cnfs(eps,5,'0',3);
-  logger::record(msg);
+  std::string msg_1 = ""; //1st message
+  msg_1 += "N = "+cnfs(N,5,'0')+" ";
+  msg_1 += "R = "+cnfs(R,5,'0',2)+" ";
+  msg_1 += "T = "+cnfs(T,5,'0',1)+" ";
+  logger::record(msg_1);
+  std::string msg_2 = ""; //2nd message
+  msg_2 += "eps = "+cnfs(eps,5,'0',3)+" ";
+  logger::record(msg_2);
 
   //allocate device memory
   cuda_check(cudaMalloc(&pt,N*sizeof(ptype)));

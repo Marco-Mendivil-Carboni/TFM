@@ -74,9 +74,9 @@ int main(
     }
 
     //record indexes
-    std::string msg = "indexes:"; //message
-    msg += " sim_idx = "+mmc::cnfs(sim_idx,3,'0');
-    msg += " t_f_idx = "+mmc::cnfs(t_f_idx,3,'0');
+    std::string msg = ""; //message
+    msg += "sim_idx = "+mmc::cnfs(sim_idx,3,'0')+" ";
+    msg += "t_f_idx = "+mmc::cnfs(t_f_idx,3,'0')+" ";
     mmc::logger::record(msg);
 
     //run simulation

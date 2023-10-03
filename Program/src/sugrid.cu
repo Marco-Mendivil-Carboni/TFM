@@ -97,9 +97,9 @@ sugrid::sugrid(
   //check parameters
   if (!(0.0<csl&&csl<10.0)){ throw error("cell_side_length out of range");}
   if (!(1<=cps&&cps<1'000)){ throw error("cells_per_side out of range");}
-  std::string msg = "sugrid:"; //message
-  msg += " csl = "+cnfs(csl,3,'0',1);
-  msg += " cps = "+cnfs(cps,3,'0');
+  std::string msg = ""; //message
+  msg += "csl = "+cnfs(csl,3,'0',1)+" ";
+  msg += "cps = "+cnfs(cps,3,'0')+" ";
   logger::record(msg);
 
   //allocate arrays

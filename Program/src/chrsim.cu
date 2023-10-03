@@ -303,10 +303,10 @@ chrsim::chrsim(parmap &par) //parameters
   if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}
   if (!(1<=spf&&spf<10'000)){ throw error("steps_per_frame out of range");}
   if (!(1<=tpb&&tpb<1'025)){ throw error("threads_per_block out of range");}
-  std::string msg = "chrsim:"; //message
-  msg += " fpf = "+cnfs(fpf,4,'0');
-  msg += " spf = "+cnfs(spf,4,'0');
-  msg += " tpb = "+cnfs(tpb,4,'0');
+  std::string msg = ""; //message
+  msg += "fpf = "+cnfs(fpf,4,'0')+" ";
+  msg += "spf = "+cnfs(spf,4,'0')+" ";
+  msg += "tpb = "+cnfs(tpb,4,'0')+" ";
   logger::record(msg);
 
   //allocate device memory
