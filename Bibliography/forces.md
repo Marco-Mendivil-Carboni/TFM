@@ -63,10 +63,16 @@ $$
 
 ## Soft-Repulsive potential
 
+---
+
+change this potential Add mis = 0.8... //WFI minimal initial separation
+
+---
+
 $$
-V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 2 \left(d _{ij} + 1\right) \left(d _{ij} - 2\right) ^{2}
+V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} ...
 $$
 
 $$
--\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} \left(12 - 6 d _{ij}\right) (\bar{r} _i - \bar{r} _j)
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} ... (\bar{r} _i - \bar{r} _j)
 $$

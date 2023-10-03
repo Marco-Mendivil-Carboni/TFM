@@ -28,6 +28,8 @@ chrdat::chrdat(parmap &par) //parameters
   msg += " N = "+cnfs(N,5,'0');
   msg += " R = "+cnfs(R,5,'0',2);
   msg += " T = "+cnfs(T,5,'0',1);
+  logger::record(msg);
+  msg = "chrdat:";
   msg += " eps = "+cnfs(eps,5,'0',3);
   logger::record(msg);
 

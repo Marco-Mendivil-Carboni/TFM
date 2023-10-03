@@ -47,7 +47,7 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 512"; echo "confinement_radius 10.00"; 
+{ echo "number_of_particles 32768"; echo "confinement_radius 21.7"; 
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir
