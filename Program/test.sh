@@ -47,7 +47,8 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 32768"; echo "confinement_radius 21.7"; 
+{ echo "number_of_particles 32768"; echo "confinement_radius 21.7";
+  echo "steps_per_frame 256";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/simulate $testdir
@@ -68,7 +69,6 @@ nvprof ./Program/bin/simulate $testdir 0
 check $?
 
 vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
-
 vmd -e ./Program/visualize.tcl -args $testdir 1 > /dev/null
 
 rm -rI $testdir

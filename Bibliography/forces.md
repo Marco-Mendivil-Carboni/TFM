@@ -37,16 +37,6 @@ $$
 \frac{\partial}{\partial \bar{r} _i}\cos(\theta _{i+1}) = \frac{-\bar{b} _{i+1}}{d _{i+1} d _{i}} + \cos(\theta _{i+1})\bar{b} _{i} / d _{i} ^2
 $$
 
-## Lennard-Jones potential
-
-$$
-V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 4 \varepsilon \left(\frac{1}{d _{ij} ^{12}} - \frac{1}{d _{ij} ^{6}}\right)
-$$
-
-$$
--\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 4 \varepsilon \left(\frac{12}{d _{ij} ^{14}} - \frac{6}{d _{ij} ^{8}}\right) (\bar{r} _i - \bar{r} _j)
-$$
-
 ## Wang-Frenkel potential
 
 $$
@@ -58,21 +48,15 @@ $$
 $$
 
 $$
-{\tt rco} = \frac{2}{\sqrt{3}}
+d _m = \frac{2}{\sqrt{3}}
 $$
 
 ## Soft-Repulsive potential
 
----
-
-change this potential Add mis = 0.8... //WFI minimal initial separation
-
----
-
 $$
-V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} ...
+V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 128 \left(d _{ij} + d _m/2\right) \left(d _{ij} - d _m\right) ^{2}
 $$
 
 $$
--\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} ... (\bar{r} _i - \bar{r} _j)
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 128 \left(3 d _{ij} - 3 d _m\right) (\bar{r} _i - \bar{r} _j)
 $$

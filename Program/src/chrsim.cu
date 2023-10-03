@@ -14,8 +14,8 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
-static constexpr float rco = 1.154701; //Wang-Frenkel repulsive cutoff
-static constexpr float aco = 2.000000; //Wang-Frenkel attractive cutoff
+static constexpr float rco = 1.154701; //repulsive cutoff
+static constexpr float aco = 2.000000; //attractive cutoff
 static constexpr float mis = 0.838732; //minimum initial separation
 
 //Aliases
@@ -124,7 +124,8 @@ template <> inline __device__ void calc_srf<SRI>(
   float dpp, //particle particle distance
   float3 &srf) //short-range forces
 {
-  if (dpp<rco){ srf += 128*(2*sqrtf(3)-3*dpp)*vpp;}
+  if (dpp>rco){ return;}
+  srf += 128*(3*rco-3*dpp)*vpp;
 }
 
 //calculate short-range forces with cell's particles
@@ -343,9 +344,13 @@ void chrsim::generate_initial_condition()
   perform_random_walk();
 
   //separate beads
-  uint po = particle_overlaps(); //add comments polish this part ----------------
+  uint po = particle_overlaps(); //particle overlaps
+  uint ipo = po; //initial particle overlaps
   while (po>0)
   {
+    //show separation progress
+    logger::show_prog_pc(100.0*(ipo-po)/ipo);
+
     //iterate over all steps per frame
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
@@ -359,9 +364,8 @@ void chrsim::generate_initial_condition()
     //copy position array to host
     cuda_check(cudaMemcpy(hr,r,N*sizeof(float4),cudaMemcpyDeviceToHost));
 
-    //show separation progress//move this to the begginning ---------------------
+    //count particle overlaps
     po = particle_overlaps();
-    logger::show_prog_pc(100.0/(po+1));
   }
 
   //record success message
@@ -503,12 +507,6 @@ void chrsim::perform_random_walk()
     if (!isfinite(hr[i_p].x)){ p_a = false;}
     if (!isfinite(hr[i_p].y)){ p_a = false;}
     if (!isfinite(hr[i_p].z)){ p_a = false;}
-    // for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
-    // {
-    //   float dpp; //particle-particle distance
-    //   dpp = length(make_float3(hr[j_p]-hr[i_p]));
-    //   if (dpp<0.5){ p_a = false; break;}//change acceptable distance to the minimum possible
-    // }
     float d_r; //radial distance to origin
     d_r = length(make_float3(hr[i_p]));
     if (((R+0.5)-d_r)<1.0){ p_a = false;}
@@ -531,30 +529,23 @@ void chrsim::perform_random_walk()
 
   //free host PRNG
   curandDestroyGenerator(gen);
-
-  //record success message//remove-----------------------------------------------
-  logger::record("random walk generated");
 }
 
 //count particle overlaps
 uint chrsim::particle_overlaps()
 {
-  //initialize particle overlaps to zero
-  int po = 0; //particle overlaps
-
   //iterate over all pairs of non-bonded particles
+  int po = 0; //particle overlaps
   for (uint i_p = 1; i_p<N; ++i_p) //particle index
   {
     for (uint j_p = 0; j_p<(i_p-1); ++j_p) //secondary particle index
     {
-      //update particle overlaps
+      //check if particles overlap
       float dpp; //particle-particle distance
       dpp = length(make_float3(hr[j_p]-hr[i_p]));
       if (dpp<mis){ ++po;}
     }
   }
-
-  //return particle overlaps
   return po;
 }
 
