@@ -87,13 +87,13 @@ inline __device__ void calc_cf(
   //calculate auxiliary variables
   float d_r; //radial distance to origin
   d_r = length(make_float3(r[i_p]));
-  float dwp = (R+0.5)-d_r; //wall-particle distance
+  float dwp = R-d_r; //wall-particle distance
   if (dwp>rco){ return;}
 
   //calculate confinement force
   float3 cf = make_float3(-r[i_p]/d_r); //confinement force
   float d2 = dwp*dwp; //dwp squared
-  cf *= (18*d2*d2-96*d2+96)/(d2*d2*d2*d2);
+  cf *= (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2);
 
   //add result to force array
   f[i_p] += make_float4(cf);
@@ -114,7 +114,7 @@ template <> inline __device__ void calc_srf<WFI>(
   float3 &srf) //short-range forces
 {
   float d2 = dpp*dpp; //dpp squared
-  srf += eps*(18*d2*d2-96*d2+96)/(d2*d2*d2*d2)*vpp;
+  srf += eps*(18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vpp;
 }
 
 //calculate Soft-Repulsive force
@@ -125,7 +125,7 @@ template <> inline __device__ void calc_srf<SRI>(
   float3 &srf) //short-range forces
 {
   if (dpp>rco){ return;}
-  srf += 128*(3*rco-3*dpp)*vpp;
+  srf += 128.0*(3.0*rco-3.0*dpp)*vpp;
 }
 
 //calculate short-range forces with cell's particles
@@ -509,7 +509,7 @@ void chrsim::perform_random_walk()
     if (!isfinite(hr[i_p].z)){ p_a = false;}
     float d_r; //radial distance to origin
     d_r = length(make_float3(hr[i_p]));
-    if (((R+0.5)-d_r)<1.0){ p_a = false;}
+    if ((R-d_r)<mis){ p_a = false;}
 
     if (p_a) //continue
     {

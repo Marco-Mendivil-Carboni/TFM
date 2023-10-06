@@ -22,7 +22,7 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(0.0<R&&R<100.0)){ throw error("confinement_radius out of range");}
   if (!(0.0<T&&T<1'000.0)){ throw error("temperature out of range");}
   if (!(0.125<eps&&eps<2.0)){ throw error("particle_energy out of range");}
-  float cvf = N*pow(0.5/R,3); //chromatin volume fraction
+  float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
@@ -63,10 +63,12 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
 {
   txt_out_f<<"Chromatin simulation, i_f = 0, t = 0.0\n";
   txt_out_f<<cnfs(N,5,' ')<<"\n";
+  std::string pts; //particle type string
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<"X";
-    txt_out_f<<std::right<<std::setw(5)<<"X"<<std::setw(5)<<i_p+1;
+    pts = (hpt[i_p]==LAD)?"X":"X";//tmp -----------------------------------------
+    txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<pts;
+    txt_out_f<<std::right<<std::setw(5)<<pts<<std::setw(5)<<i_p+1;
     txt_out_f<<cnfs(hr[i_p].x,8,' ',3);
     txt_out_f<<cnfs(hr[i_p].y,8,' ',3);
     txt_out_f<<cnfs(hr[i_p].z,8,' ',3);

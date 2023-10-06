@@ -78,11 +78,11 @@ error::error(const std::string &msg) //error message
   : std::runtime_error(msg) {}
 
 //parmap constructor
-parmap::parmap(std::ifstream &par_f) //parameter file
+parmap::parmap(std::istream &par_s) //parameter stream
 {
   std::string key; //parameter key
   std::string val; //parameter value
-  while (par_f>>key>>val)
+  while (par_s>>key>>val)
   {
     insert({key,val});
   }

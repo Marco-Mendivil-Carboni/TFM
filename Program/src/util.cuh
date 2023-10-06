@@ -67,7 +67,7 @@ class parmap : public std::map<std::string,std::string> //parameter map
   //Functions
 
   //parmap constructor
-  parmap(std::ifstream &par_f); //parameter file
+  parmap(std::istream &par_s); //parameter stream
 
   //get parameter value
   template <typename T> T get_val(
