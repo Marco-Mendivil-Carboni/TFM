@@ -3,15 +3,15 @@ NVCCFLAGS = -gencode arch=compute_35,code=sm_35 \
 	-Wno-deprecated-gpu-targets -g
 NVCCLINKS = -lcurand
 
-bin/simulate: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
-		bin/simulate.o
+bin/performsim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
+		bin/performsim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
 bin/measuresim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
 		bin/measuresim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
-bin/simulate.o: src/simulate.cu bin/chrsim.o
+bin/performsim.o: src/performsim.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/measuresim.o: src/measuresim.cu bin/chrsim.o
@@ -31,4 +31,4 @@ bin/util.o: src/util.cu src/util.cuh
 
 clean:
 	rm bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
-	bin/simulate.o bin/measuresim
+	bin/performsim.o bin/performsim bin/measuresim.o bin/measuresim

@@ -12,5 +12,5 @@ bin/
 *.trr
 
 Report/TikZ-figures/
-
+Plots/*.tex
 *.synctex.gz
