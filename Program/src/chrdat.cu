@@ -15,6 +15,7 @@ chrdat::chrdat(parmap &par) //parameters
   , R {par.get_val<float>("confinement_radius",-1.0)}
   , T {par.get_val<float>("temperature",298.0)}
   , eps {par.get_val<float>("particle_energy",1.0)}
+  , n_l {par.get_val<uint>("number_of_lbs",0)}
   , i_f {0}, t {0.0}
 {
   //check parameters
@@ -22,8 +23,11 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(0.0<R&&R<100.0)){ throw error("confinement_radius out of range");}
   if (!(0.0<T&&T<1'000.0)){ throw error("temperature out of range");}
   if (!(0.125<eps&&eps<2.0)){ throw error("particle_energy out of range");}
+  if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
   float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
+  float laf = n_l*pow(0.5/(R-0.5),2.0); //lbs area fraction
+  if (laf>0.5){ throw error("lbs area fraction above 0.5");}
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
   msg_1 += "R = "+cnfs(R,5,'0',2)+" ";
@@ -31,17 +35,21 @@ chrdat::chrdat(parmap &par) //parameters
   logger::record(msg_1);
   std::string msg_2 = ""; //2nd message
   msg_2 += "eps = "+cnfs(eps,5,'0',3)+" ";
+  msg_2 += "n_l = "+cnfs(n_l,5,'0')+" ";
+  msg_2 += "cvf = "+cnfs(cvf,5,'0',3)+" ";
   logger::record(msg_2);
 
   //allocate device memory
   cuda_check(cudaMalloc(&pt,N*sizeof(ptype)));
   cuda_check(cudaMalloc(&r,N*sizeof(float4)));
   cuda_check(cudaMalloc(&f,N*sizeof(float4)));
+  cuda_check(cudaMalloc(&lr,N*sizeof(float4)));
 
   //allocate host memory
   cuda_check(cudaMallocHost(&hpt,N*sizeof(ptype)));
   cuda_check(cudaMallocHost(&hr,N*sizeof(float4)));
   cuda_check(cudaMallocHost(&hf,N*sizeof(float4)));
+  cuda_check(cudaMallocHost(&hlr,N*sizeof(float4)));
 }
 
 //chromatin data destructor
@@ -51,11 +59,13 @@ chrdat::~chrdat()
   cuda_check(cudaFree(pt));
   cuda_check(cudaFree(r));
   cuda_check(cudaFree(f));
+  cuda_check(cudaFree(lr));
 
   //deallocate host memory
   cuda_check(cudaFreeHost(hpt));
   cuda_check(cudaFreeHost(hr));
   cuda_check(cudaFreeHost(hf));
+  cuda_check(cudaFreeHost(hlr));
 }
 
 //write frame to text file

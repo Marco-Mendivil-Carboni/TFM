@@ -22,8 +22,8 @@ int main(
   std::ofstream out_f; //output file
   std::string pathstr; //file path string
   std::string pathpat; //file path pathpat
-  uint sim_idx; //simulation index
-  uint t_f_idx; //trajectory file index
+  uint i_s; //simulation index
+  uint i_t_f; //trajectory file index
 
   //open log file inside simulation directory
   pathstr = sim_dir+"/all-messages.log";
@@ -42,15 +42,15 @@ int main(
 
     if (new_sim) //begin new simulation
     {
-      //set sim_idx and t_f_idx
+      //set i_s and i_t_f
       pathpat = sim_dir+"/initial-condition-*";
-      sim_idx = mmc::glob_count(pathpat);
-      t_f_idx = 0;
+      i_s = mmc::glob_count(pathpat);
+      i_t_f = 0;
 
       //generate and write initial condition
       sim.generate_initial_condition();
       pathstr = sim_dir+"/initial-condition-";
-      pathstr += mmc::cnfs(sim_idx,3,'0')+".gro";
+      pathstr += mmc::cnfs(i_s,3,'0')+".gro";
       out_f.open(pathstr);
       mmc::check_file(out_f,pathstr);
       sim.write_frame_txt(out_f);
@@ -58,31 +58,31 @@ int main(
     }
     else //continue previous simulation
     {
-      //set sim_idx and t_f_idx
-      sim_idx = std::stoi(argv[2]);
+      //set i_s and i_t_f
+      i_s = std::stoi(argv[2]);
       pathpat = sim_dir+"/trajectory-";
-      pathpat += mmc::cnfs(sim_idx,3,'0')+"*";
-      t_f_idx = mmc::glob_count(pathpat);
+      pathpat += mmc::cnfs(i_s,3,'0')+"*";
+      i_t_f = mmc::glob_count(pathpat);
 
       //load checkpoint
       pathstr = sim_dir+"/checkpoint-";
-      pathstr += mmc::cnfs(sim_idx,3,'0')+".bin";
+      pathstr += mmc::cnfs(i_s,3,'0')+".bin";
       inp_f.open(pathstr,std::ios::binary);
       mmc::check_file(inp_f,pathstr);
       sim.load_checkpoint(inp_f);
       inp_f.close();
     }
 
-    //record indexes
+    //record i_s and i_t_f
     std::string msg = ""; //message
-    msg += "sim_idx = "+mmc::cnfs(sim_idx,3,'0')+" ";
-    msg += "t_f_idx = "+mmc::cnfs(t_f_idx,3,'0')+" ";
+    msg += "i_s = "+mmc::cnfs(i_s,3,'0')+" ";
+    msg += "i_t_f = "+mmc::cnfs(i_t_f,3,'0')+" ";
     mmc::logger::record(msg);
 
     //run simulation
     pathstr = sim_dir+"/trajectory-";
-    pathstr += mmc::cnfs(sim_idx,3,'0')+"-";
-    pathstr += mmc::cnfs(t_f_idx,3,'0')+".trr";
+    pathstr += mmc::cnfs(i_s,3,'0')+"-";
+    pathstr += mmc::cnfs(i_t_f,3,'0')+".trr";
     out_f.open(pathstr,std::ios::binary);
     mmc::check_file(out_f,pathstr);
     sim.run_simulation(out_f);
@@ -90,7 +90,7 @@ int main(
 
     //save checkpoint
     pathstr = sim_dir+"/checkpoint-";
-    pathstr += mmc::cnfs(sim_idx,3,'0')+".bin";
+    pathstr += mmc::cnfs(i_s,3,'0')+".bin";
     out_f.open(pathstr,std::ios::binary);
     mmc::check_file(out_f,pathstr);
     sim.save_checkpoint(out_f);

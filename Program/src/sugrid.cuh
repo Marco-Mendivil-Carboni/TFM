@@ -21,7 +21,6 @@ struct sugrid //sorted uniform grid
   uint *sci; //sorted cell index array
   uint *upi; //unsorted particle index array
   uint *spi; //sorted particle index array
-
   uint *beg; //cell beginning array
   uint *end; //cell end array
 
@@ -32,9 +31,14 @@ struct sugrid //sorted uniform grid
 
   //sorted uniform grid constructor
   sugrid(
-    const uint N, //number of particles
+    const uint n_o, //number of objects
     const float csl, //cell side length
     const uint cps); //cells per side
+
+  //sorted uniform grid delegating constructor
+  sugrid(
+    const uint n_o, //number of objects
+    const sugrid &g); //grid
 
   //sorted uniform grid destructor
   ~sugrid();

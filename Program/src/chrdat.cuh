@@ -60,17 +60,19 @@ class chrdat //chromatin data
   const float R; //confinement radius
   const float T; //temperature
   const float eps; //particle energy
-
+  const uint n_l; //number of lbs
   uint i_f; //frame index
   double t; //time
 
   ptype *pt; //particle type array
   float4 *r; //position array
   float4 *f; //force array
+  float4 *lr; //lbs position array
 
   ptype *hpt; //host particle type array
   float4 *hr; //host position array
   float4 *hf; //host force array
+  float4 *hlr; //host lbs position array
 };
 
 } //namespace mmc

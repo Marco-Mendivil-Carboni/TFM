@@ -48,7 +48,7 @@ __global__ void set_cells_empty(
   if (lai>=n_c){ return;}
 
   //set beginning and end of cells
-  beg[lai] = 0xffffffff;
+  beg[lai] = 0;
   end[lai] = 0;
 }
 
@@ -94,14 +94,6 @@ sugrid::sugrid(
   , cps {cps}
   , n_c {cps*cps*cps}
 {
-  //check parameters
-  if (!(0.0<csl&&csl<10.0)){ throw error("cell_side_length out of range");}
-  if (!(1<=cps&&cps<1'000)){ throw error("cells_per_side out of range");}
-  std::string msg = ""; //message
-  msg += "csl = "+cnfs(csl,3,'0',1)+" ";
-  msg += "cps = "+cnfs(cps,3,'0')+" ";
-  logger::record(msg);
-
   //allocate arrays
   cuda_check(cudaMalloc(&uci,n_o*sizeof(uint)));
   cuda_check(cudaMalloc(&sci,n_o*sizeof(uint)));
@@ -114,6 +106,12 @@ sugrid::sugrid(
   cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,n_o);
   cuda_check(cudaMalloc(&eb,ebs));
 }
+
+//sorted uniform grid delegating constructor
+sugrid::sugrid(
+    const uint n_o, //number of objects
+    const sugrid &g) //grid
+  : sugrid(n_o,g.csl,g.cps) {}
 
 //sorted uniform grid destructor
 sugrid::~sugrid()

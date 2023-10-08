@@ -24,10 +24,10 @@ using prng = curandStatePhilox4_32_10; //PRNG type
 
 //Enumerations
 
-enum srint //short-range interaction
+enum stype //simulation type
 {
-  WFI, //Wang-Frenkel interaction
-  SRI //Soft-Repulsive interaction
+  PCS, //proper chromatin simulation
+  ICG //initial condition generation
 };
 
 //Device Functions
@@ -99,59 +99,59 @@ inline __device__ void calc_cf(
   f[i_p] += make_float4(cf);
 }
 
-//calculate short-range force
-template <srint I> inline __device__ void calc_srf(
+//calculate particle force
+template <stype T> inline __device__ void calc_pf(
   const float eps, //particle energy
   float3 vpp, //particle particle vector
   float dpp, //particle particle distance
   float3 &srf); //short-range forces
 
-//calculate Wang-Frenkel force
-template <> inline __device__ void calc_srf<WFI>(
+//calculate particle force
+template <> inline __device__ void calc_pf<PCS>(
   const float eps, //particle energy
   float3 vpp, //particle particle vector
   float dpp, //particle particle distance
   float3 &srf) //short-range forces
 {
+  //calculate Wang-Frenkel force
+  if (dpp>aco){ return;}
   float d2 = dpp*dpp; //dpp squared
   srf += eps*(18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vpp;
 }
 
-//calculate Soft-Repulsive force
-template <> inline __device__ void calc_srf<SRI>(
+//calculate particle force
+template <> inline __device__ void calc_pf<ICG>(
   const float eps, //particle energy
   float3 vpp, //particle particle vector
   float dpp, //particle particle distance
   float3 &srf) //short-range forces
 {
+  //calculate Soft-Repulsive force
   if (dpp>rco){ return;}
   srf += 128.0*(3.0*rco-3.0*dpp)*vpp;
 }
 
-//calculate short-range forces with cell's particles
-template <srint I> inline __device__ void calc_cell_srf(
+//calculate short-range forces with cell's objects
+template <stype T> inline __device__ void calc_cell_srf(
   const float eps, //particle energy
   uint i_c, //cell index
   uint i_p, //particle index
   float3 r_i, //particle position
   float4 *r, //position array
-  sugrid *srg_p, //short-range grid pointer
+  sugrid *pgp, //particle grid pointer
   float3 &srf) //short-range forces
 {
   //declare auxiliary variables
   uint j_p; //secondary particle index
   float3 r_j; //secondary particle position
-  uint beg = srg_p->beg[i_c]; //cell beginning
-  uint end = srg_p->end[i_c]; //cell end
-
-  //check cell isn't empty
-  if (beg==0xffffffff){ return;}
+  uint beg = pgp->beg[i_c]; //cell beginning
+  uint end = pgp->end[i_c]; //cell end
 
   //range over cell's particles
   for (uint sai = beg; sai<end; ++sai) //sorted array index
   {
     //get secondary particle index
-    j_p = srg_p->spi[sai];
+    j_p = pgp->spi[sai];
 
     //calculate force only between non-bonded particles
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
@@ -160,27 +160,28 @@ template <srint I> inline __device__ void calc_cell_srf(
       r_j = make_float3(r[j_p]);
       float3 vpp = r_i-r_j; //particle particle vector
       float dpp = length(vpp); //particle particle distance
-      if (dpp>aco){ continue;}
 
-      //calculate short-range force
-      calc_srf<I>(eps,vpp,dpp,srf);
+      //calculate particle force
+      calc_pf<T>(eps,vpp,dpp,srf);
     }
   }
+
+  //same thing with lgp ---------------------------------------------------------
 }
 
 //calculate all short-range forces
-template <srint I> inline __device__ void calc_all_srf(
+template <stype T> inline __device__ void calc_all_srf(
   const float eps, //particle energy
   uint i_p, //particle index
   float4 *r, //position array
   float4 *f, //force array
-  sugrid *srg_p) //short-range grid pointer
+  sugrid *pgp) //particle grid pointer
 {
   //calculate auxiliary variables
   float3 r_i = make_float3(r[i_p]); //particle position
-  const float csl = srg_p->csl; //grid cell side length
-  const uint cps = srg_p->cps; //grid cells per side
-  const uint n_c = srg_p->n_c; //number of grid cells
+  const float csl = pgp->csl; //cell side length
+  const uint cps = pgp->cps; //cells per side
+  const uint n_c = pgp->n_c; //number of cells
   int3 ir = floorf(r_i/csl); //integer coordinates
   uint iofst = (cps/2)*(1+cps+cps*cps); //index offset
   float3 srf = {0.0,0.0,0.0}; //short-range forces
@@ -198,8 +199,8 @@ template <srint I> inline __device__ void calc_all_srf(
         nci = iofst+nir.x+nir.y*cps+nir.z*cps*cps;
         if (nci>=n_c){ continue;}
 
-        //calculate short-range forces with cell's particles
-        calc_cell_srf<I>(eps,nci,i_p,r_i,r,srg_p,srf);
+        //calculate short-range forces with cell's objects
+        calc_cell_srf<T>(eps,nci,i_p,r_i,r,pgp,srf);
       }
     }
   }
@@ -226,7 +227,7 @@ __global__ void init_ps(
 }
 
 //execute 1st stage of the Runge-Kutta method
-template <srint I> __global__ void exec_RK_1(
+template <stype T> __global__ void exec_RK_1(
   const uint N, //number of particles
   const float R, //confinement radius
   const float eps, //particle energy
@@ -236,7 +237,7 @@ template <srint I> __global__ void exec_RK_1(
   float sd, //standard deviation
   float4 *rn, //random number array
   void *vps, //void PRNG state array
-  sugrid *srg_p) //short-range grid pointer
+  sugrid *pgp) //particle grid pointer
 {
   //calculate particle index
   uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -256,14 +257,14 @@ template <srint I> __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
   calc_cf(R,i_p,r,f);
-  calc_all_srf<I>(eps,i_p,r,f,srg_p);
+  calc_all_srf<T>(eps,i_p,r,f,pgp);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt+rn[i_p];
 }
 
 //execute 2nd stage of the Runge-Kutta method
-template <srint I> __global__ void exec_RK_2(
+template <stype T> __global__ void exec_RK_2(
   const uint N, //number of particles
   const float R, //confinement radius
   const float eps, //particle energy
@@ -272,7 +273,7 @@ template <srint I> __global__ void exec_RK_2(
   float4 *er, //extra position array
   float4 *ef, //extra force array
   float4 *rn, //random number array
-  sugrid *srg_p) //short-range grid pointer
+  sugrid *pgp) //particle grid pointer
 {
   //calculate particle index
   uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -282,7 +283,7 @@ template <srint I> __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,i_p,er,ef);
-  calc_all_srf<I>(eps,i_p,er,ef,srg_p);
+  calc_all_srf<T>(eps,i_p,er,ef,pgp);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt+rn[i_p];
@@ -296,8 +297,9 @@ chrsim::chrsim(parmap &par) //parameters
   , fpf {par.get_val<uint>("frames_per_file",100)}
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",256)}
-  , sd {sqrtf(2.0*k_B*T*dt)}
-  , srg(N,aco,2*ceil(R/aco))
+  , sd {static_cast<float>(sqrt(2.0*k_B*T*dt))}
+  , pg(N,aco,2*ceil(R/aco))
+  , lg(n_l,pg)
 {
   //check parameters
   if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}
@@ -314,10 +316,12 @@ chrsim::chrsim(parmap &par) //parameters
   cuda_check(cudaMalloc(&ef,N*sizeof(float4)));
   cuda_check(cudaMalloc(&rn,N*sizeof(float4)));
   cuda_check(cudaMalloc(&vps,N*sizeof(prng)));
-  cuda_check(cudaMalloc(&srg_p,sizeof(sugrid)));
+  cuda_check(cudaMalloc(&pgp,sizeof(sugrid)));
+  cuda_check(cudaMalloc(&lgp,sizeof(sugrid)));
 
-  //copy short-range grid to device
-  cuda_check(cudaMemcpy(srg_p,&srg,sizeof(sugrid),cudaMemcpyHostToDevice));
+  //copy grids to device
+  cuda_check(cudaMemcpy(pgp,&pg,sizeof(sugrid),cudaMemcpyHostToDevice));
+  cuda_check(cudaMemcpy(lgp,&lg,sizeof(sugrid),cudaMemcpyHostToDevice));
 
   //initialize PRNG
   init_ps<<<(N+tpb-1)/tpb,tpb>>>(N,vps,time(nullptr));
@@ -331,7 +335,8 @@ chrsim::~chrsim()
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
   cuda_check(cudaFree(vps));
-  cuda_check(cudaFree(srg_p));
+  cuda_check(cudaFree(pgp));
+  cuda_check(cudaFree(lgp));
 }
 
 //generate a random initial condition
@@ -355,10 +360,10 @@ void chrsim::generate_initial_condition()
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       //make one Runge-Kutta iteration
-      srg.generate_arrays(tpb,r);
-      exec_RK_1<SRI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,srg_p);
-      srg.generate_arrays(tpb,er);
-      exec_RK_2<SRI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
+      pg.generate_arrays(tpb,r);
+      exec_RK_1<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,pgp);
+      pg.generate_arrays(tpb,er);
+      exec_RK_2<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,pgp);
     }
 
     //copy position array to host
@@ -379,6 +384,7 @@ void chrsim::save_checkpoint(std::ofstream &bin_out_f) //binary output file
   bin_out_f.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_out_f.write(reinterpret_cast<char *>(&t),sizeof(t));
   bin_out_f.write(reinterpret_cast<char *>(hr),N*sizeof(float4));
+  //write lr --------------------------------------------------------------------
 
   //record success message
   logger::record("simulation checkpoint saved");
@@ -391,9 +397,11 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
   bin_inp_f.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
   bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(float4));
+  //read lr ---------------------------------------------------------------------
 
   //copy host position array to device
   cuda_check(cudaMemcpy(r,hr,N*sizeof(float4),cudaMemcpyHostToDevice));
+  //copy lr and generate arrays for its grid ------------------------------------
 
   //record success message
   logger::record("simulation checkpoint loaded");
@@ -412,10 +420,10 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       //make one Runge-Kutta iteration
-      srg.generate_arrays(tpb,r);
-      exec_RK_1<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,srg_p);
-      srg.generate_arrays(tpb,er);
-      exec_RK_2<WFI><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,srg_p);
+      pg.generate_arrays(tpb,r);
+      exec_RK_1<PCS><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,sd,rn,vps,pgp);
+      pg.generate_arrays(tpb,er);
+      exec_RK_2<PCS><<<(N+tpb-1)/tpb,tpb>>>(N,R,eps,r,f,er,ef,rn,pgp);
     }
 
     //copy position array to host
