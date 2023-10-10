@@ -26,7 +26,7 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
   float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
-  float laf = n_l*pow(0.5/(R-0.5),2.0); //lbs area fraction
+  float laf = n_l*pow(0.5/(R-1.0),2.0); //lbs area fraction
   if (laf>0.5){ throw error("lbs area fraction above 0.5");}
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
@@ -43,13 +43,13 @@ chrdat::chrdat(parmap &par) //parameters
   cuda_check(cudaMalloc(&pt,N*sizeof(ptype)));
   cuda_check(cudaMalloc(&r,N*sizeof(float4)));
   cuda_check(cudaMalloc(&f,N*sizeof(float4)));
-  cuda_check(cudaMalloc(&lr,N*sizeof(float4)));
+  cuda_check(cudaMalloc(&lr,n_l*sizeof(float4)));
 
   //allocate host memory
   cuda_check(cudaMallocHost(&hpt,N*sizeof(ptype)));
   cuda_check(cudaMallocHost(&hr,N*sizeof(float4)));
   cuda_check(cudaMallocHost(&hf,N*sizeof(float4)));
-  cuda_check(cudaMallocHost(&hlr,N*sizeof(float4)));
+  cuda_check(cudaMallocHost(&hlr,n_l*sizeof(float4)));
 }
 
 //chromatin data destructor
@@ -76,7 +76,7 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
   std::string pts; //particle type string
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    pts = (hpt[i_p]==LAD)?"X":"X";//tmp -----------------------------------------
+    pts = (hpt[i_p]==LAD)?"X":"Y";//tmp -----------------------------------------
     txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<pts;
     txt_out_f<<std::right<<std::setw(5)<<pts<<std::setw(5)<<i_p+1;
     txt_out_f<<cnfs(hr[i_p].x,8,' ',3);

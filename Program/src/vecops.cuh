@@ -9,7 +9,7 @@ inline __host__ __device__ float3 make_float3(float4 a)
 }
 inline __host__ __device__ float4 make_float4(float3 a)
 {
-  return make_float4(a.x,a.y,a.z,0.0f);
+  return make_float4(a.x,a.y,a.z,0.0);
 }
 inline __host__ __device__ float3 operator-(float3 &a)
 {

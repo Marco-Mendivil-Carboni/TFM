@@ -54,10 +54,16 @@ class chrsim : public chrdat //chromatin simulation
 
   sugrid pg; //particle grid
   sugrid *pgp; //particle grid pointer
+
   sugrid lg; //lbs grid
   sugrid *lgp; //lbs grid pointer
 
+  // chrsim *sdp; //simulation device pointer -----------------------------------?
+
   //Functions
+
+  //set random lbs positions
+  void set_lbs_positions();
 
   //set random particle types
   void set_particle_types();
