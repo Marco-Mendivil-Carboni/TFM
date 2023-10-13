@@ -64,7 +64,7 @@ check $?
 -f "${testdir}/checkpoint-001.bin" ]]
 check $?
 
-nvprof ./Program/bin/performsim $testdir 0
+./Program/bin/performsim $testdir 0
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 

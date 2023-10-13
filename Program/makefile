@@ -1,6 +1,6 @@
 NVCC = nvcc
-NVCCFLAGS = -gencode arch=compute_35,code=sm_35 \
-	-Wno-deprecated-gpu-targets -g
+
+NVCCFLAGS = -gencode arch=compute_86,code=sm_86 -g
 NVCCLINKS = -lcurand
 
 bin/performsim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
