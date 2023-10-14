@@ -46,7 +46,7 @@ struct sugrid //sorted uniform grid
   //generate grid arrays
   void generate_arrays(
     int tpb, //threads per block
-    float4 *r); //position array
+    float3 *r); //position array
 };
 
 } //namespace mmc

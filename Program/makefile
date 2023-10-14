@@ -1,5 +1,4 @@
 NVCC = nvcc
-
 NVCCFLAGS = -gencode arch=compute_86,code=sm_86 -g
 NVCCLINKS = -lcurand
 
@@ -31,4 +30,5 @@ bin/util.o: src/util.cu src/util.cuh
 
 clean:
 	rm bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
-	bin/performsim.o bin/performsim bin/measuresim.o bin/measuresim
+	bin/performsim.o bin/performsim \
+	bin/measuresim.o bin/measuresim

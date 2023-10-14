@@ -65,14 +65,14 @@ class chrdat //chromatin data
   double t; //time
 
   ptype *pt; //particle type array
-  float4 *r; //position array
-  float4 *f; //force array
-  float4 *lr; //lbs position array
+  float3 *r; //position array
+  float3 *f; //force array
+  float3 *lr; //lbs position array
 
   ptype *hpt; //host particle type array
-  float4 *hr; //host position array
-  float4 *hf; //host force array
-  float4 *hlr; //host lbs position array
+  float3 *hr; //host position array
+  float3 *hf; //host force array
+  float3 *hlr; //host lbs position array
 };
 
 } //namespace mmc

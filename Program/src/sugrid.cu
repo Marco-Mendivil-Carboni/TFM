@@ -21,7 +21,7 @@ __global__ void calc_indexes(
   const uint cps, //cells per side
   uint *uci, //unsorted cell index array
   uint *upi, //unsorted particle index array
-  float4 *r) //position array
+  float3 *r) //position array
 {
   //calculate particle index
   int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -29,7 +29,7 @@ __global__ void calc_indexes(
   upi[i_p] = i_p;
 
   //calculate auxiliary variables
-  float3 r_i = make_float3(r[i_p]); //particle position
+  float3 r_i = r[i_p]; //particle position
   int3 ir = floorf(r_i/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
@@ -131,7 +131,7 @@ sugrid::~sugrid()
 //generate grid arrays
 void sugrid::generate_arrays(
   int tpb, //threads per block
-  float4 *r) //position array
+  float3 *r) //position array
 {
   calc_indexes<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,csl,cps,uci,upi,r);
   cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,upi,spi,n_o);

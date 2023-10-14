@@ -45,11 +45,11 @@ class chrsim : public chrdat //chromatin simulation
   const uint spf; //steps per frame
   const uint tpb; //threads per block
 
-  float4 *er; //extra position array
-  float4 *ef; //extra force array
+  float3 *er; //extra position array
+  float3 *ef; //extra force array
 
   const float sd; //standard deviation
-  float4 *rn; //random number array
+  float3 *rn; //random number array
   void *vps; //void PRNG state array
 
   sugrid pg; //particle grid

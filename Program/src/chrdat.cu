@@ -41,15 +41,15 @@ chrdat::chrdat(parmap &par) //parameters
 
   //allocate device memory
   cuda_check(cudaMalloc(&pt,N*sizeof(ptype)));
-  cuda_check(cudaMalloc(&r,N*sizeof(float4)));
-  cuda_check(cudaMalloc(&f,N*sizeof(float4)));
-  cuda_check(cudaMalloc(&lr,n_l*sizeof(float4)));
+  cuda_check(cudaMalloc(&r,N*sizeof(float3)));
+  cuda_check(cudaMalloc(&f,N*sizeof(float3)));
+  cuda_check(cudaMalloc(&lr,n_l*sizeof(float3)));
 
   //allocate host memory
   cuda_check(cudaMallocHost(&hpt,N*sizeof(ptype)));
-  cuda_check(cudaMallocHost(&hr,N*sizeof(float4)));
-  cuda_check(cudaMallocHost(&hf,N*sizeof(float4)));
-  cuda_check(cudaMallocHost(&hlr,n_l*sizeof(float4)));
+  cuda_check(cudaMallocHost(&hr,N*sizeof(float3)));
+  cuda_check(cudaMallocHost(&hf,N*sizeof(float3)));
+  cuda_check(cudaMallocHost(&hlr,n_l*sizeof(float3)));
 }
 
 //chromatin data destructor
