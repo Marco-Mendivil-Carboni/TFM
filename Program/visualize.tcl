@@ -1,6 +1,6 @@
 #parameters
 set res 32
-set r_LJ 5.0
+set p_rad 5.0
 
 if {$argc==2} {
     #load initial condition
@@ -15,12 +15,12 @@ if {$argc==2} {
     set N [molinfo top get numatoms]
     for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
     set sel [atomselect top "name A"]
-    $sel set radius $r_LJ
+    $sel set radius $p_rad
     color Name "A" 0
     set sel [atomselect top "name B"]
-    $sel set radius $r_LJ
+    $sel set radius $p_rad
     color Name "B" 1
-    mol modstyle 0 top CPK 4.0 [expr 4.0*$r_LJ/2.0] $res $res
+    mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
 
     #draw sphere
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]

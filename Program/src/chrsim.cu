@@ -159,7 +159,7 @@ template <stype T> inline __device__ void calc_cell_srf(
   for (uint sai = pgbeg; sai<pgend; ++sai) //sorted array index
   {
     //get secondary particle index
-    j_p = pgp->spi[sai];
+    j_p = pgp->soi[sai];
 
     //calculate particle-particle force only between non-bonded particles
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
@@ -177,7 +177,7 @@ template <stype T> inline __device__ void calc_cell_srf(
     for (uint sai = lgbeg; sai<lgend; ++sai) //sorted array index
     {
       //get lbs index
-      i_l = lgp->spi[sai];
+      i_l = lgp->soi[sai];
 
       //calculate lbs-particle force
       float3 vlp = r_i-lr[i_l]; //lbs-particle vector
@@ -201,7 +201,7 @@ template <stype T> inline __device__ void calc_srf(
   const float csl = pgp->csl; //cell side length
   const uint cps = pgp->cps; //cells per side
   const uint n_c = pgp->n_c; //number of cells
-  int3 ir = floorf(r_i/csl); //integer coordinates
+  int3 ir = ifloorf(r_i/csl); //integer coordinates
   uint iofst = (cps/2)*(1+cps+cps*cps); //index offset
   float3 srf = {0.0,0.0,0.0}; //short-range forces
 

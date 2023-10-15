@@ -25,7 +25,7 @@ chrdat::chrdat(parmap &par) //parameters
   float cvf = N*pow(0.5*rco/(R-0.5*rco),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   float laf = n_l*pow(lco/(R-rco),2.0); //lbs area fraction
-  if (laf>0.5){ throw error("lbs area fraction above 0.5");}
+  if (laf>0.6){ throw error("lbs area fraction above 0.6");}
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
   msg_1 += "R = "+cnfs(R,5,'0',2)+" ";

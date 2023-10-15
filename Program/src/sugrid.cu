@@ -3,7 +3,7 @@
 #include "sugrid.cuh" //chromatin simulation
 
 #include "util.cuh" //general utilities
-#include "vecops.cuh" //vector operations
+#include "vect.cuh" //vector types
 
 #include <cub/device/device_radix_sort.cuh> //cub parallel radix sort
 
@@ -14,27 +14,27 @@ namespace mmc //Marco Mendívil Carboni
 
 //Global Functions
 
-//calculate cell and particle indexes
+//calculate cell and object indexes
 __global__ void calc_indexes(
   const uint n_o, //number of objects
   const float csl, //cell side length
   const uint cps, //cells per side
   uint *uci, //unsorted cell index array
-  uint *upi, //unsorted particle index array
+  uint *uoi, //unsorted object index array
   float3 *r) //position array
 {
-  //calculate particle index
-  int i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
-  if (i_p>=n_o){ return;}
-  upi[i_p] = i_p;
+  //calculate object index
+  int i_o = blockIdx.x*blockDim.x+threadIdx.x; //object index
+  if (i_o>=n_o){ return;}
+  uoi[i_o] = i_o;
 
   //calculate auxiliary variables
-  float3 r_i = r[i_p]; //particle position
-  int3 ir = floorf(r_i/csl); //integer coordinates
+  float3 r_i = r[i_o]; //object position
+  int3 ir = ifloorf(r_i/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
   //calculate cell index
-  uci[i_p] = iofst+ir.x+ir.y*cps+ir.z*cps*cps;
+  uci[i_o] = iofst+ir.x+ir.y*cps+ir.z*cps*cps;
 }
 
 //set cells empty
@@ -97,13 +97,13 @@ sugrid::sugrid(
   //allocate arrays
   cuda_check(cudaMalloc(&uci,n_o*sizeof(uint)));
   cuda_check(cudaMalloc(&sci,n_o*sizeof(uint)));
-  cuda_check(cudaMalloc(&upi,n_o*sizeof(uint)));
-  cuda_check(cudaMalloc(&spi,n_o*sizeof(uint)));
+  cuda_check(cudaMalloc(&uoi,n_o*sizeof(uint)));
+  cuda_check(cudaMalloc(&soi,n_o*sizeof(uint)));
   cuda_check(cudaMalloc(&beg,n_c*sizeof(uint)));
   cuda_check(cudaMalloc(&end,n_c*sizeof(uint)));
 
   //allocate extra buffer
-  cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,upi,spi,n_o);
+  cub::DeviceRadixSort::SortPairs(nullptr,ebs,uci,sci,uoi,soi,n_o);
   cuda_check(cudaMalloc(&eb,ebs));
 }
 
@@ -119,8 +119,8 @@ sugrid::~sugrid()
   //deallocate arrays
   cuda_check(cudaFree(uci));
   cuda_check(cudaFree(sci));
-  cuda_check(cudaFree(upi));
-  cuda_check(cudaFree(spi));
+  cuda_check(cudaFree(uoi));
+  cuda_check(cudaFree(soi));
   cuda_check(cudaFree(beg));
   cuda_check(cudaFree(end));
 
@@ -133,8 +133,8 @@ void sugrid::generate_arrays(
   int tpb, //threads per block
   float3 *r) //position array
 {
-  calc_indexes<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,csl,cps,uci,upi,r);
-  cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,upi,spi,n_o);
+  calc_indexes<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,csl,cps,uci,uoi,r);
+  cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,uoi,soi,n_o);
   set_cells_empty<<<(n_c+tpb-1)/tpb,tpb>>>(n_c,beg,end);
   find_cells_limits<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,sci,beg,end);
 }

@@ -4,7 +4,7 @@
 //Includes
 
 #include "util.cuh" //general utilities
-#include "vecops.cuh" //vector operations
+#include "vect.cuh" //vector types
 
 //Namespace
 

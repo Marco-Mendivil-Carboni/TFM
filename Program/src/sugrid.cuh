@@ -19,8 +19,8 @@ struct sugrid //sorted uniform grid
 
   uint *uci; //unsorted cell index array
   uint *sci; //sorted cell index array
-  uint *upi; //unsorted particle index array
-  uint *spi; //sorted particle index array
+  uint *uoi; //unsorted object index array
+  uint *soi; //sorted object index array
   uint *beg; //cell beginning array
   uint *end; //cell end array
 
