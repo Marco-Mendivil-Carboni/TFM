@@ -14,7 +14,6 @@ chrdat::chrdat(parmap &par) //parameters
   : N {par.get_val<uint>("number_of_particles",0)}
   , R {par.get_val<float>("confinement_radius",-1.0)}
   , T {par.get_val<float>("temperature",298.0)}
-  , eps {par.get_val<float>("particle_energy",1.0)}
   , n_l {par.get_val<uint>("number_of_lbs",0)}
   , i_f {0}, t {0.0}
 {
@@ -22,11 +21,10 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(1<=N&&N<100'000)){ throw error("number_of_particles out of range");}
   if (!(0.0<R&&R<100.0)){ throw error("confinement_radius out of range");}
   if (!(0.0<T&&T<1'000.0)){ throw error("temperature out of range");}
-  if (!(0.125<eps&&eps<2.0)){ throw error("particle_energy out of range");}
   if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
-  float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
+  float cvf = N*pow(0.5*rco/(R-0.5*rco),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
-  float laf = n_l*pow(0.5/(R-1.0),2.0); //lbs area fraction
+  float laf = n_l*pow(lco/(R-rco),2.0); //lbs area fraction
   if (laf>0.5){ throw error("lbs area fraction above 0.5");}
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
@@ -34,9 +32,9 @@ chrdat::chrdat(parmap &par) //parameters
   msg_1 += "T = "+cnfs(T,5,'0',1)+" ";
   logger::record(msg_1);
   std::string msg_2 = ""; //2nd message
-  msg_2 += "eps = "+cnfs(eps,5,'0',3)+" ";
   msg_2 += "n_l = "+cnfs(n_l,5,'0')+" ";
   msg_2 += "cvf = "+cnfs(cvf,5,'0',3)+" ";
+  msg_2 += "laf = "+cnfs(laf,5,'0',3)+" ";
   logger::record(msg_2);
 
   //allocate device memory
@@ -76,7 +74,7 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
   std::string pts; //particle type string
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    pts = (hpt[i_p]==LAD)?"X":"Y";//tmp -----------------------------------------
+    pts = (hpt[i_p]==LND)?"A":"B";
     txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<pts;
     txt_out_f<<std::right<<std::setw(5)<<pts<<std::setw(5)<<i_p+1;
     txt_out_f<<cnfs(hr[i_p].x,8,' ',3);

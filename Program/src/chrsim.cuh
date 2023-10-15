@@ -58,8 +58,6 @@ class chrsim : public chrdat //chromatin simulation
   sugrid lg; //lbs grid
   sugrid *lgp; //lbs grid pointer
 
-  // chrsim *sdp; //simulation device pointer -----------------------------------?
-
   //Functions
 
   //set random lbs positions

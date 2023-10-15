@@ -13,10 +13,12 @@ if {$argc==2} {
     mol new $gro_file autobonds off
     set N [molinfo top get numatoms]
     for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
-    set sel [atomselect top "type X"]
+    set sel [atomselect top "name A"]
     $sel set radius $r_LJ
-    set sel [atomselect top "type Y"]
+    color Name "A" 0
+    set sel [atomselect top "name B"]
     $sel set radius $r_LJ
+    color Name "B" 1
     # mol modstyle 0 top VDW 1.0 $res
     mol modstyle 0 top CPK 4.0 [expr 4.0*$r_LJ/2.0] $res $res
 

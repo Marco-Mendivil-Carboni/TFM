@@ -14,8 +14,6 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr float dt = 1.0/2048; //timestep
-static constexpr float rco = 1.154701; //repulsive cutoff
-static constexpr float aco = 2.000000; //attractive cutoff
 static constexpr float mis = 0.838732; //minimum initial separation
 
 //Aliases
@@ -85,8 +83,7 @@ inline __device__ void calc_cf(
   float3 *f) //force array
 {
   //calculate auxiliary variables
-  float d_r; //radial distance to origin
-  d_r = length(r[i_p]);
+  float d_r = length(r[i_p]); //radial distance
   float dwp = R-d_r; //wall-particle distance
   if (dwp>rco){ return;}
 
@@ -101,22 +98,20 @@ inline __device__ void calc_cf(
 
 //calculate particle force
 template <stype T> inline __device__ void calc_pf(
-  const float eps, //particle energy
-  float3 vpp, //particle particle vector
-  float dpp, //particle particle distance
+  float3 vpp, //particle-particle vector
+  float dpp, //particle-particle distance
   float3 &srf) //short-range forces
 {
   //calculate Wang-Frenkel force
   if (dpp>aco){ return;}
   float d2 = dpp*dpp; //dpp squared
-  srf += eps*(18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vpp;
+  srf += e_p*(18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vpp;
 }
 
 //calculate particle force
 template <> inline __device__ void calc_pf<ICG>(
-  const float eps, //particle energy
-  float3 vpp, //particle particle vector
-  float dpp, //particle particle distance
+  float3 vpp, //particle-particle vector
+  float dpp, //particle-particle distance
   float3 &srf) //short-range forces
 {
   //calculate Soft-Repulsive force
@@ -126,29 +121,24 @@ template <> inline __device__ void calc_pf<ICG>(
 
 //calculate lbs force
 template <stype T> inline __device__ void calc_lf(
-  float3 vlp, //lbs particle vector
-  float dlp, //lbs particle distance
+  float3 vlp, //lbs-particle vector
+  float dlp, //lbs-particle distance
   float3 &srf) //short-range forces
 {
   //calculate lbs force
-  if (dlp>0.5){ return;}
-  float d6 = dlp*dlp*dlp*dlp*dlp*dlp; //dlp to the sixth power
-  float r6 = 0.5*0.5*0.5*0.5*0.5*0.5; //r_c to the sixth power
-  srf += 128.0*(d6/r6-1.0)*vlp;
+  if (dlp>lco){ return;}
+  float rd2 = (dlp/lco)*(dlp/lco); //reduced dlp squared
+  srf += e_l*(rd2*rd2*rd2-1.0)*vlp;
 }
 
 //calculate lbs force
 template <> inline __device__ void calc_lf<ICG>(
-  float3 vpp, //lbs particle vector
-  float dpp, //lbs particle distance
-  float3 &srf) //short-range forces
-{
-  return;
-}
+  float3 vpp, //lbs-particle vector
+  float dpp, //lbs-particle distance
+  float3 &srf) {} //short-range forces
 
 //calculate short-range forces with cell's objects
 template <stype T> inline __device__ void calc_cell_srf(
-  const float eps, //particle energy
   ptype *pt, //particle type array
   float3 *lr, //lbs position array
   uint i_c, //cell index
@@ -178,16 +168,16 @@ template <stype T> inline __device__ void calc_cell_srf(
     //calculate force only between non-bonded particles
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
     {
-      //calculate particle particle distance
-      float3 vpp = r_i-r[j_p]; //particle particle vector
-      float dpp = length(vpp); //particle particle distance
+      //calculate particle-particle distance
+      float3 vpp = r_i-r[j_p]; //particle-particle vector
+      float dpp = length(vpp); //particle-particle distance
 
       //calculate particle force
-      calc_pf<T>(eps,vpp,dpp,srf);
+      calc_pf<T>(vpp,dpp,srf);
     }
   }
 
-  //calculate lbs force only for LAD particles
+  //calculate lbs force only on LAD particles
   if (pt[i_p]==LAD)
   {
     //get lbs grid limits
@@ -200,9 +190,9 @@ template <stype T> inline __device__ void calc_cell_srf(
       //get lbs index
       i_l = lgp->spi[sai];
 
-      //calculate lbs particle distance
-      float3 vlp = r_i-lr[i_l]; //lbs particle vector
-      float dlp = length(vlp); //lbs particle distance
+      //calculate lbs-particle distance
+      float3 vlp = r_i-lr[i_l]; //lbs-particle vector
+      float dlp = length(vlp); //lbs-particle distance
 
       //calculate lbs force
       calc_lf<T>(vlp,dlp,srf);
@@ -212,7 +202,6 @@ template <stype T> inline __device__ void calc_cell_srf(
 
 //calculate all short-range forces
 template <stype T> inline __device__ void calc_all_srf(
-  const float eps, //particle energy
   ptype *pt, //particle type array
   float3 *lr, //lbs position array
   uint i_p, //particle index
@@ -244,7 +233,7 @@ template <stype T> inline __device__ void calc_all_srf(
         if (nci>=n_c){ continue;}
 
         //calculate short-range forces with cell's objects
-        calc_cell_srf<T>(eps,pt,lr,nci,i_p,r_i,r,pgp,lgp,srf);
+        calc_cell_srf<T>(pt,lr,nci,i_p,r_i,r,pgp,lgp,srf);
       }
     }
   }
@@ -274,7 +263,6 @@ __global__ void init_ps(
 template <stype T> __global__ void exec_RK_1(
   const uint N, //number of particles
   const float R, //confinement radius
-  const float eps, //particle energy
   ptype *pt, //particle type array
   float3 *r, //position array
   float3 *f, //force array
@@ -306,7 +294,7 @@ template <stype T> __global__ void exec_RK_1(
   f[i_p] = {0.0,0.0,0.0};
   calc_bf(N,i_p,r,f);
   calc_cf(R,i_p,r,f);
-  calc_all_srf<T>(eps,pt,lr,i_p,r,f,pgp,lgp);
+  calc_all_srf<T>(pt,lr,i_p,r,f,pgp,lgp);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt+rn[i_p];
@@ -316,7 +304,6 @@ template <stype T> __global__ void exec_RK_1(
 template <stype T> __global__ void exec_RK_2(
   const uint N, //number of particles
   const float R, //confinement radius
-  const float eps, //particle energy
   ptype *pt, //particle type array
   float3 *r, //position array
   float3 *f, //force array
@@ -335,7 +322,7 @@ template <stype T> __global__ void exec_RK_2(
   ef[i_p] = {0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,i_p,er,ef);
-  calc_all_srf<T>(eps,pt,lr,i_p,er,ef,pgp,lgp);
+  calc_all_srf<T>(pt,lr,i_p,er,ef,pgp,lgp);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt+rn[i_p];
@@ -417,10 +404,10 @@ void chrsim::generate_initial_condition()
       //make one Runge-Kutta iteration
       pg.generate_arrays(tpb,r);
       exec_RK_1<ICG><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,eps,pt,r,f,lr,er,sd,rn,vps,pgp,lgp);
+      (N,R,pt,r,f,lr,er,sd,rn,vps,pgp,lgp);
       pg.generate_arrays(tpb,er);
       exec_RK_2<ICG><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,eps,pt,r,f,lr,er,ef,rn,pgp,lgp);
+      (N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
     }
 
     //copy position array to host
@@ -485,10 +472,10 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
       //make one Runge-Kutta iteration
       pg.generate_arrays(tpb,r);
       exec_RK_1<DST><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,eps,pt,r,f,lr,er,sd,rn,vps,pgp,lgp);
+      (N,R,pt,r,f,lr,er,sd,rn,vps,pgp,lgp);
       pg.generate_arrays(tpb,er);
       exec_RK_2<DST><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,eps,pt,r,f,lr,er,ef,rn,pgp,lgp);
+      (N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
     }
 
     //copy position array to host
@@ -526,15 +513,14 @@ void chrsim::set_lbs_positions()
     ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
 
     //calculate position of next lbs
-    hlr[i_l] = (R-1.0)*ran_dir;
+    hlr[i_l] = (R-rco)*ran_dir;
 
     //check if position is acceptable
     bool p_a = true; //position is acceptable
     for (uint j_l = 0; j_l<i_l; ++j_l) //secondary lbs index
     {
-      float dll; //lbs lbs distance
-      dll = length(hlr[j_l]-hlr[i_l]);
-      if (dll<1.0){ p_a = false;}
+      float dll = length(hlr[j_l]-hlr[i_l]); //lbs-lbs distance
+      if (dll<2.0*lco){ p_a = false;}
     }
 
     if (!p_a){ --i_l;} //repeat
@@ -627,8 +613,7 @@ void chrsim::perform_random_walk()
     if (!isfinite(hr[i_p].x)){ p_a = false;}
     if (!isfinite(hr[i_p].y)){ p_a = false;}
     if (!isfinite(hr[i_p].z)){ p_a = false;}
-    float d_r; //radial distance to origin
-    d_r = length(hr[i_p]);
+    float d_r = length(hr[i_p]); //radial distance
     if ((R-d_r)<mis){ p_a = false;}
 
     if (p_a) //continue
@@ -661,8 +646,7 @@ uint chrsim::particle_overlaps()
     for (uint j_p = 0; (j_p+1)<i_p; ++j_p) //secondary particle index
     {
       //check if particles overlap
-      float dpp; //particle-particle distance
-      dpp = length(hr[j_p]-hr[i_p]);
+      float dpp = length(hr[j_p]-hr[i_p]); //particle-particle distance
       if (dpp<mis){ ++po;}
     }
   }
