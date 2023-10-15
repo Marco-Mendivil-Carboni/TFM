@@ -82,12 +82,10 @@ inline __device__ void calc_cf(
   float3 *r, //position array
   float3 *f) //force array
 {
-  //calculate auxiliary variables
+  //calculate confinement force
   float d_r = length(r[i_p]); //radial distance
   float dwp = R-d_r; //wall-particle distance
   if (dwp>rco){ return;}
-
-  //calculate confinement force
   float3 cf = -r[i_p]/d_r; //confinement force
   float d2 = dwp*dwp; //dwp squared
   cf *= (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2);
@@ -96,121 +94,109 @@ inline __device__ void calc_cf(
   f[i_p] += cf;
 }
 
-//calculate particle force
-template <stype T> inline __device__ void calc_pf(
+//calculate particle-particle force
+template <stype T> inline __device__ void calc_ppf(
   float3 vpp, //particle-particle vector
-  float dpp, //particle-particle distance
   float3 &srf) //short-range forces
 {
   //calculate Wang-Frenkel force
+  float dpp = length(vpp); //particle-particle distance
   if (dpp>aco){ return;}
   float d2 = dpp*dpp; //dpp squared
   srf += e_p*(18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vpp;
 }
 
-//calculate particle force
-template <> inline __device__ void calc_pf<ICG>(
+//calculate particle-particle force
+template <> inline __device__ void calc_ppf<ICG>(
   float3 vpp, //particle-particle vector
-  float dpp, //particle-particle distance
   float3 &srf) //short-range forces
 {
   //calculate Soft-Repulsive force
+  float dpp = length(vpp); //particle-particle distance
   if (dpp>rco){ return;}
   srf += 128.0*(3.0*rco-3.0*dpp)*vpp;
 }
 
-//calculate lbs force
-template <stype T> inline __device__ void calc_lf(
+//calculate lbs-particle force
+template <stype T> inline __device__ void calc_lpf(
   float3 vlp, //lbs-particle vector
-  float dlp, //lbs-particle distance
   float3 &srf) //short-range forces
 {
-  //calculate lbs force
+  //calculate lbs-particle force
+  float dlp = length(vlp); //lbs-particle distance
   if (dlp>lco){ return;}
-  float rd2 = (dlp/lco)*(dlp/lco); //reduced dlp squared
-  srf += e_l*(rd2*rd2*rd2-1.0)*vlp;
+  float nd = (dlp/lco); //normalized dlp
+  float d2 = nd*nd; //normalized dlp squared
+  srf += e_l*(d2*d2*d2-1.0)*vlp;
 }
 
-//calculate lbs force
-template <> inline __device__ void calc_lf<ICG>(
-  float3 vpp, //lbs-particle vector
-  float dpp, //lbs-particle distance
+//calculate lbs-particle force
+template <> inline __device__ void calc_lpf<ICG>(
+  float3 vlp, //lbs-particle vector
   float3 &srf) {} //short-range forces
 
 //calculate short-range forces with cell's objects
 template <stype T> inline __device__ void calc_cell_srf(
   ptype *pt, //particle type array
   float3 *lr, //lbs position array
-  uint i_c, //cell index
-  uint i_p, //particle index
-  float3 r_i, //particle position
-  float3 *r, //position array
   sugrid *pgp, //particle grid pointer
   sugrid *lgp, //lbs grid pointer
+  uint i_p, //particle index
+  float3 r_i, //particle position
+  uint i_c, //cell index
+  float3 *r, //position array
   float3 &srf) //short-range forces
 {
   //declare auxiliary variables
+  uint pgbeg = pgp->beg[i_c]; //particle grid cell beginning
+  uint pgend = pgp->end[i_c]; //particle grid cell end
+  uint lgbeg = lgp->beg[i_c]; //lbs grid cell beginning
+  uint lgend = lgp->end[i_c]; //lbs grid cell end
   uint j_p; //secondary particle index
   uint i_l; //lbs index
-  uint beg; //cell beginning
-  uint end; //cell end
-
-  //get particle grid limits
-  beg = pgp->beg[i_c]; //cell beginning
-  end = pgp->end[i_c]; //cell end
 
   //range over cell's particles
-  for (uint sai = beg; sai<end; ++sai) //sorted array index
+  for (uint sai = pgbeg; sai<pgend; ++sai) //sorted array index
   {
     //get secondary particle index
     j_p = pgp->spi[sai];
 
-    //calculate force only between non-bonded particles
+    //calculate particle-particle force only between non-bonded particles
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
     {
-      //calculate particle-particle distance
+      //calculate particle-particle force
       float3 vpp = r_i-r[j_p]; //particle-particle vector
-      float dpp = length(vpp); //particle-particle distance
-
-      //calculate particle force
-      calc_pf<T>(vpp,dpp,srf);
+      calc_ppf<T>(vpp,srf);
     }
   }
 
-  //calculate lbs force only on LAD particles
+  //calculate lbs-particle force only on LAD particles
   if (pt[i_p]==LAD)
   {
-    //get lbs grid limits
-    beg = lgp->beg[i_c];
-    end = lgp->end[i_c];
-
     //range over cell's lbs
-    for (uint sai = beg; sai<end; ++sai) //sorted array index
+    for (uint sai = lgbeg; sai<lgend; ++sai) //sorted array index
     {
       //get lbs index
       i_l = lgp->spi[sai];
 
-      //calculate lbs-particle distance
+      //calculate lbs-particle force
       float3 vlp = r_i-lr[i_l]; //lbs-particle vector
-      float dlp = length(vlp); //lbs-particle distance
-
-      //calculate lbs force
-      calc_lf<T>(vlp,dlp,srf);
+      calc_lpf<T>(vlp,srf);
     }
   }
 }
 
-//calculate all short-range forces
-template <stype T> inline __device__ void calc_all_srf(
+//calculate short-range forces
+template <stype T> inline __device__ void calc_srf(
   ptype *pt, //particle type array
   float3 *lr, //lbs position array
+  sugrid *pgp, //particle grid pointer
+  sugrid *lgp, //lbs grid pointer
   uint i_p, //particle index
   float3 *r, //position array
-  float3 *f, //force array
-  sugrid *pgp, //particle grid pointer
-  sugrid *lgp) //lbs grid pointer
+  float3 *f) //force array
 {
-  //calculate auxiliary variables
+  //declare auxiliary variables
   float3 r_i = r[i_p]; //particle position
   const float csl = pgp->csl; //cell side length
   const uint cps = pgp->cps; //cells per side
@@ -233,7 +219,7 @@ template <stype T> inline __device__ void calc_all_srf(
         if (nci>=n_c){ continue;}
 
         //calculate short-range forces with cell's objects
-        calc_cell_srf<T>(pt,lr,nci,i_p,r_i,r,pgp,lgp,srf);
+        calc_cell_srf<T>(pt,lr,pgp,lgp,i_p,r_i,nci,r,srf);
       }
     }
   }
@@ -259,20 +245,14 @@ __global__ void init_ps(
   curand_init(pseed,i_p,0,&ps[i_p]);
 }
 
-//execute 1st stage of the Runge-Kutta method
-template <stype T> __global__ void exec_RK_1(
+//begin Runge-Kutta iteration
+__global__ void begin_iter(
   const uint N, //number of particles
-  const float R, //confinement radius
-  ptype *pt, //particle type array
-  float3 *r, //position array
   float3 *f, //force array
-  float3 *lr, //lbs position array
-  float3 *er, //extra position array
+  float3 *ef, //extra force array
   float sd, //standard deviation
   float3 *rn, //random number array
-  void *vps, //void PRNG state array
-  sugrid *pgp, //particle grid pointer
-  sugrid *lgp) //lbs grid pointer
+  void *vps) //void PRNG state array
 {
   //calculate particle index
   uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
@@ -290,11 +270,32 @@ template <stype T> __global__ void exec_RK_1(
   }
   while (az.x>5||az.y>5||az.z>5);
 
-  //calculate forces
+  //initialize forces to zero
   f[i_p] = {0.0,0.0,0.0};
+  ef[i_p] = {0.0,0.0,0.0};
+}
+
+//execute 1st stage of the Runge-Kutta method
+template <stype T> __global__ void exec_RK_1(
+  const uint N, //number of particles
+  const float R, //confinement radius
+  ptype *pt, //particle type array
+  float3 *r, //position array
+  float3 *f, //force array
+  float3 *lr, //lbs position array
+  float3 *er, //extra position array
+  float3 *rn, //random number array
+  sugrid *pgp, //particle grid pointer
+  sugrid *lgp) //lbs grid pointer
+{
+  //calculate particle index
+  uint i_p = blockIdx.x*blockDim.x+threadIdx.x; //particle index
+  if (i_p>=N){ return;}
+
+  //calculate forces
   calc_bf(N,i_p,r,f);
   calc_cf(R,i_p,r,f);
-  calc_all_srf<T>(pt,lr,i_p,r,f,pgp,lgp);
+  calc_srf<T>(pt,lr,pgp,lgp,i_p,r,f);
 
   //calculate extra position
   er[i_p] = r[i_p]+f[i_p]*dt+rn[i_p];
@@ -319,10 +320,9 @@ template <stype T> __global__ void exec_RK_2(
   if (i_p>=N){ return;}
 
   //calculate forces
-  ef[i_p] = {0.0,0.0,0.0};
   calc_bf(N,i_p,er,ef);
   calc_cf(R,i_p,er,ef);
-  calc_all_srf<T>(pt,lr,i_p,er,ef,pgp,lgp);
+  calc_srf<T>(pt,lr,pgp,lgp,i_p,er,ef);
 
   //calculate new position
   r[i_p] = r[i_p]+0.5*(ef[i_p]+f[i_p])*dt+rn[i_p];
@@ -402,12 +402,11 @@ void chrsim::generate_initial_condition()
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       //make one Runge-Kutta iteration
+      begin_iter<<<(N+tpb-1)/tpb,tpb>>>(N,f,ef,sd,rn,vps);
       pg.generate_arrays(tpb,r);
-      exec_RK_1<ICG><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,pt,r,f,lr,er,sd,rn,vps,pgp,lgp);
+      exec_RK_1<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,rn,pgp,lgp);
       pg.generate_arrays(tpb,er);
-      exec_RK_2<ICG><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
+      exec_RK_2<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
     }
 
     //copy position array to host
@@ -450,7 +449,7 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
   cuda_check(cudaMemcpy(r,hr,N*sizeof(float3),cudaMemcpyHostToDevice));
   cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(float3),cudaMemcpyHostToDevice));
 
-  // ----------------------------------------------------------------------------
+  //generate lbs grid arrays
   lg.generate_arrays(tpb,lr);
 
   //record success message
@@ -470,12 +469,11 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     for (uint fsi = 0; fsi<spf; ++fsi) //frame step index
     {
       //make one Runge-Kutta iteration
+      begin_iter<<<(N+tpb-1)/tpb,tpb>>>(N,f,ef,sd,rn,vps);
       pg.generate_arrays(tpb,r);
-      exec_RK_1<DST><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,pt,r,f,lr,er,sd,rn,vps,pgp,lgp);
+      exec_RK_1<DST><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,rn,pgp,lgp);
       pg.generate_arrays(tpb,er);
-      exec_RK_2<DST><<<(N+tpb-1)/tpb,tpb>>>
-      (N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
+      exec_RK_2<DST><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
     }
 
     //copy position array to host
@@ -529,7 +527,7 @@ void chrsim::set_lbs_positions()
   //copy host lbs position array to device
   cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(float3),cudaMemcpyHostToDevice));
 
-  // ----------------------------------------------------------------------------
+  //generate lbs grid arrays
   lg.generate_arrays(tpb,lr);
 
   //free host PRNG
