@@ -60,3 +60,13 @@ $$
 $$
 -\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 128 \left(3 d _{ij} - 3 d _m\right) (\bar{r} _i - \bar{r} _j)
 $$
+
+## Binding potential
+
+$$
+V = \sum _{i=0} ^{N-1} \sum _{j=0} ^{n _l - 1} \varepsilon \left(\frac{4}{3} \frac{d _{ij} ^{2}}{r _c ^{2}} - \frac{1}{3} \frac{d _{ij} ^{8}}{r _c ^{8}} - 1\right)
+$$
+
+$$
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} \varepsilon \frac{8}{3 r _c ^{2}} \left( \frac{d _{ij} ^{6}}{r _c ^{6}} - 1\right) (\bar{r} _i - \bar{r} _j)
+$$

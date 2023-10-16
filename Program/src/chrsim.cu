@@ -124,12 +124,12 @@ template <stype T> inline __device__ void calc_lpf(
   float3 vlp, //lbs-particle vector
   float3 &srf) //short-range forces
 {
-  //calculate lbs-particle force
+  //calculate Binding force
   float dlp = length(vlp); //lbs-particle distance
   if (dlp>lco){ return;}
   float nd = (dlp/lco); //normalized dlp
   float d2 = nd*nd; //normalized dlp squared
-  srf += e_l*(d2*d2*d2-1.0)*vlp;
+  srf += e_l*(8.0/(3.0*lco*lco))*(d2*d2*d2-1.0)*vlp;
 }
 
 //calculate lbs-particle force

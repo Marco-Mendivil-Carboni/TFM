@@ -19,7 +19,7 @@ static constexpr float k_b = 2.000000; //bending constant
 static constexpr float e_p = 1.000000; //particle energy
 static constexpr float rco = 1.154701; //repulsive cutoff
 static constexpr float aco = 2.000000; //attractive cutoff
-static constexpr float e_l = 128.0000; //lbs energy
+static constexpr float e_l = 16.00000; //lbs energy
 static constexpr float lco = 0.577351; //lbs cutoff
 
 //Enumerations
