@@ -201,7 +201,7 @@ template <stype T> inline __device__ void calc_srf(
   const float csl = pgp->csl; //cell side length
   const uint cps = pgp->cps; //cells per side
   const uint n_c = pgp->n_c; //number of cells
-  int3 ir = ifloorf(r_i/csl); //integer coordinates
+  int3 ir = ifloorc(r_i/csl); //integer coordinates
   uint iofst = (cps/2)*(1+cps+cps*cps); //index offset
   float3 srf = {0.0,0.0,0.0}; //short-range forces
 
@@ -266,7 +266,7 @@ __global__ void begin_iter(
     rn[i_p].x = sd*curand_normal(&ps[i_p]);
     rn[i_p].y = sd*curand_normal(&ps[i_p]);
     rn[i_p].z = sd*curand_normal(&ps[i_p]);
-    az = fabs(rn[i_p]/sd);
+    az = fabsc(rn[i_p]/sd);
   }
   while (az.x>5||az.y>5||az.z>5);
 
@@ -594,7 +594,7 @@ void chrsim::perform_random_walk()
     curandGenerateUniform(gen,&ran,1); phi = 2.0*M_PI*ran;
     ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
     per_dir = cross(old_dir,ran_dir);
-    per_dir = normalize(per_dir);
+    per_dir = normalized(per_dir);
 
     //generate random bond angle and calculate new direction
     curandGenerateUniform(gen,&ran,1);

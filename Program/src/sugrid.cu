@@ -30,7 +30,7 @@ __global__ void calc_indexes(
 
   //calculate auxiliary variables
   float3 r_i = r[i_o]; //object position
-  int3 ir = ifloorf(r_i/csl); //integer coordinates
+  int3 ir = ifloorc(r_i/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
   //calculate cell index
