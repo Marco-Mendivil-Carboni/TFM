@@ -22,7 +22,7 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(0.0<R&&R<100.0)){ throw error("confinement_radius out of range");}
   if (!(0.0<T&&T<1'000.0)){ throw error("temperature out of range");}
   if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
-  float cvf = N*pow(0.5*rco/(R-0.5*rco),3.0); //chromatin volume fraction
+  float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   float laf = n_l*pow(lco/(R-rco),2.0); //lbs area fraction
   if (laf>0.6){ throw error("lbs area fraction above 0.6");}

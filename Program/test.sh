@@ -47,8 +47,8 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 check $?
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 1024"; echo "confinement_radius 10.0";
-  echo "steps_per_frame 1024"; echo "number_of_lbs 100";
+{ echo "number_of_particles 2048"; echo "confinement_radius 10.0";
+  echo "number_of_lbs 128";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/performsim $testdir
