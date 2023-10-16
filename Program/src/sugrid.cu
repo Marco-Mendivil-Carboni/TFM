@@ -3,7 +3,7 @@
 #include "sugrid.cuh" //chromatin simulation
 
 #include "util.cuh" //general utilities
-#include "vect.cuh" //vector types
+#include "vecops.cuh" //vector operations
 
 #include <cub/device/device_radix_sort.cuh> //cub parallel radix sort
 

@@ -6,18 +6,6 @@
 namespace mmc //Marco Mendívil Carboni
 {
 
-//Structures
-
-struct __align__(16) vec3f //vector of 3 floats
-{
-  float x, y, z;
-};
-
-struct __align__(16) vec3i //vector of 3 ints
-{
-  int x, y, z;
-};
-
 //Operators and Functions
 
 inline __host__ __device__ float3 operator-(float3 &a)

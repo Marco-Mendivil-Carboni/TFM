@@ -4,7 +4,6 @@
 //Includes
 
 #include "util.cuh" //general utilities
-#include "vect.cuh" //vector types
 
 //Namespace
 
@@ -65,6 +64,7 @@ class chrdat //chromatin data
   const float R; //confinement radius
   const float T; //temperature
   const uint n_l; //number of lbs
+
   uint i_f; //frame index
   double t; //time
 
