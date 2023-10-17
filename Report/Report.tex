@@ -1,0 +1,154 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{setspace}
+\spacing{1.15}
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+
+\usepackage{mathtools,amssymb}
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{subfig}
+\usepackage{tikz}
+
+\usepackage{gnuplot-lua-tikz}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage[nottoc]{tocbibind}
+\usepackage{appendix}
+
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{epigraph}
+
+\definecolor{color1}{HTML}{d81e2c}
+\definecolor{color2}{HTML}{a31cc5}
+\definecolor{color3}{HTML}{194bb2}
+\definecolor{color4}{HTML}{169f62}
+
+\usetikzlibrary{calc}
+\usetikzlibrary{external}
+\tikzexternalize[prefix=TikZ-figures/]
+
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{15pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{40pt}{20pt}
+
+\lstset{language=C,basicstyle=\ttfamily,keywordstyle=\color{color1}}
+
+\setlength\epigraphwidth{8cm}
+\setlength\epigraphrule{0pt}
+
+\title{Modelo polimérico de la cromatina: Estudio de su organización dentro del núcleo celular}
+\author{Marco Mendívil Carboni}
+
+\begin{document}
+
+\renewcommand{\contentsname}{Índice}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\appendixname}{Anexo}
+
+\pagenumbering{gobble}
+
+\begin{titlepage}
+
+\vspace*{4mm}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=66mm]{../Multimedia/Images/UnizarLogo}
+\end{figure}
+
+\vspace*{8mm}
+
+\begin{center}
+\Large TRABAJO FIN DE MÁSTER
+\end{center}
+\begin{center}
+\Large GRADO EN FÍSICA
+\end{center}
+
+\vspace*{8mm}
+
+\hrule
+
+\vspace*{4mm}
+
+\begin{center}
+\huge\bf Modelo polimérico de la cromatina: Estudio de su organización dentro del núcleo celular
+\end{center}
+
+\vspace*{4mm}
+
+\hrule
+
+\vspace*{20mm}
+
+\center{Autor}
+\center{\Large Marco Mendívil Carboni}
+
+\vspace*{8mm}
+
+\center{Directores}
+\center{\Large Fernando Falo Forniés}
+\center{\Large Alejandro Sáinz-Agost}
+
+\vfill
+
+\begin{center}
+\large Facultad de Ciencias\\
+\today\\
+\end{center}
+
+\end{titlepage}
+
+\clearpage
+\thispagestyle{empty}\hfill
+\clearpage
+
+\pagenumbering{Roman}
+
+% \input{Chapters/Abstract}
+\newpage
+
+% \input{Chapters/Acknowledgments}
+\newpage
+
+\tableofcontents
+\newpage
+
+\clearpage
+\thispagestyle{empty}\hfill
+\clearpage
+
+\pagenumbering{arabic}
+
+\begingroup
+
+\let\clearpage\relax
+
+\input{Chapters/Introduction}
+
+% \input{Chapters/...}
+
+\begin{spacing}{0.0}
+\bibliographystyle{unsrt}
+% \bibliography{Bibliography}
+\end{spacing}
+\newpage
+
+\endgroup
+
+\clearpage
+\thispagestyle{empty}\hfill
+\clearpage
+
+\appendix
+
+% \input{Appendixes/...}
+
+\end{document}
