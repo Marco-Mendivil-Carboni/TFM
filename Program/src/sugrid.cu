@@ -2,9 +2,6 @@
 
 #include "sugrid.cuh" //chromatin simulation
 
-#include "util.cuh" //general utilities
-#include "vecops.cuh" //vector operations
-
 #include <cub/device/device_radix_sort.cuh> //cub parallel radix sort
 
 //Namespace
@@ -21,7 +18,7 @@ __global__ void calc_indexes(
   const uint cps, //cells per side
   uint *uci, //unsorted cell index array
   uint *uoi, //unsorted object index array
-  float3 *r) //position array
+  vec3f *r) //position array
 {
   //calculate object index
   int i_o = blockIdx.x*blockDim.x+threadIdx.x; //object index
@@ -29,8 +26,8 @@ __global__ void calc_indexes(
   uoi[i_o] = i_o;
 
   //calculate auxiliary variables
-  float3 r_i = r[i_o]; //object position
-  int3 ir = ifloorc(r_i/csl); //integer coordinates
+  vec3f r_i = r[i_o]; //object position
+  vec3i ir = ifloorc(r_i/csl); //integer coordinates
   int iofst = (cps/2)*(1+cps+cps*cps); //index offset
 
   //calculate cell index
@@ -67,8 +64,7 @@ __global__ void find_cells_limits(
   int ci_curr = sci[sai]; //current cell index
   if (sai==0)
   {
-    beg[ci_curr] = sai;
-    return;
+    beg[ci_curr] = sai; return;
   }
   int ci_prev = sci[sai-1]; //previous cell index
   if (ci_prev!=ci_curr)
@@ -131,7 +127,7 @@ sugrid::~sugrid()
 //generate grid arrays
 void sugrid::generate_arrays(
   int tpb, //threads per block
-  float3 *r) //position array
+  vec3f *r) //position array
 {
   calc_indexes<<<(n_o+tpb-1)/tpb,tpb>>>(n_o,csl,cps,uci,uoi,r);
   cub::DeviceRadixSort::SortPairs(eb,ebs,uci,sci,uoi,soi,n_o);

@@ -2,8 +2,6 @@
 
 #include "chrsim.cuh" //chromatin simulation
 
-#include "vecops.cuh" //vector operations
-
 #include <time.h> //time utilities library
 
 #include <curand_kernel.h> //cuRAND device functions
@@ -36,14 +34,14 @@ enum stype //simulation type
 inline __device__ void calc_bf(
   const uint N, //number of particles
   uint i_p, //particle index
-  float3 *r, //position array
-  float3 *f) //force array
+  vec3f *r, //position array
+  vec3f *f) //force array
 {
   //declare auxiliary variables
-  float3 vec[4]; //bond vectors
+  vec3f vec[4]; //bond vectors
   float il[4]; //bond inverse lengths
   float cos[3]; //bond angle cosines
-  float3 bf = {0.0,0.0,0.0}; //bonded forces
+  vec3f bf = {0.0,0.0,0.0}; //bonded forces
 
   //calculate bond vectors, inverse lengths and angle cosines
   for (uint i_b = 0; i_b<4; ++i_b) //bond index
@@ -81,14 +79,14 @@ inline __device__ void calc_bf(
 inline __device__ void calc_cf(
   const float R, //confinement radius
   uint i_p, //particle index
-  float3 *r, //position array
-  float3 *f) //force array
+  vec3f *r, //position array
+  vec3f *f) //force array
 {
   //calculate confinement force
   float d_r = length(r[i_p]); //radial distance
   float dwp = R-d_r; //wall-particle distance
   if (dwp>rco){ return;}
-  float3 cf = -r[i_p]/d_r; //confinement force
+  vec3f cf = -r[i_p]/d_r; //confinement force
   float d2 = dwp*dwp; //dwp squared
   cf *= (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2);
 
@@ -98,8 +96,8 @@ inline __device__ void calc_cf(
 
 //calculate particle-particle force
 template <stype T> inline __device__ void calc_ppf(
-  float3 vpp, //particle-particle vector
-  float3 &srf) //short-range forces
+  vec3f vpp, //particle-particle vector
+  vec3f &srf) //short-range forces
 {
   //calculate Wang-Frenkel force
   float dpp = length(vpp); //particle-particle distance
@@ -110,8 +108,8 @@ template <stype T> inline __device__ void calc_ppf(
 
 //calculate particle-particle force
 template <> inline __device__ void calc_ppf<ICG>(
-  float3 vpp, //particle-particle vector
-  float3 &srf) //short-range forces
+  vec3f vpp, //particle-particle vector
+  vec3f &srf) //short-range forces
 {
   //calculate Soft-Repulsive force
   float dpp = length(vpp); //particle-particle distance
@@ -121,8 +119,8 @@ template <> inline __device__ void calc_ppf<ICG>(
 
 //calculate lbs-particle force
 template <stype T> inline __device__ void calc_lpf(
-  float3 vlp, //lbs-particle vector
-  float3 &srf) //short-range forces
+  vec3f vlp, //lbs-particle vector
+  vec3f &srf) //short-range forces
 {
   //calculate Binding force
   float dlp = length(vlp); //lbs-particle distance
@@ -134,20 +132,20 @@ template <stype T> inline __device__ void calc_lpf(
 
 //calculate lbs-particle force
 template <> inline __device__ void calc_lpf<ICG>(
-  float3 vlp, //lbs-particle vector
-  float3 &srf) {} //short-range forces
+  vec3f vlp, //lbs-particle vector
+  vec3f &srf) {} //short-range forces
 
 //calculate short-range forces with cell's objects
 template <stype T> inline __device__ void calc_cell_srf(
   ptype *pt, //particle type array
-  float3 *lr, //lbs position array
+  vec3f *lr, //lbs position array
   sugrid *pgp, //particle grid pointer
   sugrid *lgp, //lbs grid pointer
   uint i_p, //particle index
-  float3 r_i, //particle position
+  vec3f r_i, //particle position
   uint i_c, //cell index
-  float3 *r, //position array
-  float3 &srf) //short-range forces
+  vec3f *r, //position array
+  vec3f &srf) //short-range forces
 {
   //declare auxiliary variables
   uint pgbeg = pgp->beg[i_c]; //particle grid cell beginning
@@ -167,7 +165,7 @@ template <stype T> inline __device__ void calc_cell_srf(
     if (((j_p>i_p)?j_p-i_p:i_p-j_p)>1)
     {
       //calculate particle-particle force
-      float3 vpp = r_i-r[j_p]; //particle-particle vector
+      vec3f vpp = r_i-r[j_p]; //particle-particle vector
       calc_ppf<T>(vpp,srf);
     }
   }
@@ -182,7 +180,7 @@ template <stype T> inline __device__ void calc_cell_srf(
       i_l = lgp->soi[sai];
 
       //calculate lbs-particle force
-      float3 vlp = r_i-lr[i_l]; //lbs-particle vector
+      vec3f vlp = r_i-lr[i_l]; //lbs-particle vector
       calc_lpf<T>(vlp,srf);
     }
   }
@@ -191,25 +189,25 @@ template <stype T> inline __device__ void calc_cell_srf(
 //calculate short-range forces
 template <stype T> inline __device__ void calc_srf(
   ptype *pt, //particle type array
-  float3 *lr, //lbs position array
+  vec3f *lr, //lbs position array
   sugrid *pgp, //particle grid pointer
   sugrid *lgp, //lbs grid pointer
   uint i_p, //particle index
-  float3 *r, //position array
-  float3 *f) //force array
+  vec3f *r, //position array
+  vec3f *f) //force array
 {
   //declare auxiliary variables
-  float3 r_i = r[i_p]; //particle position
+  vec3f r_i = r[i_p]; //particle position
   const float csl = pgp->csl; //cell side length
   const uint cps = pgp->cps; //cells per side
   const uint n_c = pgp->n_c; //number of cells
-  int3 ir = ifloorc(r_i/csl); //integer coordinates
+  vec3i ir = ifloorc(r_i/csl); //integer coordinates
   uint iofst = (cps/2)*(1+cps+cps*cps); //index offset
-  float3 srf = {0.0,0.0,0.0}; //short-range forces
+  vec3f srf = {0.0,0.0,0.0}; //short-range forces
 
   //range over neighbouring cells
   uint nci; //neighbour cell index
-  int3 nir; //neighbour integer coordinates
+  vec3i nir; //neighbour integer coordinates
   for (nir.x = ir.x-1; nir.x<=ir.x+1; ++nir.x)
   {
     for (nir.y = ir.y-1; nir.y<=ir.y+1; ++nir.y)
@@ -250,10 +248,10 @@ __global__ void init_ps(
 //begin Runge-Kutta iteration
 __global__ void begin_iter(
   const uint N, //number of particles
-  float3 *f, //force array
-  float3 *ef, //extra force array
+  vec3f *f, //force array
+  vec3f *ef, //extra force array
   float sd, //standard deviation
-  float3 *rn, //random number array
+  vec3f *rn, //random number array
   void *vps) //void PRNG state array
 {
   //calculate particle index
@@ -262,7 +260,7 @@ __global__ void begin_iter(
 
   //calculate random numbers
   prng *ps = static_cast<prng *>(vps); //PRNG state array
-  float3 az; //absolute z-score
+  vec3f az; //absolute z-score
   do
   {
     rn[i_p].x = sd*curand_normal(&ps[i_p]);
@@ -282,11 +280,11 @@ template <stype T> __global__ void exec_RK_1(
   const uint N, //number of particles
   const float R, //confinement radius
   ptype *pt, //particle type array
-  float3 *r, //position array
-  float3 *f, //force array
-  float3 *lr, //lbs position array
-  float3 *er, //extra position array
-  float3 *rn, //random number array
+  vec3f *r, //position array
+  vec3f *f, //force array
+  vec3f *lr, //lbs position array
+  vec3f *er, //extra position array
+  vec3f *rn, //random number array
   sugrid *pgp, //particle grid pointer
   sugrid *lgp) //lbs grid pointer
 {
@@ -308,12 +306,12 @@ template <stype T> __global__ void exec_RK_2(
   const uint N, //number of particles
   const float R, //confinement radius
   ptype *pt, //particle type array
-  float3 *r, //position array
-  float3 *f, //force array
-  float3 *lr, //lbs position array
-  float3 *er, //extra position array
-  float3 *ef, //extra force array
-  float3 *rn, //random number array
+  vec3f *r, //position array
+  vec3f *f, //force array
+  vec3f *lr, //lbs position array
+  vec3f *er, //extra position array
+  vec3f *ef, //extra force array
+  vec3f *rn, //random number array
   sugrid *pgp, //particle grid pointer
   sugrid *lgp) //lbs grid pointer
 {
@@ -353,9 +351,9 @@ chrsim::chrsim(parmap &par) //parameters
   logger::record(msg);
 
   //allocate device memory
-  cuda_check(cudaMalloc(&er,N*sizeof(float3)));
-  cuda_check(cudaMalloc(&ef,N*sizeof(float3)));
-  cuda_check(cudaMalloc(&rn,N*sizeof(float3)));
+  cuda_check(cudaMalloc(&er,N*sizeof(vec3f)));
+  cuda_check(cudaMalloc(&ef,N*sizeof(vec3f)));
+  cuda_check(cudaMalloc(&rn,N*sizeof(vec3f)));
   cuda_check(cudaMalloc(&vps,N*sizeof(prng)));
   cuda_check(cudaMalloc(&pgp,sizeof(sugrid)));
   cuda_check(cudaMalloc(&lgp,sizeof(sugrid)));
@@ -412,7 +410,7 @@ void chrsim::generate_initial_condition()
     }
 
     //copy position array to host
-    cuda_check(cudaMemcpy(hr,r,N*sizeof(float3),cudaMemcpyDeviceToHost));
+    cuda_check(cudaMemcpy(hr,r,N*sizeof(vec3f),cudaMemcpyDeviceToHost));
 
     //count particle overlaps
     po = particle_overlaps();
@@ -429,8 +427,8 @@ void chrsim::save_checkpoint(std::ofstream &bin_out_f) //binary output file
   bin_out_f.write(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_out_f.write(reinterpret_cast<char *>(&t),sizeof(t));
   bin_out_f.write(reinterpret_cast<char *>(hpt),N*sizeof(ptype));
-  bin_out_f.write(reinterpret_cast<char *>(hr),N*sizeof(float3));
-  bin_out_f.write(reinterpret_cast<char *>(hlr),n_l*sizeof(float3));
+  bin_out_f.write(reinterpret_cast<char *>(hr),N*sizeof(vec3f));
+  bin_out_f.write(reinterpret_cast<char *>(hlr),n_l*sizeof(vec3f));
 
   //record success message
   logger::record("simulation checkpoint saved");
@@ -443,13 +441,13 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
   bin_inp_f.read(reinterpret_cast<char *>(&i_f),sizeof(i_f));
   bin_inp_f.read(reinterpret_cast<char *>(&t),sizeof(t));
   bin_inp_f.read(reinterpret_cast<char *>(hpt),N*sizeof(ptype));
-  bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(float3));
-  bin_inp_f.read(reinterpret_cast<char *>(hlr),n_l*sizeof(float3));
+  bin_inp_f.read(reinterpret_cast<char *>(hr),N*sizeof(vec3f));
+  bin_inp_f.read(reinterpret_cast<char *>(hlr),n_l*sizeof(vec3f));
 
   //copy host arrays to device
   cuda_check(cudaMemcpy(pt,hpt,N*sizeof(ptype),cudaMemcpyHostToDevice));
-  cuda_check(cudaMemcpy(r,hr,N*sizeof(float3),cudaMemcpyHostToDevice));
-  cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(float3),cudaMemcpyHostToDevice));
+  cuda_check(cudaMemcpy(r,hr,N*sizeof(vec3f),cudaMemcpyHostToDevice));
+  cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(vec3f),cudaMemcpyHostToDevice));
 
   //generate lbs grid arrays
   lg.generate_arrays(tpb,lr);
@@ -479,7 +477,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
     }
 
     //copy position array to host
-    cuda_check(cudaMemcpy(hr,r,N*sizeof(float3),cudaMemcpyDeviceToHost));
+    cuda_check(cudaMemcpy(hr,r,N*sizeof(vec3f),cudaMemcpyDeviceToHost));
 
     //write trajectory frame
     ++i_f; t += spf*dt;
@@ -502,7 +500,7 @@ void chrsim::set_lbs_positions()
   float ran; //random number in (0,1]
   float theta; //polar angle
   float phi; //azimuthal angle
-  float3 ran_dir; //random direction
+  vec3f ran_dir; //random direction
 
   //set lbs positions randomly
   for (uint i_l = 0; i_l<n_l; ++i_l) //lbs index
@@ -527,7 +525,7 @@ void chrsim::set_lbs_positions()
   }
 
   //copy host lbs position array to device
-  cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(float3),cudaMemcpyHostToDevice));
+  cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(vec3f),cudaMemcpyHostToDevice));
 
   //generate lbs grid arrays
   lg.generate_arrays(tpb,lr);
@@ -575,10 +573,10 @@ void chrsim::perform_random_walk()
   float phi; //azimuthal angle
   float len_b; //bond length
   float angle_b; //bond angle
-  float3 old_dir; //old direction
-  float3 new_dir; //new direction
-  float3 ran_dir; //random direction
-  float3 per_dir; //perpendicular direction
+  vec3f old_dir; //old direction
+  vec3f new_dir; //new direction
+  vec3f ran_dir; //random direction
+  vec3f per_dir; //perpendicular direction
 
   //place first particle
   hr[0] = {0.0,0.0,0.0};
@@ -630,7 +628,7 @@ void chrsim::perform_random_walk()
   }
 
   //copy host position array to device
-  cuda_check(cudaMemcpy(r,hr,N*sizeof(float3),cudaMemcpyHostToDevice));
+  cuda_check(cudaMemcpy(r,hr,N*sizeof(vec3f),cudaMemcpyHostToDevice));
 
   //free host PRNG
   curandDestroyGenerator(gen);

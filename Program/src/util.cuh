@@ -3,6 +3,8 @@
 
 //Includes
 
+#include "vect.cuh" //vector types
+
 #include <fstream> //file stream classes
 #include <iomanip> //input/output parametric manipulators
 #include <map> //map container classes

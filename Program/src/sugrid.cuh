@@ -1,6 +1,10 @@
 #ifndef MMC_SUGRID_H
 #define MMC_SUGRID_H
 
+//Includes
+
+#include "util.cuh" //general utilities
+
 //Namespace
 
 namespace mmc //Marco Mendívil Carboni
@@ -46,7 +50,7 @@ struct sugrid //sorted uniform grid
   //generate grid arrays
   void generate_arrays(
     int tpb, //threads per block
-    float3 *r); //position array
+    vec3f *r); //position array
 };
 
 } //namespace mmc
