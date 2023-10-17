@@ -1,6 +1,6 @@
 # Forces
-
 Let
+
 $$
 \bar{b} _i = \bar{r} _{i+1} - \bar{r} _i \quad , \quad d _i = \left\|\bar{b} _i\right\| \quad , \quad \cos(\theta _i) = \frac{\bar{b} _i \cdot \bar{b} _{i-1}}{d _i d _{i-1}} \quad , \quad d _{ij} = \left\|\bar{r} _i - \bar{r} _j\right\|
 $$
