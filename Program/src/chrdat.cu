@@ -86,12 +86,19 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
   txt_out_f<<cnfs(0.0,10,' ',5);
   txt_out_f<<cnfs(0.0,10,' ',5);
   txt_out_f<<"\n";
+  if (txt_out_f.fail())
+  {
+    throw mmc::error("failed to write frame to text file");
+  }
 }
 
 //read frame from text file
 void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
 {
-
+  if (txt_inp_f.fail())
+  {
+    throw mmc::error("failed to read frame from text file");
+  }
 }
 
 //write frame to binary file
@@ -111,12 +118,19 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
     bin_out_f.write(reinterpret_cast<char *>(&(hr[i_p].y)),4);
     bin_out_f.write(reinterpret_cast<char *>(&(hr[i_p].z)),4);
   }
+  if (bin_out_f.fail())
+  {
+    throw mmc::error("failed to write frame to binary file");
+  }
 }
 
 //read frame from binary file
 void chrdat::read_frame_bin(std::ifstream &bin_inp_f) //binary input file
 {
-
+  if (bin_inp_f.fail())
+  {
+    throw mmc::error("failed to read frame from binary file");
+  }
 }
 
 } //namespace mmc

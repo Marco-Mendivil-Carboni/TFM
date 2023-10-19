@@ -12,8 +12,8 @@ int main(
   const char **argv) //argument vector
 {
   //check command-line arguments
-  if (argc<2){ std::cout<<"no arguments"<<std::endl; return EXIT_FAILURE;}
-  if (argc>3){ std::cout<<"extra arguments"<<std::endl; return EXIT_FAILURE;}
+  if (argc<2){ std::cout<<"no arguments"; return EXIT_FAILURE;}
+  if (argc>3){ std::cout<<"extra arguments"; return EXIT_FAILURE;}
 
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory
@@ -21,7 +21,7 @@ int main(
   std::ifstream inp_f; //input file
   std::ofstream out_f; //output file
   std::string pathstr; //file path string
-  std::string pathpat; //file path pathpat
+  std::string pathpat; //file path pattern
   uint i_s; //simulation index
   uint i_t_f; //trajectory file index
 
@@ -100,11 +100,11 @@ int main(
   {
     //exit program unsuccessfully
     mmc::logger::record(err.what());
-    mmc::logger::record("program exited unsuccessfully\n");
+    mmc::logger::record("program exited unsuccessfully");
     return EXIT_FAILURE;
   }
 
   //exit program successfully
-  mmc::logger::record("program exited successfully\n");
+  mmc::logger::record("program exited successfully");
   return EXIT_SUCCESS;
 }

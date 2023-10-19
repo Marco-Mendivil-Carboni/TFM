@@ -88,6 +88,10 @@ inline __host__ __device__ vec3f fabsc(vec3f v)
 {
   return {fabsf(v.x),fabsf(v.y),fabsf(v.z)};
 }
+inline __host__ __device__ vec3f multc(vec3f a, vec3f b)
+{
+  return {a.x*b.x,a.y*b.y,a.z*b.z};
+}
 
 } //namespace mmc
 

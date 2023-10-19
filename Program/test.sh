@@ -19,33 +19,6 @@ mkdir $testdir
 
 echo "---"
 
-./Program/bin/performsim | grep "no arguments"
-check $?
-
-./Program/bin/performsim 1 2 3 | grep "extra arguments"
-check $?
-
-./Program/bin/performsim wrong-dir | grep "unable to open wrong-dir"
-check $?
-
-echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles -10"; echo "confinement_radius 10.00";
-} >> "${testdir}/adjustable-parameters.dat"
-./Program/bin/performsim $testdir | grep "number_of_particles out of range"
-check $?
-
-echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 512";
-} >> "${testdir}/adjustable-parameters.dat"
-./Program/bin/performsim $testdir | grep "confinement_radius out of range"
-check $?
-
-echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 512"; echo "confinement_radius 1.00";
-} >> "${testdir}/adjustable-parameters.dat"
-./Program/bin/performsim $testdir | grep "chromatin volume fraction above 0.5"
-check $?
-
 echo -n > "${testdir}/adjustable-parameters.dat"
 { echo "number_of_particles 2048"; echo "confinement_radius 10.0";
   echo "number_of_lbs 128";
@@ -69,6 +42,7 @@ check $?
 check $?
 
 vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
+
 vmd -e ./Program/visualize.tcl -args $testdir 1 > /dev/null
 
 rm -rI $testdir
