@@ -130,7 +130,7 @@ void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
 //write frame to binary file
 void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
 {
-  //note
+  //------------------------------note------------------------------
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 

@@ -35,13 +35,12 @@ int main(
     inp_f.close();
     mmc::chrana ana(par); //analysis
 
-    //read and analyze initial condition
+    //add initial condition to analysis
     pathstr = sim_dir+"/initial-condition-";
     pathstr += mmc::cnfs(i_s,3,'0')+".gro";
     inp_f.open(pathstr);
     mmc::check_file(inp_f,pathstr);
-    ana.read_frame_txt(inp_f);
-    //
+    ana.add_initial_condition(inp_f);
     inp_f.close();
 
     //find the number of trajectory files
@@ -49,18 +48,23 @@ int main(
     pathpat += mmc::cnfs(i_s,3,'0')+"*";
     n_t_f = mmc::glob_count(pathpat);
 
-    //read and analyze trajectory
+    //add trajectory to analysis
     for (uint i_t_f = 0; i_t_f<n_t_f; ++i_t_f) //trajectory file index
     {
-      //read and analyze trajectory file
+      //add trajectory file to analysis
       pathstr = sim_dir+"/trajectory-";
       pathstr += mmc::cnfs(i_s,3,'0')+"-";
       pathstr += mmc::cnfs(i_t_f,3,'0')+".trr";
       inp_f.open(pathstr,std::ios::binary);
       mmc::check_file(inp_f,pathstr);
-      //
+      ana.add_trajectory_file(inp_f);
       inp_f.close();
     }
+
+    //make analysis
+    //
+
+    //save analysis results
   }
   catch (const mmc::error &err) //caught error
   {
