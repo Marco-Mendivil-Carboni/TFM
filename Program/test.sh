@@ -41,8 +41,16 @@ check $?
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 
+./Program/bin/analyzesim $testdir 0
+check $?
+
+./Program/bin/analyzesim $testdir 1
+check $?
+
 vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
+check $?
 
 vmd -e ./Program/visualize.tcl -args $testdir 1 > /dev/null
+check $?
 
 rm -rI $testdir

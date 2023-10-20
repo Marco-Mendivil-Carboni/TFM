@@ -72,12 +72,12 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) //text output file
   //write chromatin data
   txt_out_f<<i_f<<" "<<t<<"\n";
   txt_out_f<<cnfs(N,5,' ')<<"\n";
-  std::string pts; //particle type string
+  char ptc; //particle type character
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    pts = (hpt[i_p]==LND)?"A":"B";
-    txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<pts;
-    txt_out_f<<std::right<<std::setw(5)<<pts<<std::setw(5)<<i_p+1;
+    ptc = (hpt[i_p]==LND)?'A':'B';
+    txt_out_f<<std::setw(5)<<i_p+1<<std::left<<std::setw(5)<<ptc;
+    txt_out_f<<std::right<<std::setw(5)<<ptc<<std::setw(5)<<i_p+1;
     txt_out_f<<cnfs(hr[i_p].x,8,' ',3);
     txt_out_f<<cnfs(hr[i_p].y,8,' ',3);
     txt_out_f<<cnfs(hr[i_p].z,8,' ',3);
@@ -102,11 +102,12 @@ void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
   std::string aux_str; //auxiliary string
   txt_inp_f>>i_f>>t;
   txt_inp_f>>aux_str;
-  std::string pts; //particle type string
+  char ptc; //particle type character
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    txt_inp_f>>aux_str>>pts>>pts>>aux_str;
-    hpt[i_p] = (pts=="A")?LND:LAD;
+    txt_inp_f>>aux_str;
+    txt_inp_f>>ptc>>aux_str;
+    hpt[i_p] = (ptc=='A')?LND:LAD;
     txt_inp_f>>hr[i_p].x;
     txt_inp_f>>hr[i_p].y;
     txt_inp_f>>hr[i_p].z;
@@ -129,6 +130,7 @@ void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
 //write frame to binary file
 void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
 {
+  //note
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 
