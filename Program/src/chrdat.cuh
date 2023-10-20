@@ -66,7 +66,7 @@ class chrdat //chromatin data
   const uint n_l; //number of lbs
 
   uint i_f; //frame index
-  double t; //time
+  float t; //time
 
   ptype *pt; //particle type array
   vec3f *r; //position array

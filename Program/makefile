@@ -10,13 +10,23 @@ bin/measuresim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
 		bin/measuresim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
+bin/analyzesim: bin/util.o bin/chrdat.o bin/chrana.o \
+		bin/analyzesim.o
+	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
+
 bin/performsim.o: src/performsim.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/measuresim.o: src/measuresim.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
+bin/analyzesim.o: src/analyzesim.cu bin/chrana.o
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
 bin/chrsim.o: src/chrsim.cu src/chrsim.cuh bin/chrdat.o bin/sugrid.o
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+bin/chrana.o: src/chrana.cu src/chrana.cuh bin/chrdat.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/sugrid.o: src/sugrid.cu src/sugrid.cuh bin/util.o
@@ -29,6 +39,4 @@ bin/util.o: src/util.cu src/util.cuh src/vect.cuh
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 clean:
-	rm bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
-	bin/performsim.o bin/performsim \
-	bin/measuresim.o bin/measuresim
+	rm -r bin/*
