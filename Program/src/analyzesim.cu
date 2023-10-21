@@ -61,10 +61,16 @@ int main(
       inp_f.close();
     }
 
-    //make analysis
-    //
+    //calculate statistics
+    ana.calc_stats();
 
     //save analysis results
+    pathstr = sim_dir+"/analysis-";
+    pathstr += mmc::cnfs(i_s,3,'0')+".dat";
+    out_f.open(pathstr);
+    mmc::check_file(out_f,pathstr);
+    ana.save_results(out_f);
+    inp_f.close();
   }
   catch (const mmc::error &err) //caught error
   {
