@@ -61,8 +61,8 @@ int main(
       inp_f.close();
     }
 
-    //calculate statistics
-    ana.calc_stats();
+    //calculate observables' statistics
+    ana.calc_observables_stat();
 
     //save analysis results
     pathstr = sim_dir+"/analysis-";

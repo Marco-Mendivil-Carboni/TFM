@@ -14,30 +14,22 @@ namespace mmc //Marco Mendívil Carboni
 
 //Structures
 
-struct ranvar //random variable
+struct idstat //independent data statistics
 {
-  //Variables
-
-  std::vector<float> val; //values
-
-  double m_1; //1st moment (mean)
-  double m_2; //2nd moment
+  double avg; //average
   double var; //variance
   double sem; //standard error of the mean
+};
 
-  uint i_ter; //termalization index
-  uint n_b; //number of blocks
+struct cdstat : idstat //correlated data statistics
+{
+  uint f_n_b; //final number of blocks
+};
 
-  //Functions
-
-  //include value
-  void inc_val(float c_val); //current value
-
-  //calculate statistics
-  void calc_stats();
-
-  //check if random variable has termalized
-  bool has_termalized();
+struct tdstat : cdstat //time series data statistics
+{
+  uint i_t; //termalization index
+  bool ter; //termalized
 };
 
 //Classes
@@ -60,8 +52,8 @@ class chrana : public chrdat //chromatin analysis
   //add trajectory file to analysis
   void add_trajectory_file(std::ifstream &bin_inp_f); //binary input file
 
-  //calculate statistics
-  void calc_stats();
+  //calculate observables' statistics
+  void calc_observables_stat();
 
   //save analysis results
   void save_results(std::ofstream &txt_out_f); //text output file
@@ -72,14 +64,34 @@ class chrana : public chrdat //chromatin analysis
 
   const uint fpf; //frames per file
 
-  ranvar dcm; //distance to the center of mass
-  ranvar rg2; //gyration radius squared
+  std::vector<float> dcm_v; //center of mass distance vector
+  tdstat dcm_s; //center of mass distance statistics
 
-  //Functions
+  std::vector<float> rg2_v; //gyration radius squared vector
+  tdstat rg2_s; //gyration radius squared statistics
 
-  //calculate random variables
-  void calc_ranvar();
+  //Function
+
+  //calculate observables
+  void calc_observables();
 };
+
+//Functions
+
+//calculate statistics
+void calc_stats(
+  const std::vector<float> &v, //vector
+  idstat &s); //statistics
+
+//calculate statistics
+void calc_stats(
+  const std::vector<float> &v, //vector
+  cdstat &s); //statistics
+
+//calculate statistics
+void calc_stats(
+  const std::vector<float> &v, //vector
+  tdstat &s); //statistics
 
 } //namespace mmc
 
