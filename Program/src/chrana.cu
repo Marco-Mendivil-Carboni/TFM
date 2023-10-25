@@ -22,6 +22,7 @@ void chrana::add_initial_condition(std::ifstream &txt_inp_f) //text input file
 {
   //read initial condition frame
   read_frame_txt(txt_inp_f);
+  t_v.push_back(t);
 
   //calculate observables
   calc_observables();
@@ -35,6 +36,7 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
   {
     //read trajectory frame
     read_frame_bin(bin_inp_f);
+    t_v.push_back(t);
 
     //calculate observables
     calc_observables();
@@ -54,33 +56,26 @@ void chrana::calc_observables_stat()
 //save analysis results
 void chrana::save_results(std::ofstream &txt_out_f) //text output file
 {
-  //save center of mass distance statistics
+  //save statistics
+  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t   ter\n";
   txt_out_f<<"# center of mass distance:\n";
-  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   txt_out_f<<cnfs(dcm_s.avg,12,' ',6)<<cnfs(sqrt(dcm_s.var),12,' ',6);
   txt_out_f<<cnfs(dcm_s.sem,12,' ',6)<<cnfs(dcm_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?" true":" false")<<"\n";
-  txt_out_f<<"\n\n";
-
-  //save gyration radius squared statistics
+  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?"  true":" false")<<"\n";
   txt_out_f<<"# gyration radius squared:\n";
-  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   txt_out_f<<cnfs(rg2_s.avg,12,' ',6)<<cnfs(sqrt(rg2_s.var),12,' ',6);
   txt_out_f<<cnfs(rg2_s.sem,12,' ',6)<<cnfs(rg2_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?" true":" false")<<"\n";
+  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?"  true":" false")<<"\n";
   txt_out_f<<"\n\n";
 
-  //save center of mass distance vector
-  for (float dcm : dcm_v) //center of mass distance
+  //save vectors
+  uint n_e = t_v.size(); //number of elements
+  for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
-    txt_out_f<<cnfs(dcm,12,' ',6)<<"\n";
-  }
-  txt_out_f<<"\n\n";
-
-  //save gyration radius squared vector
-  for (float rg2 : rg2_v) //gyration radius squared
-  {
-    txt_out_f<<cnfs(rg2,12,' ',6)<<"\n";
+    txt_out_f<<cnfs(t_v[i_e],12,' ',6);
+    txt_out_f<<cnfs(dcm_v[i_e],12,' ',6);
+    txt_out_f<<cnfs(rg2_v[i_e],12,' ',6);
+    txt_out_f<<"\n";
   }
   txt_out_f<<"\n\n";
 }
@@ -205,7 +200,8 @@ void calc_stats(
     //save the optimal termalization index
     if (mse<min_mse)
     {
-      s.i_t = i_t; min_mse = mse;
+      s.i_t = i_t;
+      min_mse = mse;
     }
   }
   if (s.i_t!=v.size()/2){ s.ter = true;} //termalized

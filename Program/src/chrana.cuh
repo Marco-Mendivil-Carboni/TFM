@@ -64,6 +64,8 @@ class chrana : public chrdat //chromatin analysis
 
   const uint fpf; //frames per file
 
+  std::vector<float> t_v; //time vector
+
   std::vector<float> dcm_v; //center of mass distance vector
   tdstat dcm_s; //center of mass distance statistics
 
