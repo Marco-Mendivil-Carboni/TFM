@@ -51,10 +51,19 @@ void chrana::calc_observables_stat()
 //save analysis results
 void chrana::save_results(std::ofstream &txt_out_f) //text output file
 {
-  txt_out_f<<dcm_s.avg<<" "<<dcm_s.var<<" "<<dcm_s.sem<<" ";
-  txt_out_f<<dcm_s.f_n_b<<" "<<dcm_s.i_t<<" "<<dcm_s.ter<<"\n";
-  txt_out_f<<rg2_s.avg<<" "<<rg2_s.var<<" "<<rg2_s.sem<<" ";
-  txt_out_f<<rg2_s.f_n_b<<" "<<rg2_s.i_t<<" "<<rg2_s.ter<<"\n";
+  //save center of mass distance statistcs
+  txt_out_f<<"# center of mass distance:\n";
+  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
+  txt_out_f<<cnfs(dcm_s.avg,12,' ',6)<<cnfs(sqrt(dcm_s.var),12,' ',6);
+  txt_out_f<<cnfs(dcm_s.sem,12,' ',6)<<cnfs(dcm_s.f_n_b,8,' ');
+  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?" true":" false")<<"\n\n";
+
+  //save gyration radius squared statistics
+  txt_out_f<<"# gyration radius squared:\n";
+  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
+  txt_out_f<<cnfs(rg2_s.avg,12,' ',6)<<cnfs(sqrt(rg2_s.var),12,' ',6);
+  txt_out_f<<cnfs(rg2_s.sem,12,' ',6)<<cnfs(rg2_s.f_n_b,8,' ');
+  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?" true":" false")<<"\n\n";
 }
 
 //calculate observables
@@ -101,7 +110,7 @@ void calc_stats(
 
   //calculate statistics
   s.avg = m_1;
-  s.var = (m_2-m_1*m_1)*n_e/(n_e-1);
+  s.var = (m_2-m_1*m_1)/(1.0-1.0/n_e);
   s.sem = sqrt(s.var/n_e);
 }
 
@@ -191,6 +200,33 @@ void calc_stats(
   s.var = cas.var;
   s.sem = cas.sem;
   s.f_n_b = cas.f_n_b;
+}
+
+//calculate statistics
+void calc_stats(
+  const std::vector<float[2]> &v, //vector
+  idstat &s) //statistics
+{
+  //calculate the first two weighted raw moments
+  double m_1 = 0.0; //1st moment
+  double m_2 = 0.0; //2nd moment
+  double w_1 = 0.0; //1st weight sum
+  double w_2 = 0.0; //2nd weight sum
+  uint n_e = v.size(); //number of elements
+  for (uint i_e = 0; i_e<n_e; ++i_e) //element index
+  {
+    m_1 += v[i_e][0]/v[i_e][1];
+    m_2 += v[i_e][0]*v[i_e][0]/v[i_e][1];
+    w_1 += 1.0/v[i_e][1];
+    w_2 += 1.0/v[i_e][1]*v[i_e][1];
+  }
+  m_1 /= w_1;
+  m_2 /= w_1;
+
+  //calculate weighted statistics
+  s.avg = m_1;
+  s.var = (m_2-m_1*m_1)/(1.0-w_2/(w_1*w_1));
+  s.sem = sqrt(s.var*w_2/(w_1*w_1));
 }
 
 } //namespace mmc
