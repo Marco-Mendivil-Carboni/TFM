@@ -44,26 +44,45 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
 //calculate observables' statistics
 void chrana::calc_observables_stat()
 {
+  //calculate center of mass distance statistics
   calc_stats(dcm_v,dcm_s);
+
+  //calculate gyration radius squared statistics
   calc_stats(rg2_v,rg2_s);
 }
 
 //save analysis results
 void chrana::save_results(std::ofstream &txt_out_f) //text output file
 {
-  //save center of mass distance statistcs
+  //save center of mass distance statistics
   txt_out_f<<"# center of mass distance:\n";
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   txt_out_f<<cnfs(dcm_s.avg,12,' ',6)<<cnfs(sqrt(dcm_s.var),12,' ',6);
   txt_out_f<<cnfs(dcm_s.sem,12,' ',6)<<cnfs(dcm_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?" true":" false")<<"\n\n";
+  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?" true":" false")<<"\n";
+  txt_out_f<<"\n\n";
 
   //save gyration radius squared statistics
   txt_out_f<<"# gyration radius squared:\n";
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   txt_out_f<<cnfs(rg2_s.avg,12,' ',6)<<cnfs(sqrt(rg2_s.var),12,' ',6);
   txt_out_f<<cnfs(rg2_s.sem,12,' ',6)<<cnfs(rg2_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?" true":" false")<<"\n\n";
+  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?" true":" false")<<"\n";
+  txt_out_f<<"\n\n";
+
+  //save center of mass distance vector
+  for (float dcm : dcm_v) //center of mass distance
+  {
+    txt_out_f<<cnfs(dcm,12,' ',6)<<"\n";
+  }
+  txt_out_f<<"\n\n";
+
+  //save gyration radius squared vector
+  for (float rg2 : rg2_v) //gyration radius squared
+  {
+    txt_out_f<<cnfs(rg2,12,' ',6)<<"\n";
+  }
+  txt_out_f<<"\n\n";
 }
 
 //calculate observables
@@ -186,8 +205,7 @@ void calc_stats(
     //save the optimal termalization index
     if (mse<min_mse)
     {
-      s.i_t = i_t;
-      min_mse = mse;
+      s.i_t = i_t; min_mse = mse;
     }
   }
   if (s.i_t!=v.size()/2){ s.ter = true;} //termalized
