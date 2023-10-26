@@ -12,6 +12,10 @@
 namespace mmc //Marco Mendívil Carboni
 {
 
+//Constants
+
+static constexpr uint n_b = 128; //number of bins
+
 //Structures
 
 struct idstat //independent data statistics
@@ -68,9 +72,13 @@ class chrana : public chrdat //chromatin analysis
 
   std::vector<float> dcm_v; //center of mass distance vector
   tdstat dcm_s; //center of mass distance statistics
-
   std::vector<float> rg2_v; //gyration radius squared vector
   tdstat rg2_s; //gyration radius squared statistics
+  std::vector<float> nop_v; //nematic order parameter vector
+  tdstat nop_s; //nematic order parameter statistics
+
+  std::vector<float> rcd_v[n_b]; //radial chromatin density vector
+  tdstat rcd_s[n_b]; //radial chromatin density statistics
 
   //Function
 

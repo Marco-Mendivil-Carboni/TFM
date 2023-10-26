@@ -22,7 +22,6 @@ void chrana::add_initial_condition(std::ifstream &txt_inp_f) //text input file
 {
   //read initial condition frame
   read_frame_txt(txt_inp_f);
-  t_v.push_back(t);
 
   //calculate observables
   calc_observables();
@@ -36,7 +35,6 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
   {
     //read trajectory frame
     read_frame_bin(bin_inp_f);
-    t_v.push_back(t);
 
     //calculate observables
     calc_observables();
@@ -51,30 +49,38 @@ void chrana::calc_observables_stat()
 
   //calculate gyration radius squared statistics
   calc_stats(rg2_v,rg2_s);
+
+  //calculate nematic order parameter statistics
+  calc_stats(nop_v,nop_s);
 }
 
 //save analysis results
 void chrana::save_results(std::ofstream &txt_out_f) //text output file
 {
   //save statistics
-  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t   ter\n";
+  txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b    t_v[i_t] ter\n";
   txt_out_f<<"# center of mass distance:\n";
   txt_out_f<<cnfs(dcm_s.avg,12,' ',6)<<cnfs(sqrt(dcm_s.var),12,' ',6);
   txt_out_f<<cnfs(dcm_s.sem,12,' ',6)<<cnfs(dcm_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?"  true":" false")<<"\n";
+  txt_out_f<<cnfs(t_v[dcm_s.i_t],12,' ',2)<<(dcm_s.ter?" yes":"  no")<<"\n";
   txt_out_f<<"# gyration radius squared:\n";
   txt_out_f<<cnfs(rg2_s.avg,12,' ',6)<<cnfs(sqrt(rg2_s.var),12,' ',6);
   txt_out_f<<cnfs(rg2_s.sem,12,' ',6)<<cnfs(rg2_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?"  true":" false")<<"\n";
+  txt_out_f<<cnfs(t_v[rg2_s.i_t],12,' ',2)<<(rg2_s.ter?" yes":"  no")<<"\n";
+  txt_out_f<<"# nematic order parameter:\n";
+  txt_out_f<<cnfs(nop_s.avg,12,' ',6)<<cnfs(sqrt(nop_s.var),12,' ',6);
+  txt_out_f<<cnfs(nop_s.sem,12,' ',6)<<cnfs(nop_s.f_n_b,8,' ');
+  txt_out_f<<cnfs(t_v[nop_s.i_t],12,' ',2)<<(nop_s.ter?" yes":"  no")<<"\n";
   txt_out_f<<"\n\n";
 
   //save vectors
   uint n_e = t_v.size(); //number of elements
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
-    txt_out_f<<cnfs(t_v[i_e],12,' ',6);
+    txt_out_f<<cnfs(t_v[i_e],12,' ',2);
     txt_out_f<<cnfs(dcm_v[i_e],12,' ',6);
     txt_out_f<<cnfs(rg2_v[i_e],12,' ',6);
+    txt_out_f<<cnfs(nop_v[i_e],12,' ',6);
     txt_out_f<<"\n";
   }
   txt_out_f<<"\n\n";
@@ -83,9 +89,12 @@ void chrana::save_results(std::ofstream &txt_out_f) //text output file
 //calculate observables
 void chrana::calc_observables()
 {
+  //store time
+  t_v.push_back(t);
+
   //calculate the center of mass position
   vec3f cmr = {0.0,0.0,0.0}; //center of mass position
-  for (uint i_p = 0; i_p<N; ++i_p)
+  for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     cmr += hr[i_p];
   }
@@ -97,12 +106,25 @@ void chrana::calc_observables()
 
   //calculate the gyration radius squared
   float rg2 = 0.0; //gyration radius squared
-  for (uint i_p = 0; i_p<N; ++i_p)
+  for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     rg2 += dot(hr[i_p]-cmr,hr[i_p]-cmr);
   }
   rg2 /= N;
   rg2_v.push_back(rg2);
+
+  //calculate the nematic order parameter
+  vec3f vec; //bond vector
+  float cos; //cosine of the angle
+  float nop = 0.0; //nematic order parameter
+  for (uint i_p = 0; i_p<(N-1); ++i_p) //particle index
+  {
+    vec = hr[i_p+1]-hr[i_p];
+    cos = dot(vec,hr[i_p])/(length(vec)*length(hr[i_p]));
+    nop += 0.5*(3.0*cos*cos-1.0);
+  }
+  nop /= N-1.0;
+  nop_v.push_back(nop);
 }
 
 //calculate statistics
