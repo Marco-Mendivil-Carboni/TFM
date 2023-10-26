@@ -56,11 +56,14 @@ class chrana : public chrdat //chromatin analysis
   //add trajectory file to analysis
   void add_trajectory_file(std::ifstream &bin_inp_f); //binary input file
 
-  //calculate observables' statistics
-  void calc_observables_stat();
+  //calculate individual simulation statistics
+  void calc_ind_sim_stat();
 
-  //save analysis results
-  void save_results(std::ofstream &txt_out_f); //text output file
+  //save individual simulation analysis results
+  void save_ind_sim_results(std::ofstream &txt_out_f); //text output file
+
+  //clear analysis data
+  void clear_data();
 
   private:
 
@@ -102,6 +105,11 @@ void calc_stats(
 void calc_stats(
   const std::vector<float> &v, //vector
   tdstat &s); //statistics
+
+//calculate statistics
+void calc_stats(
+  const std::vector<float[2]> &v, //vector
+  idstat &s); //statistics
 
 } //namespace mmc
 

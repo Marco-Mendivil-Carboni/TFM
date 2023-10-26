@@ -41,8 +41,8 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
   }
 }
 
-//calculate observables' statistics
-void chrana::calc_observables_stat()
+//calculate individual simulation statistics
+void chrana::calc_ind_sim_stat()
 {
   //calculate center of mass distance statistics
   calc_stats(dcm_v,dcm_s);
@@ -54,8 +54,8 @@ void chrana::calc_observables_stat()
   calc_stats(nop_v,nop_s);
 }
 
-//save analysis results
-void chrana::save_results(std::ofstream &txt_out_f) //text output file
+//save individual simulation analysis results
+void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
 {
   //save statistics
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b    t_v[i_t] ter\n";
@@ -84,6 +84,19 @@ void chrana::save_results(std::ofstream &txt_out_f) //text output file
     txt_out_f<<"\n";
   }
   txt_out_f<<"\n\n";
+}
+
+//clear analysis data
+void chrana::clear_data()
+{
+  //clear center of mass distance vector
+  dcm_v.clear();
+
+  //clear gyration radius squared vector
+  rg2_v.clear();
+
+  //clear nematic order parameter vector
+  nop_v.clear();
 }
 
 //calculate observables

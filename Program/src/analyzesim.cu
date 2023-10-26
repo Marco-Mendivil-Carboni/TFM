@@ -12,16 +12,16 @@ int main(
   const char **argv) //argument vector
 {
   //check command-line arguments
-  if (argc<3){ std::cout<<"missing arguments"; return EXIT_FAILURE;}
-  if (argc>3){ std::cout<<"extra arguments"; return EXIT_FAILURE;}
+  if (argc<2){ std::cout<<"no arguments"; return EXIT_FAILURE;}
+  if (argc>2){ std::cout<<"extra arguments"; return EXIT_FAILURE;}
 
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory
-  const uint i_s = std::stoi(argv[2]); //simulation index
   std::ifstream inp_f; //input file
   std::ofstream out_f; //output file
   std::string pathstr; //file path string
   std::string pathpat; //file path pathpat
+  uint n_s; //number of simulations
   uint n_t_f; //number of trajectory files
 
   //main try block
@@ -35,42 +35,56 @@ int main(
     inp_f.close();
     mmc::chrana ana(par); //analysis
 
-    //add initial condition to analysis
-    pathstr = sim_dir+"/initial-condition-";
-    pathstr += mmc::cnfs(i_s,3,'0')+".gro";
-    inp_f.open(pathstr);
-    mmc::check_file(inp_f,pathstr);
-    ana.add_initial_condition(inp_f);
-    inp_f.close();
+    //find the number of simulations
+    pathpat = sim_dir+"/initial-condition-*";
+    n_s = mmc::glob_count(pathpat);
 
-    //find the number of trajectory files
-    pathpat = sim_dir+"/trajectory-";
-    pathpat += mmc::cnfs(i_s,3,'0')+"*";
-    n_t_f = mmc::glob_count(pathpat);
-
-    //add trajectory to analysis
-    for (uint i_t_f = 0; i_t_f<n_t_f; ++i_t_f) //trajectory file index
+    //analyse all simulations
+    for (uint i_s = 0; i_s<n_s; ++i_s) //simulation index
     {
-      //add trajectory file to analysis
-      pathstr = sim_dir+"/trajectory-";
-      pathstr += mmc::cnfs(i_s,3,'0')+"-";
-      pathstr += mmc::cnfs(i_t_f,3,'0')+".trr";
-      inp_f.open(pathstr,std::ios::binary);
+      //add initial condition to analysis
+      pathstr = sim_dir+"/initial-condition-";
+      pathstr += mmc::cnfs(i_s,3,'0')+".gro";
+      inp_f.open(pathstr);
       mmc::check_file(inp_f,pathstr);
-      ana.add_trajectory_file(inp_f);
+      ana.add_initial_condition(inp_f);
       inp_f.close();
+
+      //find the number of trajectory files
+      pathpat = sim_dir+"/trajectory-";
+      pathpat += mmc::cnfs(i_s,3,'0')+"*";
+      n_t_f = mmc::glob_count(pathpat);
+
+      //add trajectory to analysis
+      for (uint i_t_f = 0; i_t_f<n_t_f; ++i_t_f) //trajectory file index
+      {
+        //add trajectory file to analysis
+        pathstr = sim_dir+"/trajectory-";
+        pathstr += mmc::cnfs(i_s,3,'0')+"-";
+        pathstr += mmc::cnfs(i_t_f,3,'0')+".trr";
+        inp_f.open(pathstr,std::ios::binary);
+        mmc::check_file(inp_f,pathstr);
+        ana.add_trajectory_file(inp_f);
+        inp_f.close();
+      }
+
+      //calculate individual simulation statistics
+      ana.calc_ind_sim_stat();
+
+      //save individual simulation analysis results
+      pathstr = sim_dir+"/analysis-";
+      pathstr += mmc::cnfs(i_s,3,'0')+".dat";
+      out_f.open(pathstr);
+      mmc::check_file(out_f,pathstr);
+      ana.save_ind_sim_results(out_f);
+      inp_f.close();
+
+      //record success message and clear analysis data
+      std::string msg = ""; //message
+      msg += "simulation "+mmc::cnfs(i_s,3,'0')+" analysed";
+      mmc::logger::record(msg);
+      ana.clear_data();
     }
-
-    //calculate observables' statistics
-    ana.calc_observables_stat();
-
-    //save analysis results
-    pathstr = sim_dir+"/analysis-";
-    pathstr += mmc::cnfs(i_s,3,'0')+".dat";
-    out_f.open(pathstr);
-    mmc::check_file(out_f,pathstr);
-    ana.save_results(out_f);
-    inp_f.close();
   }
   catch (const mmc::error &err) //caught error
   {
