@@ -18,14 +18,16 @@ static constexpr uint n_b = 128; //number of bins
 
 //Structures
 
-struct idstat //independent data statistics
+struct gdstat //generic data statistics
 {
   double avg; //average
   double var; //variance
   double sem; //standard error of the mean
 };
 
-struct cdstat : idstat //correlated data statistics
+struct idstat : gdstat {}; //independent data statistics
+
+struct cdstat : gdstat //correlated data statistics
 {
   uint f_n_b; //final number of blocks
 };
@@ -34,12 +36,6 @@ struct tdstat : cdstat //time series data statistics
 {
   uint i_t; //termalization index
   bool ter; //termalized
-};
-
-struct avgsem //average and standard error of the mean
-{
-  double avg; //average
-  double sem; //standard error of the mean
 };
 
 //Classes
@@ -84,24 +80,20 @@ class chrana : public chrdat //chromatin analysis
   const uint fpf; //frames per file
 
   std::vector<float> t_v; //time vector
-
   std::vector<float> dcm_v; //center of mass distance vector
-  tdstat dcm_s; //center of mass distance statistics
   std::vector<float> rg2_v; //gyration radius squared vector
-  tdstat rg2_s; //gyration radius squared statistics
   std::vector<float> nop_v; //nematic order parameter vector
-  tdstat nop_s; //nematic order parameter statistics
   std::vector<float> rcd_v[n_b]; //radial chromatin density vector
-  tdstat rcd_s[n_b]; //radial chromatin density statistics
 
-  std::vector<avgsem> dcmrv; //center of mass distance results vector
-  idstat dcmrs; //center of mass distance results statistics
-  std::vector<avgsem> rg2rv; //gyration radius squared results vector
-  idstat rg2rs; //gyration radius squared results statistics
-  std::vector<avgsem> noprv; //nematic order parameter results vector
-  idstat noprs; //nematic order parameter results statistics
-  std::vector<avgsem> rcdrv[n_b]; //radial chromatin density results vector
-  idstat rcdrs[n_b]; //radial chromatin density results statistics
+  std::vector<tdstat> dcm_s_v; //dcm statistics vector
+  std::vector<tdstat> rg2_s_v; //rg2 statistics vector
+  std::vector<tdstat> nop_s_v; //nop statistics vector
+  std::vector<tdstat> rcd_s_v[n_b]; //rcd statistics vector
+
+  idstat dcm_f_s; //dcm final statistics
+  idstat rg2_f_s; //rg2 final statistics
+  idstat nop_f_s; //nop final statistics
+  idstat rcd_f_s[n_b]; //rcd final statistics
 
   //Function
 
@@ -128,7 +120,7 @@ void calc_stats(
 
 //calculate statistics
 void calc_stats(
-  const std::vector<avgsem> &v, //vector
+  const std::vector<tdstat> &v, //vector
   idstat &s); //statistics
 
 } //namespace mmc

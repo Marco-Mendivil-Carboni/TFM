@@ -45,16 +45,19 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
 void chrana::calc_ind_sim_stat()
 {
   //calculate center of mass distance statistics
+  tdstat dcm_s; //dcm statistics
   calc_stats(dcm_v,dcm_s);
-  dcmrv.push_back({dcm_s.avg,dcm_s.sem});
+  dcm_s_v.push_back(dcm_s);
 
   //calculate gyration radius squared statistics
+  tdstat rg2_s; //rg2 statistics
   calc_stats(rg2_v,rg2_s);
-  rg2rv.push_back({rg2_s.avg,rg2_s.sem});
+  rg2_s_v.push_back(rg2_s);
 
   //calculate nematic order parameter statistics
+  tdstat nop_s; //nop statistics
   calc_stats(nop_v,nop_s);
-  noprv.push_back({nop_s.avg,nop_s.sem});
+  nop_s_v.push_back(nop_s);
 }
 
 //save individual simulation analysis results
@@ -63,14 +66,17 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   //save statistics
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b    t_v[i_t] ter\n";
   txt_out_f<<"# center of mass distance:\n";
+  tdstat dcm_s = dcm_s_v.back(); //dcm statistics
   txt_out_f<<cnfs(dcm_s.avg,12,' ',6)<<cnfs(sqrt(dcm_s.var),12,' ',6);
   txt_out_f<<cnfs(dcm_s.sem,12,' ',6)<<cnfs(dcm_s.f_n_b,8,' ');
   txt_out_f<<cnfs(t_v[dcm_s.i_t],12,' ',2)<<(dcm_s.ter?" yes":"  no")<<"\n";
   txt_out_f<<"# gyration radius squared:\n";
+  tdstat rg2_s = rg2_s_v.back(); //rg2 statistics
   txt_out_f<<cnfs(rg2_s.avg,12,' ',6)<<cnfs(sqrt(rg2_s.var),12,' ',6);
   txt_out_f<<cnfs(rg2_s.sem,12,' ',6)<<cnfs(rg2_s.f_n_b,8,' ');
   txt_out_f<<cnfs(t_v[rg2_s.i_t],12,' ',2)<<(rg2_s.ter?" yes":"  no")<<"\n";
   txt_out_f<<"# nematic order parameter:\n";
+  tdstat nop_s = nop_s_v.back(); //nop statistics
   txt_out_f<<cnfs(nop_s.avg,12,' ',6)<<cnfs(sqrt(nop_s.var),12,' ',6);
   txt_out_f<<cnfs(nop_s.sem,12,' ',6)<<cnfs(nop_s.f_n_b,8,' ');
   txt_out_f<<cnfs(t_v[nop_s.i_t],12,' ',2)<<(nop_s.ter?" yes":"  no")<<"\n";
@@ -86,7 +92,6 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
     txt_out_f<<cnfs(nop_v[i_e],12,' ',6);
     txt_out_f<<"\n";
   }
-  txt_out_f<<"\n\n";
 
   //check filestream
   if (txt_out_f.fail())
@@ -115,13 +120,13 @@ void chrana::clear_ind_sim_data()
 void chrana::calc_all_sim_stat()
 {
   //calculate center of mass distance results statistics
-  calc_stats(dcmrv,dcmrs);
+  calc_stats(dcm_s_v,dcm_f_s);
 
   //calculate gyration radius squared results statistics
-  calc_stats(rg2rv,rg2rs);
+  calc_stats(rg2_s_v,rg2_f_s);
 
   //calculate nematic order parameter results statistics
-  calc_stats(noprv,noprs);
+  calc_stats(nop_s_v,nop_f_s);
 }
 
 //save all simulations analysis results
@@ -130,14 +135,14 @@ void chrana::save_all_sim_results(std::ofstream &txt_out_f) //text output file
   //save statistics
   txt_out_f<<"#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";
-  txt_out_f<<cnfs(dcmrs.avg,12,' ',6)<<cnfs(sqrt(dcmrs.var),12,' ',6);
-  txt_out_f<<cnfs(dcmrs.sem,12,' ',6)<<"\n";
+  txt_out_f<<cnfs(dcm_f_s.avg,12,' ',6)<<cnfs(sqrt(dcm_f_s.var),12,' ',6);
+  txt_out_f<<cnfs(dcm_f_s.sem,12,' ',6)<<"\n";
   txt_out_f<<"# gyration radius squared:\n";
-  txt_out_f<<cnfs(rg2rs.avg,12,' ',6)<<cnfs(sqrt(rg2rs.var),12,' ',6);
-  txt_out_f<<cnfs(rg2rs.sem,12,' ',6)<<"\n";
+  txt_out_f<<cnfs(rg2_f_s.avg,12,' ',6)<<cnfs(sqrt(rg2_f_s.var),12,' ',6);
+  txt_out_f<<cnfs(rg2_f_s.sem,12,' ',6)<<"\n";
   txt_out_f<<"# nematic order parameter:\n";
-  txt_out_f<<cnfs(noprs.avg,12,' ',6)<<cnfs(sqrt(noprs.var),12,' ',6);
-  txt_out_f<<cnfs(noprs.sem,12,' ',6)<<"\n";
+  txt_out_f<<cnfs(nop_f_s.avg,12,' ',6)<<cnfs(sqrt(nop_f_s.var),12,' ',6);
+  txt_out_f<<cnfs(nop_f_s.sem,12,' ',6)<<"\n";
   txt_out_f<<"\n\n";
 
   //check filestream
@@ -301,7 +306,7 @@ void calc_stats(
 
 //calculate statistics
 void calc_stats(
-  const std::vector<avgsem> &v, //vector
+  const std::vector<tdstat> &v, //vector
   idstat &s) //statistics
 {
   //calculate the first two weighted raw moments
