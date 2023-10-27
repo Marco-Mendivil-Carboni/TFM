@@ -67,11 +67,11 @@ class chrana : public chrdat //chromatin analysis
   //clear individual simulation analysis data
   void clear_ind_sim_data();
 
-  //calculate all simulations statistics
-  void calc_all_sim_stat();
+  //calculate final statistics
+  void calc_fin_stat();
 
-  //save all simulations analysis results
-  void save_all_sim_results(std::ofstream &txt_out_f); //text output file
+  //save final analysis results
+  void save_fin_results(std::ofstream &txt_out_f); //text output file
 
   private:
 

@@ -44,17 +44,17 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
 //calculate individual simulation statistics
 void chrana::calc_ind_sim_stat()
 {
-  //calculate center of mass distance statistics
+  //calculate dcm statistics
   tdstat dcm_s; //dcm statistics
   calc_stats(dcm_v,dcm_s);
   dcm_s_v.push_back(dcm_s);
 
-  //calculate gyration radius squared statistics
+  //calculate rg2 statistics
   tdstat rg2_s; //rg2 statistics
   calc_stats(rg2_v,rg2_s);
   rg2_s_v.push_back(rg2_s);
 
-  //calculate nematic order parameter statistics
+  //calculate nop statistics
   tdstat nop_s; //nop statistics
   calc_stats(nop_v,nop_s);
   nop_s_v.push_back(nop_s);
@@ -116,21 +116,21 @@ void chrana::clear_ind_sim_data()
   nop_v.clear();
 }
 
-//calculate all simulations statistics
-void chrana::calc_all_sim_stat()
+//calculate final statistics
+void chrana::calc_fin_stat()
 {
-  //calculate center of mass distance results statistics
+  //calculate dcm final statistics
   calc_stats(dcm_s_v,dcm_f_s);
 
-  //calculate gyration radius squared results statistics
+  //calculate rg2 final statistics
   calc_stats(rg2_s_v,rg2_f_s);
 
-  //calculate nematic order parameter results statistics
+  //calculate nop final statistics
   calc_stats(nop_s_v,nop_f_s);
 }
 
-//save all simulations analysis results
-void chrana::save_all_sim_results(std::ofstream &txt_out_f) //text output file
+//save final analysis results
+void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 {
   //save statistics
   txt_out_f<<"#        avg   sqrt(var)         sem\n";

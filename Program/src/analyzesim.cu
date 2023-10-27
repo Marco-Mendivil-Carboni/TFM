@@ -81,25 +81,25 @@ int main(
       out_f.close();
 
       //record success message
-      msg = "simulation "+mmc::cnfs(i_s,3,'0')+" analysed";
+      msg = "analysis "+mmc::cnfs(i_s,3,'0')+" finished";
       mmc::logger::record(msg);
 
       //clear individual simulation analysis data
       ana.clear_ind_sim_data();
     }
 
-    //calculate all simulations statistics
-    ana.calc_all_sim_stat();
+    //calculate final statistics
+    ana.calc_fin_stat();
 
-    //save all simulations analysis results
-    pathstr = sim_dir+"/analysis-all.dat";
+    //save final analysis results
+    pathstr = sim_dir+"/analysis.dat";
     out_f.open(pathstr);
     mmc::check_file(out_f,pathstr);
-    ana.save_all_sim_results(out_f);
+    ana.save_fin_results(out_f);
     out_f.close();
 
     //record success message
-    msg = "all simulations analysed";
+    msg = "final analysis finished";
     mmc::logger::record(msg);
   }
   catch (const mmc::error &err) //caught error
