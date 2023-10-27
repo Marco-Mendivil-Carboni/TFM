@@ -36,6 +36,12 @@ struct tdstat : cdstat //time series data statistics
   bool ter; //termalized
 };
 
+struct avgsem //average and standard error of the mean
+{
+  double avg; //average
+  double sem; //standard error of the mean
+};
+
 //Classes
 
 class chrana : public chrdat //chromatin analysis
@@ -62,8 +68,14 @@ class chrana : public chrdat //chromatin analysis
   //save individual simulation analysis results
   void save_ind_sim_results(std::ofstream &txt_out_f); //text output file
 
-  //clear analysis data
-  void clear_data();
+  //clear individual simulation analysis data
+  void clear_ind_sim_data();
+
+  //calculate all simulations statistics
+  void calc_all_sim_stat();
+
+  //save all simulations analysis results
+  void save_all_sim_results(std::ofstream &txt_out_f); //text output file
 
   private:
 
@@ -79,9 +91,17 @@ class chrana : public chrdat //chromatin analysis
   tdstat rg2_s; //gyration radius squared statistics
   std::vector<float> nop_v; //nematic order parameter vector
   tdstat nop_s; //nematic order parameter statistics
-
   std::vector<float> rcd_v[n_b]; //radial chromatin density vector
   tdstat rcd_s[n_b]; //radial chromatin density statistics
+
+  std::vector<avgsem> dcmrv; //center of mass distance results vector
+  idstat dcmrs; //center of mass distance results statistics
+  std::vector<avgsem> rg2rv; //gyration radius squared results vector
+  idstat rg2rs; //gyration radius squared results statistics
+  std::vector<avgsem> noprv; //nematic order parameter results vector
+  idstat noprs; //nematic order parameter results statistics
+  std::vector<avgsem> rcdrv[n_b]; //radial chromatin density results vector
+  idstat rcdrs[n_b]; //radial chromatin density results statistics
 
   //Function
 
@@ -108,7 +128,7 @@ void calc_stats(
 
 //calculate statistics
 void calc_stats(
-  const std::vector<float[2]> &v, //vector
+  const std::vector<avgsem> &v, //vector
   idstat &s); //statistics
 
 } //namespace mmc

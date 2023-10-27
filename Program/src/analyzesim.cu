@@ -23,6 +23,7 @@ int main(
   std::string pathpat; //file path pathpat
   uint n_s; //number of simulations
   uint n_t_f; //number of trajectory files
+  std::string msg; //message
 
   //main try block
   try
@@ -77,14 +78,29 @@ int main(
       out_f.open(pathstr);
       mmc::check_file(out_f,pathstr);
       ana.save_ind_sim_results(out_f);
-      inp_f.close();
+      out_f.close();
 
-      //record success message and clear analysis data
-      std::string msg = ""; //message
-      msg += "simulation "+mmc::cnfs(i_s,3,'0')+" analysed";
+      //record success message
+      msg = "simulation "+mmc::cnfs(i_s,3,'0')+" analysed";
       mmc::logger::record(msg);
-      ana.clear_data();
+
+      //clear individual simulation analysis data
+      ana.clear_ind_sim_data();
     }
+
+    //calculate all simulations statistics
+    ana.calc_all_sim_stat();
+
+    //save all simulations analysis results
+    pathstr = sim_dir+"/analysis-all.dat";
+    out_f.open(pathstr);
+    mmc::check_file(out_f,pathstr);
+    ana.save_all_sim_results(out_f);
+    out_f.close();
+
+    //record success message
+    msg = "all simulations analysed";
+    mmc::logger::record(msg);
   }
   catch (const mmc::error &err) //caught error
   {

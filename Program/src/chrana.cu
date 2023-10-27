@@ -46,12 +46,15 @@ void chrana::calc_ind_sim_stat()
 {
   //calculate center of mass distance statistics
   calc_stats(dcm_v,dcm_s);
+  dcmrv.push_back({dcm_s.avg,dcm_s.sem});
 
   //calculate gyration radius squared statistics
   calc_stats(rg2_v,rg2_s);
+  rg2rv.push_back({rg2_s.avg,rg2_s.sem});
 
   //calculate nematic order parameter statistics
   calc_stats(nop_v,nop_s);
+  noprv.push_back({nop_s.avg,nop_s.sem});
 }
 
 //save individual simulation analysis results
@@ -84,11 +87,20 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
     txt_out_f<<"\n";
   }
   txt_out_f<<"\n\n";
+
+  //check filestream
+  if (txt_out_f.fail())
+  {
+    throw mmc::error("failed to write results to text file");
+  }
 }
 
-//clear analysis data
-void chrana::clear_data()
+//clear individual simulation analysis data
+void chrana::clear_ind_sim_data()
 {
+  //clear time vector
+  t_v.clear();
+
   //clear center of mass distance vector
   dcm_v.clear();
 
@@ -97,6 +109,42 @@ void chrana::clear_data()
 
   //clear nematic order parameter vector
   nop_v.clear();
+}
+
+//calculate all simulations statistics
+void chrana::calc_all_sim_stat()
+{
+  //calculate center of mass distance results statistics
+  calc_stats(dcmrv,dcmrs);
+
+  //calculate gyration radius squared results statistics
+  calc_stats(rg2rv,rg2rs);
+
+  //calculate nematic order parameter results statistics
+  calc_stats(noprv,noprs);
+}
+
+//save all simulations analysis results
+void chrana::save_all_sim_results(std::ofstream &txt_out_f) //text output file
+{
+  //save statistics
+  txt_out_f<<"#        avg   sqrt(var)         sem\n";
+  txt_out_f<<"# center of mass distance:\n";
+  txt_out_f<<cnfs(dcmrs.avg,12,' ',6)<<cnfs(sqrt(dcmrs.var),12,' ',6);
+  txt_out_f<<cnfs(dcmrs.sem,12,' ',6)<<"\n";
+  txt_out_f<<"# gyration radius squared:\n";
+  txt_out_f<<cnfs(rg2rs.avg,12,' ',6)<<cnfs(sqrt(rg2rs.var),12,' ',6);
+  txt_out_f<<cnfs(rg2rs.sem,12,' ',6)<<"\n";
+  txt_out_f<<"# nematic order parameter:\n";
+  txt_out_f<<cnfs(noprs.avg,12,' ',6)<<cnfs(sqrt(noprs.var),12,' ',6);
+  txt_out_f<<cnfs(noprs.sem,12,' ',6)<<"\n";
+  txt_out_f<<"\n\n";
+
+  //check filestream
+  if (txt_out_f.fail())
+  {
+    throw mmc::error("failed to write results to text file");
+  }
 }
 
 //calculate observables
@@ -253,7 +301,7 @@ void calc_stats(
 
 //calculate statistics
 void calc_stats(
-  const std::vector<float[2]> &v, //vector
+  const std::vector<avgsem> &v, //vector
   idstat &s) //statistics
 {
   //calculate the first two weighted raw moments
@@ -264,10 +312,10 @@ void calc_stats(
   uint n_e = v.size(); //number of elements
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
-    m_1 += v[i_e][0]/v[i_e][1];
-    m_2 += v[i_e][0]*v[i_e][0]/v[i_e][1];
-    w_1 += 1.0/v[i_e][1];
-    w_2 += 1.0/v[i_e][1]*v[i_e][1];
+    m_1 += v[i_e].avg/v[i_e].sem;
+    m_2 += v[i_e].avg*v[i_e].avg/v[i_e].sem;
+    w_1 += 1.0/v[i_e].sem;
+    w_2 += 1.0/v[i_e].sem*v[i_e].sem;
   }
   m_1 /= w_1;
   m_2 /= w_1;
