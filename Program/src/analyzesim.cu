@@ -92,7 +92,7 @@ int main(
     ana.calc_fin_stat();
 
     //save final analysis results
-    pathstr = sim_dir+"/analysis.dat";
+    pathstr = sim_dir+"/analysis-fin.dat";
     out_f.open(pathstr);
     mmc::check_file(out_f,pathstr);
     ana.save_fin_results(out_f);

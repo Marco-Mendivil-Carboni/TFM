@@ -158,12 +158,19 @@ void chrana::calc_fin_stat()
 
   //calculate nop final statistics
   calc_stats(nop_s_v,nop_f_s);
+
+  //calculate rcd final statistics
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+    calc_stats(rcd_s_v[i_b],rcd_f_s[i_b]);
+  }
 }
 
 //save final analysis results
 void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 {
   //save dcm, rg2 and nop statistics
+  txt_out_f<<"#final analysis\n";
   txt_out_f<<"#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";
   txt_out_f<<cnfs(dcm_f_s.avg,12,' ',6)<<cnfs(sqrt(dcm_f_s.var),12,' ',6);
@@ -174,6 +181,19 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
   txt_out_f<<"# nematic order parameter:\n";
   txt_out_f<<cnfs(nop_f_s.avg,12,' ',6)<<cnfs(sqrt(nop_f_s.var),12,' ',6);
   txt_out_f<<cnfs(nop_f_s.sem,12,' ',6)<<"\n";
+  txt_out_f<<"\n\n";
+
+  //save rcd statistics
+  txt_out_f<<"#        r_b         avg   sqrt(var)         sem\n";
+  txt_out_f<<"    0.000000    0.000000    0.000000    0.000000\n";
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+    txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
+    txt_out_f<<cnfs(rcd_f_s[i_b].avg,12,' ',9);
+    txt_out_f<<cnfs(sqrt(rcd_f_s[i_b].var),12,' ',9);
+    txt_out_f<<cnfs(rcd_f_s[i_b].sem,12,' ',9);
+    txt_out_f<<"\n";
+  }
   txt_out_f<<"\n\n";
 
   //check filestream
@@ -337,7 +357,8 @@ void calc_stats(
     //save the optimal termalization index
     if (mse<min_mse)
     {
-      s.i_t = i_t; min_mse = mse;
+      s.i_t = i_t;
+      min_mse = mse;
     }
   }
   if (s.i_t!=v.size()/2){ s.ter = true;} //termalized
@@ -365,10 +386,11 @@ void calc_stats(
   uint n_e = v.size(); //number of elements
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
-    m_1 += v[i_e].avg/v[i_e].sem;
-    m_2 += v[i_e].avg*v[i_e].avg/v[i_e].sem;
-    w_1 += 1.0/v[i_e].sem;
-    w_2 += 1.0/v[i_e].sem*v[i_e].sem;
+    double w = 1.0/(v[i_e].sem*v[i_e].sem); //weight
+    m_1 += w*v[i_e].avg;
+    m_2 += w*v[i_e].avg*v[i_e].avg;
+    w_1 += w;
+    w_2 += w*w;
   }
   m_1 /= w_1;
   m_2 /= w_1;
