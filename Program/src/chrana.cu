@@ -58,12 +58,20 @@ void chrana::calc_ind_sim_stat()
   tdstat nop_s; //nop statistics
   calc_stats(nop_v,nop_s);
   nop_s_v.push_back(nop_s);
+
+  //calculate rcd statistics
+  tdstat rcd_s[n_b]; //rcd statistics
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+   calc_stats(rcd_v[i_b],rcd_s[i_b]);
+   rcd_s_v[i_b].push_back(rcd_s[i_b]);
+  }
 }
 
 //save individual simulation analysis results
 void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
 {
-  //save statistics
+  //save dcm, rg2 and nop statistics
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b    t_v[i_t] ter\n";
   txt_out_f<<"# center of mass distance:\n";
   tdstat dcm_s = dcm_s_v.back(); //dcm statistics
@@ -80,6 +88,23 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   txt_out_f<<cnfs(nop_s.avg,12,' ',6)<<cnfs(sqrt(nop_s.var),12,' ',6);
   txt_out_f<<cnfs(nop_s.sem,12,' ',6)<<cnfs(nop_s.f_n_b,8,' ');
   txt_out_f<<cnfs(t_v[nop_s.i_t],12,' ',2)<<(nop_s.ter?" yes":"  no")<<"\n";
+  txt_out_f<<"\n\n";
+
+  //save rcd statistics
+  tdstat rcd_s[n_b]; //rcd statistics
+  txt_out_f<<"#        r_b         avg   sqrt(var)         sem   f_n_b ter\n";
+  txt_out_f<<"    0.000000    0.000000    0.000000    0.000000       -   -\n";
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+    rcd_s[i_b] = rcd_s_v[i_b].back();
+    txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
+    txt_out_f<<cnfs(rcd_s[i_b].avg,12,' ',9);
+    txt_out_f<<cnfs(sqrt(rcd_s[i_b].var),12,' ',9);
+    txt_out_f<<cnfs(rcd_s[i_b].sem,12,' ',9);
+    txt_out_f<<cnfs(rcd_s[i_b].f_n_b,8,' ');
+    txt_out_f<<(rcd_s[i_b].ter?" yes":"  no");
+    txt_out_f<<"\n";
+  }
   txt_out_f<<"\n\n";
 
   //save vectors
@@ -114,6 +139,12 @@ void chrana::clear_ind_sim_data()
 
   //clear nematic order parameter vector
   nop_v.clear();
+
+  //calculate radial chromatin density vector
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+   rcd_v[i_b].clear();
+  }
 }
 
 //calculate final statistics
@@ -132,7 +163,7 @@ void chrana::calc_fin_stat()
 //save final analysis results
 void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 {
-  //save statistics
+  //save dcm, rg2 and nop statistics
   txt_out_f<<"#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";
   txt_out_f<<cnfs(dcm_f_s.avg,12,' ',6)<<cnfs(sqrt(dcm_f_s.var),12,' ',6);
@@ -191,6 +222,24 @@ void chrana::calc_observables()
   }
   nop /= N-1.0;
   nop_v.push_back(nop);
+
+  //calculate the radial chromatin density
+  float rcd[n_b]; //radial chromatin density
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+    rcd[i_b] = 0.0;
+  }
+  for (uint i_p = 0; i_p<N; ++i_p) //particle index
+  {
+    float d_r = length(hr[i_p]); //radial distance
+    uint i_b = n_b*d_r*d_r*d_r/(R*R*R); //bin index
+    rcd[i_b] += 1.0;
+  }
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+    rcd[i_b] /= N*(4.0/3.0)*M_PI*R*R*R/n_b;
+    rcd_v[i_b].push_back(rcd[i_b]);
+  }
 }
 
 //calculate statistics
@@ -288,8 +337,7 @@ void calc_stats(
     //save the optimal termalization index
     if (mse<min_mse)
     {
-      s.i_t = i_t;
-      min_mse = mse;
+      s.i_t = i_t; min_mse = mse;
     }
   }
   if (s.i_t!=v.size()/2){ s.ter = true;} //termalized
