@@ -12,7 +12,7 @@ bin/measuresim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
 
 bin/analyzesim: bin/util.o bin/chrdat.o bin/chrana.o \
 		bin/analyzesim.o
-	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
+	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
 bin/performsim.o: src/performsim.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@

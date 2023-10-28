@@ -21,7 +21,7 @@ echo "---"
 
 echo -n > "${testdir}/adjustable-parameters.dat"
 { echo "number_of_particles 2048"; echo "confinement_radius 10.0";
-  echo "number_of_lbs 128";
+  echo "number_of_lbs 128"; echo "frames_per_file 256";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/performsim $testdir
@@ -41,10 +41,10 @@ check $?
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 
-./Program/bin/analyzesim $testdir 0
-check $?
-
-./Program/bin/analyzesim $testdir 1
+./Program/bin/analyzesim $testdir
+[[ -f "${testdir}/analysis-000.dat" && \
+-f "${testdir}/analysis-001.dat" && \
+-f "${testdir}/analysis-fin.dat" ]]
 check $?
 
 vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
