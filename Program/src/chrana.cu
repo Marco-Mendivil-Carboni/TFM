@@ -13,11 +13,12 @@ namespace mmc //Marco Mendívil Carboni
 chrana::chrana(parmap &par) //parameters
   : chrdat(par)
   , fpf {par.get_val<uint>("frames_per_file",100)}
+  , l_msd_a {(N/8)-1}
 {
   //allocate memory
-  msd_v = new std::vector<float>[N-1];
-  msd_s_v = new std::vector<tdstat>[N-1];
-  msd_f_s = new idstat[N-1];
+  msd_v = new std::vector<float>[l_msd_a];
+  msd_s_v = new std::vector<tdstat>[l_msd_a];
+  msd_f_s = new idstat[l_msd_a];
 }
 
 //chromatin analysis destructor
@@ -80,8 +81,8 @@ void chrana::calc_ind_sim_stat()
   }
 
   //calculate msd statistics
-  tdstat *msd_s = new tdstat[N-1]; //msd statistics
-  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  tdstat *msd_s = new tdstat[l_msd_a]; //msd statistics
+  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
   {
     calc_stats(msd_v[i_a],msd_s[i_a]);
     msd_s_v[i_a].push_back(msd_s[i_a]);
@@ -114,7 +115,7 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   //save rcd statistics
   tdstat rcd_s[n_b]; //rcd statistics
   txt_out_f<<"#        r_b         avg   sqrt(var)         sem   f_n_b ter\n";
-  txt_out_f<<"    0.000000    0.000000    0.000000    0.000000       -   -\n";
+  txt_out_f<<"    0.000000    0.000000    0.000000    0.000000       - yes\n";
   for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
   {
     rcd_s[i_b] = rcd_s_v[i_b].back();
@@ -129,9 +130,9 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   txt_out_f<<"\n\n";
 
   //save msd statistics
-  tdstat *msd_s = new tdstat[N-1]; //msd statistics
+  tdstat *msd_s = new tdstat[l_msd_a]; //msd statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem   f_n_b ter\n";
-  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
   {
     msd_s[i_a] = msd_s_v[i_a].back();
     txt_out_f<<cnfs((i_a+1),6,' ');
@@ -185,7 +186,7 @@ void chrana::clear_ind_sim_data()
   }
 
   //clear mean spatial distance vector
-  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
   {
     msd_v[i_a].clear();
   }
@@ -210,7 +211,7 @@ void chrana::calc_fin_stat()
   }
 
   //calculate msd final statistics
-  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
   {
     calc_stats(msd_s_v[i_a],msd_f_s[i_a]);
   }
@@ -248,7 +249,7 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 
   //save msd final statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem\n";
-  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
   {
     txt_out_f<<cnfs((i_a+1),6,' ');
     txt_out_f<<cnfs(msd_f_s[i_a].avg,12,' ',6);
@@ -325,8 +326,8 @@ void chrana::calc_observables()
 
   //calculate the mean spatial distance
   uint s = 0; //separation
-  float *msd = new float[N-1]; //mean spatial distance
-  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  float *msd = new float[l_msd_a]; //mean spatial distance
+  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
   {
     s = i_a+1;
     msd[i_a] = 0.0;
@@ -435,8 +436,7 @@ void calc_stats(
     //save the optimal termalization index
     if (mse<min_mse)
     {
-      s.i_t = i_t;
-      min_mse = mse;
+      s.i_t = i_t; min_mse = mse;
     }
   }
   if (s.i_t!=v.size()/2){ s.ter = true;} //termalized
