@@ -12,10 +12,22 @@ namespace mmc //Marco Mendívil Carboni
 //chromatin analysis constructor
 chrana::chrana(parmap &par) //parameters
   : chrdat(par)
-  , fpf {par.get_val<uint>("frames_per_file",100)} {}
+  , fpf {par.get_val<uint>("frames_per_file",100)}
+{
+  //allocate memory
+  msd_v = new std::vector<float>[N-1];
+  msd_s_v = new std::vector<tdstat>[N-1];
+  msd_f_s = new idstat[N-1];
+}
 
 //chromatin analysis destructor
-chrana::~chrana() {}
+chrana::~chrana()
+{
+  //deallocate memory
+  delete[] msd_v;
+  delete[] msd_s_v;
+  delete[] msd_f_s;
+}
 
 //add initial condition to analysis
 void chrana::add_initial_condition(std::ifstream &txt_inp_f) //text input file
@@ -63,9 +75,18 @@ void chrana::calc_ind_sim_stat()
   tdstat rcd_s[n_b]; //rcd statistics
   for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
   {
-   calc_stats(rcd_v[i_b],rcd_s[i_b]);
-   rcd_s_v[i_b].push_back(rcd_s[i_b]);
+    calc_stats(rcd_v[i_b],rcd_s[i_b]);
+    rcd_s_v[i_b].push_back(rcd_s[i_b]);
   }
+
+  //calculate msd statistics
+  tdstat *msd_s = new tdstat[N-1]; //msd statistics
+  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  {
+    calc_stats(msd_v[i_a],msd_s[i_a]);
+    msd_s_v[i_a].push_back(msd_s[i_a]);
+  }
+  delete[] msd_s;
 }
 
 //save individual simulation analysis results
@@ -107,6 +128,23 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   }
   txt_out_f<<"\n\n";
 
+  //save msd statistics
+  tdstat *msd_s = new tdstat[N-1]; //msd statistics
+  txt_out_f<<"#    s         avg   sqrt(var)         sem   f_n_b ter\n";
+  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  {
+    msd_s[i_a] = msd_s_v[i_a].back();
+    txt_out_f<<cnfs((i_a+1),6,' ');
+    txt_out_f<<cnfs(msd_s[i_a].avg,12,' ',6);
+    txt_out_f<<cnfs(sqrt(msd_s[i_a].var),12,' ',6);
+    txt_out_f<<cnfs(msd_s[i_a].sem,12,' ',6);
+    txt_out_f<<cnfs(msd_s[i_a].f_n_b,8,' ');
+    txt_out_f<<(msd_s[i_a].ter?" yes":"  no");
+    txt_out_f<<"\n";
+  }
+  txt_out_f<<"\n\n";
+  delete[] msd_s;
+
   //save vectors
   uint n_e = t_v.size(); //number of elements
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
@@ -140,10 +178,16 @@ void chrana::clear_ind_sim_data()
   //clear nematic order parameter vector
   nop_v.clear();
 
-  //calculate radial chromatin density vector
+  //clear radial chromatin density vector
   for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
   {
-   rcd_v[i_b].clear();
+    rcd_v[i_b].clear();
+  }
+
+  //clear mean spatial distance vector
+  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  {
+    msd_v[i_a].clear();
   }
 }
 
@@ -164,12 +208,18 @@ void chrana::calc_fin_stat()
   {
     calc_stats(rcd_s_v[i_b],rcd_f_s[i_b]);
   }
+
+  //calculate msd final statistics
+  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  {
+    calc_stats(msd_s_v[i_a],msd_f_s[i_a]);
+  }
 }
 
 //save final analysis results
 void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 {
-  //save dcm, rg2 and nop statistics
+  //save dcm, rg2 and nop final statistics
   txt_out_f<<"#final analysis\n";
   txt_out_f<<"#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";
@@ -183,7 +233,7 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
   txt_out_f<<cnfs(nop_f_s.sem,12,' ',6)<<"\n";
   txt_out_f<<"\n\n";
 
-  //save rcd statistics
+  //save rcd final statistics
   txt_out_f<<"#        r_b         avg   sqrt(var)         sem\n";
   txt_out_f<<"    0.000000    0.000000    0.000000    0.000000\n";
   for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
@@ -192,6 +242,18 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
     txt_out_f<<cnfs(rcd_f_s[i_b].avg,12,' ',9);
     txt_out_f<<cnfs(sqrt(rcd_f_s[i_b].var),12,' ',9);
     txt_out_f<<cnfs(rcd_f_s[i_b].sem,12,' ',9);
+    txt_out_f<<"\n";
+  }
+  txt_out_f<<"\n\n";
+
+  //save msd final statistics
+  txt_out_f<<"#    s         avg   sqrt(var)         sem\n";
+  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  {
+    txt_out_f<<cnfs((i_a+1),6,' ');
+    txt_out_f<<cnfs(msd_f_s[i_a].avg,12,' ',6);
+    txt_out_f<<cnfs(sqrt(msd_f_s[i_a].var),12,' ',6);
+    txt_out_f<<cnfs(msd_f_s[i_a].sem,12,' ',6);
     txt_out_f<<"\n";
   }
   txt_out_f<<"\n\n";
@@ -260,6 +322,22 @@ void chrana::calc_observables()
     rcd[i_b] /= N*(4.0/3.0)*M_PI*R*R*R/n_b;
     rcd_v[i_b].push_back(rcd[i_b]);
   }
+
+  //calculate the mean spatial distance
+  uint s = 0; //separation
+  float *msd = new float[N-1]; //mean spatial distance
+  for (uint i_a = 0; i_a<(N-1); ++i_a) //array index
+  {
+    s = i_a+1;
+    msd[i_a] = 0.0;
+    for (uint i_p = 0; i_p<(N-s); ++i_p) //particle index
+    {
+      msd[i_a] += length(hr[i_p+s]-hr[i_p]);
+    }
+    msd[i_a] /= (N-s);
+    msd_v[i_a].push_back(msd[i_a]);
+  }
+  delete[] msd;
 }
 
 //calculate statistics
@@ -387,6 +465,10 @@ void calc_stats(
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
     double w = 1.0/(v[i_e].sem*v[i_e].sem); //weight
+    if (!isnormal(w)) //skip if weight is not normal
+    {
+      continue;
+    }
     m_1 += w*v[i_e].avg;
     m_2 += w*v[i_e].avg*v[i_e].avg;
     w_1 += w;

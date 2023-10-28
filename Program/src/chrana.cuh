@@ -80,20 +80,24 @@ class chrana : public chrdat //chromatin analysis
   const uint fpf; //frames per file
 
   std::vector<float> t_v; //time vector
+
   std::vector<float> dcm_v; //center of mass distance vector
   std::vector<float> rg2_v; //gyration radius squared vector
   std::vector<float> nop_v; //nematic order parameter vector
   std::vector<float> rcd_v[n_b]; //radial chromatin density vector
+  std::vector<float> *msd_v; //mean spatial distance vector
 
   std::vector<tdstat> dcm_s_v; //dcm statistics vector
   std::vector<tdstat> rg2_s_v; //rg2 statistics vector
   std::vector<tdstat> nop_s_v; //nop statistics vector
   std::vector<tdstat> rcd_s_v[n_b]; //rcd statistics vector
+  std::vector<tdstat> *msd_s_v; //msd statistics vector
 
   idstat dcm_f_s; //dcm final statistics
   idstat rg2_f_s; //rg2 final statistics
   idstat nop_f_s; //nop final statistics
   idstat rcd_f_s[n_b]; //rcd final statistics
+  idstat *msd_f_s; //msd final statistics
 
   //Function
 
