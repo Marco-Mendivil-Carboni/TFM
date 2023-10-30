@@ -19,6 +19,7 @@ static constexpr float k_b = 2.000000; //bending constant
 static constexpr float e_p = 1.000000; //particle energy
 static constexpr float rco = 1.154701; //repulsive cutoff
 static constexpr float aco = 2.000000; //attractive cutoff
+static constexpr float mdl = 64.00000; //mean domain length
 static constexpr float e_l = 16.00000; //lbs energy
 static constexpr float lco = 0.577351; //lbs cutoff
 
@@ -56,6 +57,12 @@ class chrdat //chromatin data
   //read frame from binary file
   void read_frame_bin(std::ifstream &bin_inp_f); //binary input file
 
+  //write lamina binding sites to text file
+  void write_lbs_txt(std::ofstream &txt_out_f); //text output file
+
+  //read lamina binding sites from text file
+  void read_lbs_txt(std::ifstream &txt_inp_f); //text input file
+
   protected:
 
   //Parameters and Variables
@@ -64,7 +71,6 @@ class chrdat //chromatin data
   const float R; //confinement radius
   const float T; //temperature
   const uint n_l; //number of lbs
-
   uint i_f; //frame index
   float t; //time
 

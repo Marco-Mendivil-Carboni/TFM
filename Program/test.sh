@@ -27,12 +27,14 @@ echo -n > "${testdir}/adjustable-parameters.dat"
 ./Program/bin/performsim $testdir
 [[ -f "${testdir}/all-messages.log" && \
 -f "${testdir}/initial-condition-000.gro" && \
+-f "${testdir}/lamina-binding-sites-000.gro" && \
 -f "${testdir}/trajectory-000-000.trr" && \
 -f "${testdir}/checkpoint-000.bin" ]]
 check $?
 
 ./Program/bin/performsim $testdir
 [[ -f "${testdir}/initial-condition-001.gro" && \
+-f "${testdir}/lamina-binding-sites-001.gro" && \
 -f "${testdir}/trajectory-001-000.trr" && \
 -f "${testdir}/checkpoint-001.bin" ]]
 check $?

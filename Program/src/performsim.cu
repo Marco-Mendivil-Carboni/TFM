@@ -55,6 +55,14 @@ int main(
       mmc::check_file(out_f,pathstr);
       sim.write_frame_txt(out_f);
       out_f.close();
+
+      //write lamina binding sites
+      pathstr = sim_dir+"/lamina-binding-sites-";
+      pathstr += mmc::cnfs(i_s,3,'0')+".gro";
+      out_f.open(pathstr);
+      mmc::check_file(out_f,pathstr);
+      sim.write_lbs_txt(out_f);
+      out_f.close();
     }
     else //continue previous simulation
     {

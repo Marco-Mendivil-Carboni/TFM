@@ -24,7 +24,7 @@ chrdat::chrdat(parmap &par) //parameters
   if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
   float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
-  float laf = n_l*pow(lco/(R-rco),2.0); //lbs area fraction
+  float laf = n_l*pow(lco/(R-rco),2.0)/4.0; //lbs area fraction
   if (laf>0.6){ throw error("lbs area fraction above 0.6");}
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
@@ -176,6 +176,64 @@ void chrdat::read_frame_bin(std::ifstream &bin_inp_f) //binary input file
   if (bin_inp_f.fail())
   {
     throw mmc::error("failed to read frame from binary file");
+  }
+}
+
+//write lamina binding sites to text file
+void chrdat::write_lbs_txt(std::ofstream &txt_out_f) //text output file
+{
+  //write lbs data
+  txt_out_f<<"\n";
+  txt_out_f<<cnfs(n_l,5,' ')<<"\n";
+  char ptc = 'C'; //particle type character
+  for (uint i_l = 0; i_l<n_l; ++i_l) //lbs index
+  {
+    txt_out_f<<std::setw(5)<<i_l+1<<std::left<<std::setw(5)<<ptc;
+    txt_out_f<<std::right<<std::setw(5)<<ptc<<std::setw(5)<<i_l+1;
+    txt_out_f<<cnfs(hlr[i_l].x,8,' ',3);
+    txt_out_f<<cnfs(hlr[i_l].y,8,' ',3);
+    txt_out_f<<cnfs(hlr[i_l].z,8,' ',3);
+    txt_out_f<<"\n";
+  }
+  txt_out_f<<cnfs(0.0,10,' ',5);
+  txt_out_f<<cnfs(0.0,10,' ',5);
+  txt_out_f<<cnfs(0.0,10,' ',5);
+  txt_out_f<<"\n";
+
+  //check filestream
+  if (txt_out_f.fail())
+  {
+    throw mmc::error("failed to write lamina binding sites to text file");
+  }
+}
+
+//read lamina binding sites from text file
+void chrdat::read_lbs_txt(std::ifstream &txt_inp_f) //text input file
+{
+  //read lbs data
+  std::string aux_str; //auxiliary string
+  txt_inp_f>>aux_str;
+  txt_inp_f>>aux_str;
+  char ptc; //particle type character
+  for (uint i_l = 0; i_l<n_l; ++i_l) //lbs index
+  {
+    txt_inp_f>>aux_str;
+    txt_inp_f>>ptc>>aux_str;
+    txt_inp_f>>hlr[i_l].x;
+    txt_inp_f>>hlr[i_l].y;
+    txt_inp_f>>hlr[i_l].z;
+  }
+  txt_inp_f>>aux_str;
+  txt_inp_f>>aux_str;
+  txt_inp_f>>aux_str;
+
+  //copy host lbs position array to device
+  cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(vec3f),cudaMemcpyHostToDevice));
+
+  //check filestream
+  if (txt_inp_f.fail())
+  {
+    throw mmc::error("failed to read lamina binding sites from text file");
   }
 }
 

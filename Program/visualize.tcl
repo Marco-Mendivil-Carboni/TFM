@@ -3,15 +3,27 @@ set res 32
 set p_rad 5.0
 
 if {$argc==2} {
-    #load initial condition
-    package require topotools
+    #set sim_dir and sim_idx
     set sim_dir [lindex $argv 0]
     set sim_idx [lindex $argv 1]
-    set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
+
+    #set visualization preferences
     color Display Background white
     display cuedensity 0.2
     display shadows on
+
+    #load lamina binding sites
+    set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
     mol new $gro_file autobonds off
+    set sel [atomselect top "name C"]
+    $sel set radius $p_rad
+    color Name "C" 2
+    mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
+
+    #load initial condition
+    set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
+    mol new $gro_file autobonds off
+    package require topotools
     set N [molinfo top get numatoms]
     for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
     set sel [atomselect top "name A"]

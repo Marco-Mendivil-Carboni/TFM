@@ -390,6 +390,9 @@ void chrsim::generate_initial_condition()
   //perform a confined random walk
   perform_random_walk();
 
+  //generate lbs grid arrays
+  lg.generate_arrays(tpb,lr);
+
   //separate beads
   uint po = particle_overlaps(); //particle overlaps
   uint ipo = po; //initial particle overlaps
@@ -449,9 +452,6 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
   cuda_check(cudaMemcpy(r,hr,N*sizeof(vec3f),cudaMemcpyHostToDevice));
   cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(vec3f),cudaMemcpyHostToDevice));
 
-  //generate lbs grid arrays
-  lg.generate_arrays(tpb,lr);
-
   //record success message
   logger::record("simulation checkpoint loaded");
 }
@@ -459,6 +459,9 @@ void chrsim::load_checkpoint(std::ifstream &bin_inp_f) //binary input file
 //run simulation and write trajectory to binary file
 void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
 {
+  //generate lbs grid arrays
+  lg.generate_arrays(tpb,lr);
+
   //iterate over all frames per file
   for (uint ffi = 0; ffi<fpf; ++ffi) //file frame index
   {
@@ -527,9 +530,6 @@ void chrsim::set_lbs_positions()
   //copy host lbs position array to device
   cuda_check(cudaMemcpy(lr,hlr,n_l*sizeof(vec3f),cudaMemcpyHostToDevice));
 
-  //generate lbs grid arrays
-  lg.generate_arrays(tpb,lr);
-
   //free host PRNG
   curandDestroyGenerator(gen);
 }
@@ -544,11 +544,19 @@ void chrsim::set_particle_types()
 
   //set particle types randomly
   float ran; //random number in (0,1]
+  float edl; //exponential domain length
+  uint cde = 0; //current domain end
+  ptype cpt = LAD; //current particle type
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
-    curandGenerateUniform(gen,&ran,1);
-    if (ran<0.5){ hpt[i_p] = LAD;}
-    else{ hpt[i_p] = LND;}
+    if (i_p==cde) //change domain type
+    {
+      curandGenerateUniform(gen,&ran,1);
+      edl = -mdl*log(ran);
+      cde = i_p+edl;
+      cpt = (cpt==LND)?LAD:LND;
+    }
+    hpt[i_p] = cpt;
   }
 
   //copy host particle type array to device
