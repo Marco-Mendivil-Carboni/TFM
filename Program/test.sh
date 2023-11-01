@@ -20,8 +20,8 @@ mkdir $testdir
 echo "---"
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 2048"; echo "confinement_radius 10.0";
-  echo "number_of_lbs 128"; echo "frames_per_file 256";
+{ echo "number_of_particles 4096"; echo "confinement_radius 16.0";
+  echo "number_of_lbs 1024"; echo "frames_per_file 128";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/performsim $testdir
