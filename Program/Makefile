@@ -29,10 +29,10 @@ bin/chrsim.o: src/chrsim.cu src/chrsim.cuh bin/chrdat.o bin/sugrid.o
 bin/chrana.o: src/chrana.cu src/chrana.cuh bin/chrdat.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/sugrid.o: src/sugrid.cu src/sugrid.cuh bin/util.o
+bin/chrdat.o: src/chrdat.cu src/chrdat.cuh bin/util.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/chrdat.o: src/chrdat.cu src/chrdat.cuh bin/util.o
+bin/sugrid.o: src/sugrid.cu src/sugrid.cuh bin/util.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/util.o: src/util.cu src/util.cuh src/vect.cuh
