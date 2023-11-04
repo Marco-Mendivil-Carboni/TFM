@@ -333,7 +333,7 @@ template <stype T> __global__ void exec_RK_2(
 //chromatin simulation constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
-  , fpf {par.get_val<uint>("frames_per_file",100)}
+  , fpf {par.get_val<uint>("frames_per_file",128)}
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",128)}
   , sd {static_cast<float>(sqrt(2.0*k_B*T*dt))}

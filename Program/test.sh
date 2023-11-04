@@ -21,7 +21,7 @@ echo "---"
 
 echo -n > "${testdir}/adjustable-parameters.dat"
 { echo "number_of_particles 4096"; echo "confinement_radius 16.0";
-  echo "number_of_lbs 1024"; echo "frames_per_file 128";
+  echo "number_of_lbs 1024";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/performsim $testdir
