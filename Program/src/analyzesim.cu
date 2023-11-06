@@ -12,8 +12,8 @@ int main(
   const char **argv) //argument vector
 {
   //check command-line arguments
-  if (argc<2){ std::cout<<"no arguments"; return EXIT_FAILURE;}
-  if (argc>2){ std::cout<<"extra arguments"; return EXIT_FAILURE;}
+  if (argc<2){ std::cout<<"no arguments\n"; return EXIT_FAILURE;}
+  if (argc>2){ std::cout<<"extra arguments\n"; return EXIT_FAILURE;}
 
   //declare auxiliary variables
   const std::string sim_dir = argv[1]; //simulation directory

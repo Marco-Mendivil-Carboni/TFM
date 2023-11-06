@@ -13,8 +13,8 @@ int main(
   const char **argv) //argument vector
 {
   //check command-line arguments
-  if (argc<2){ std::cout<<"no arguments"; return EXIT_FAILURE;}
-  if (argc>2){ std::cout<<"extra arguments"; return EXIT_FAILURE;}
+  if (argc<2){ std::cout<<"no arguments\n"; return EXIT_FAILURE;}
+  if (argc>2){ std::cout<<"extra arguments\n"; return EXIT_FAILURE;}
 
   //using declarations
   using std::chrono::system_clock;
@@ -48,7 +48,7 @@ int main(
       std::stringstream par_s; //parameter stream
       N = pow(2,8+i_t);
       R = 0.5+0.5*pow(N/0.2,1.0/3);
-      n_l = 0.3/pow(mmc::lco/(R-mmc::rco),2.0);
+      n_l = 0.2*4.0/pow(mmc::lco/(R-mmc::rco),2.0);
       par_s<<"number_of_particles"<<" "<<mmc::cnfs(N,5,'0')<<std::endl;
       par_s<<"confinement_radius"<<" "<<mmc::cnfs(R,5,'0',2)<<std::endl;
       par_s<<"number_of_lbs"<<" "<<mmc::cnfs(n_l,5,'0')<<std::endl;

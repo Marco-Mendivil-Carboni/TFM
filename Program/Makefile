@@ -1,6 +1,17 @@
+#Variables
+
 NVCC = nvcc
 NVCCFLAGS = -gencode arch=compute_86,code=sm_86 -g
+
 NVCCLINKS = -lcurand
+
+#Targets
+
+bin/makeallsim: bin/util.o bin/chrdat.o bin/makeallsim.o
+	$(NVCC) $(NVCCFLAGS) $^ -o $@
+
+bin/makeallsim.o: src/makeallsim.cu bin/performsim bin/analyzesim
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/performsim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
 		bin/performsim.o
@@ -10,8 +21,7 @@ bin/measuresim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
 		bin/measuresim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
-bin/analyzesim: bin/util.o bin/chrdat.o bin/chrana.o \
-		bin/analyzesim.o
+bin/analyzesim: bin/util.o bin/chrdat.o bin/chrana.o bin/analyzesim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
 bin/performsim.o: src/performsim.cu bin/chrsim.o
