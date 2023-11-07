@@ -7,8 +7,8 @@
 
 //Functions
 
-//perform missing simulations and analyze them
-void perform_missing_sim(
+//perform and analyze missing simulations
+void perform_and_analyze_sim(
   std::string sim_dir, //simulation directory
   uint n_s, //number of simulations
   uint fps) //files per simulation
@@ -76,8 +76,8 @@ int main(
   float R; //confinement radius
   uint n_l; //number of lbs
 
-  //open log file in current working directory
-  mmc::logger::set_file("all-messages.log");
+  //open log file inside simulation root directory
+  mmc::logger::set_file(srd+"/all-messages.log");
 
   //record n_s and fps
   std::string msg = ""; //message
@@ -115,8 +115,8 @@ int main(
           par_f<<"number_of_lbs "<<mmc::cnfs(n_l,5,'0')<<"\n";
           par_f.close();
 
-          //perform missing simulations and analyze them
-          perform_missing_sim(sim_dir,n_s,fps);
+          //perform and analyze missing simulations
+          perform_and_analyze_sim(sim_dir,n_s,fps);
 
           //record success message
           mmc::logger::record(sim_dir+" done");
