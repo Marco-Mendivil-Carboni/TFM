@@ -65,16 +65,25 @@ int main(
 
   //declare auxiliary variables
   const std::string srd = "Simulations"; //simulation root directory
+  uint n_s = std::stoi(argv[1]); //number of simulations
+  uint fps = (argc==3)?std::stoi(argv[2]):1; //files per simulation
+  std::string sim_dir; //simulation directory
+  std::string pathstr; //file path string
+  std::ofstream par_f; //parameter file
   float cvf; //chromatin volume fraction
   float laf; //lbs area fraction
   uint N; //number of particles
   float R; //confinement radius
   uint n_l; //number of lbs
-  std::string sim_dir; //simulation directory
-  std::ofstream par_f; //parameter file
-  std::string pathstr; //file path string
-  uint n_s = std::stoi(argv[1]); //number of simulations
-  uint fps = (argc==3)?std::stoi(argv[2]):1; //files per simulation
+
+  //open log file in current working directory
+  mmc::logger::set_file("all-messages.log");
+
+  //record n_s and fps
+  std::string msg = ""; //message
+  msg += "n_s = "+mmc::cnfs(n_s,3,'0')+" ";
+  msg += "fps = "+mmc::cnfs(fps,3,'0')+" ";
+  mmc::logger::record(msg);
 
   //main try block
   try
@@ -108,6 +117,9 @@ int main(
 
           //perform missing simulations and analyze them
           perform_missing_sim(sim_dir,n_s,fps);
+
+          //record success message
+          mmc::logger::record(sim_dir+" done");
         }
       }
     }
