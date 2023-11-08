@@ -70,6 +70,8 @@ int main(
   std::string sim_dir; //simulation directory
   std::string pathstr; //file path string
   std::ofstream par_f; //parameter file
+  std::ifstream inp_f; //input file
+  std::ofstream out_f; //output file
   float cvf; //chromatin volume fraction
   float laf; //lbs area fraction
   uint N; //number of particles
@@ -88,12 +90,23 @@ int main(
   //main try block
   try
   {
+    //open output file
+    pathstr = srd+"/analysis-summary.dat";
+    out_f.open(pathstr);
+    mmc::check_file(out_f,pathstr);
+
+    //write analysis summary header
+    out_f<<"#   N   cvf   laf ";
+    out_f<<"#dcm:    avg   sqrt(var)         sem ";
+    out_f<<"#rg2:    avg   sqrt(var)         sem ";
+    out_f<<"#nop:    avg   sqrt(var)         sem\n";
+
     //iterate over all simulation configurations
-    for (N = 4'096; N<65'536; N*=2)
+    for (N = 4'096; N<4097; N*=2)
     {
-      for (cvf = 0.10; cvf<0.45; cvf+=0.10)
+      for (cvf = 0.10; cvf<0.25; cvf+=0.10)
       {
-        for (laf = 0.05; laf<0.55; laf+=0.15)
+        for (laf = 0.05; laf<0.15; laf+=0.15)
         {
           //create simulation directory if it doesn't exist
           sim_dir = srd;
@@ -118,11 +131,28 @@ int main(
           //perform and analyze missing simulations
           perform_and_analyze_sim(sim_dir,n_s,fps);
 
+          //read simulation analysis and write analysis summary
+          pathstr = sim_dir+"/analysis-fin.dat";
+          inp_f.open(pathstr);
+          mmc::check_file(inp_f,pathstr);
+          std::string fl; //file line
+          out_f<<mmc::cnfs(N,5,'0')<<" ";
+          out_f<<mmc::cnfs(cvf,5,'0',3)<<" ";
+          out_f<<mmc::cnfs(laf,5,'0',3)<<" ";
+          getline(inp_f,fl); getline(inp_f,fl); getline(inp_f,fl);
+          getline(inp_f,fl); out_f<<fl<<" "; getline(inp_f,fl);
+          getline(inp_f,fl); out_f<<fl<<" "; getline(inp_f,fl);
+          getline(inp_f,fl); out_f<<fl<<"\n";
+          inp_f.close();
+
           //record success message
           mmc::logger::record(sim_dir+" done");
         }
       }
     }
+
+    //close output file
+    out_f.close();
   }
   catch (const mmc::error &err) //caught error
   {
