@@ -102,11 +102,11 @@ int main(
     out_f<<"#nop:    avg   sqrt(var)         sem\n";
 
     //iterate over all simulation configurations
-    for (N = 4'096; N<4097; N*=2)
+    for (N = 4'096; N<65'536; N*=2)
     {
-      for (cvf = 0.10; cvf<0.25; cvf+=0.10)
+      for (cvf = 0.10; cvf<0.45; cvf+=0.10)
       {
-        for (laf = 0.05; laf<0.15; laf+=0.15)
+        for (laf = 0.05; laf<0.55; laf+=0.15)
         {
           //create simulation directory if it doesn't exist
           sim_dir = srd;
