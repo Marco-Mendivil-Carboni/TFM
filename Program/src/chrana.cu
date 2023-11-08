@@ -7,18 +7,47 @@
 namespace mmc //Marco Mendívil Carboni
 {
 
-//Functions
+//Global Functions
+
+//calculate the mean spatial distance
+__global__ void calc_msd(
+  const uint lma, //length of msd arrays
+  const uint N, //number of particles
+  vec3f *r, //position array
+  float *ma) //msd array
+{
+  //calculate array index
+  int i_a = blockIdx.x*blockDim.x+threadIdx.x; //array index
+  if (i_a>=lma){ return;}
+
+  //calculate the mean spatial distance
+  ma[i_a] = 0.0;
+  uint s = i_a+1; //separation
+  for (uint i_p = 0; i_p<(N-s); ++i_p) //particle index
+  {
+    ma[i_a] += length(r[i_p+s]-r[i_p]);
+  }
+  ma[i_a] /= (N-s);
+}
+
+//Host Functions
 
 //chromatin analysis constructor
 chrana::chrana(parmap &par) //parameters
   : chrdat(par)
   , fpf {par.get_val<uint>("frames_per_file",100)}
-  , l_msd_a {(N/8)-1}
+  , lma {(N/2)-1}
 {
   //allocate memory
-  msd_v = new std::vector<float>[l_msd_a];
-  msd_s_v = new std::vector<tdstat>[l_msd_a];
-  msd_f_s = new idstat[l_msd_a];
+  msd_v = new std::vector<float>[lma];
+  msd_s_v = new std::vector<tdstat>[lma];
+  msd_f_s = new idstat[lma];
+
+  //allocate device memory
+  cuda_check(cudaMalloc(&ma,lma*sizeof(float)));
+
+  //allocate host memory
+  cuda_check(cudaMallocHost(&hma,lma*sizeof(float)));
 }
 
 //chromatin analysis destructor
@@ -28,6 +57,12 @@ chrana::~chrana()
   delete[] msd_v;
   delete[] msd_s_v;
   delete[] msd_f_s;
+
+  //deallocate device memory
+  cuda_check(cudaFree(ma));
+
+  //deallocate host memory
+  cuda_check(cudaFreeHost(hma));
 }
 
 //add initial condition to analysis
@@ -84,8 +119,8 @@ void chrana::calc_ind_sim_stat()
   }
 
   //calculate msd statistics
-  tdstat *msd_s = new tdstat[l_msd_a]; //msd statistics
-  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
+  tdstat *msd_s = new tdstat[lma]; //msd statistics
+  for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     calc_stats(msd_v[i_a],msd_s[i_a]);
     msd_s_v[i_a].push_back(msd_s[i_a]);
@@ -136,9 +171,9 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   }
 
   //save msd statistics
-  tdstat *msd_s = new tdstat[l_msd_a]; //msd statistics
+  tdstat *msd_s = new tdstat[lma]; //msd statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem   f_n_b ter\n";
-  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
+  for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     msd_s[i_a] = msd_s_v[i_a].back();
     txt_out_f<<cnfs((i_a+1),6,' ');
@@ -195,7 +230,7 @@ void chrana::clear_ind_sim_data()
   }
 
   //clear mean spatial distance vector
-  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
+  for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     msd_v[i_a].clear();
   }
@@ -223,7 +258,7 @@ void chrana::calc_fin_stat()
   }
 
   //calculate msd final statistics
-  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
+  for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     calc_stats(msd_s_v[i_a],msd_f_s[i_a]);
   }
@@ -264,7 +299,7 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 
   //save msd final statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem\n";
-  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
+  for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     txt_out_f<<cnfs((i_a+1),6,' ');
     txt_out_f<<cnfs(msd_f_s[i_a].avg,12,' ',6);
@@ -348,20 +383,13 @@ void chrana::calc_observables()
   }
 
   //calculate the mean spatial distance
-  uint s = 0; //separation
-  float *msd = new float[l_msd_a]; //mean spatial distance
-  for (uint i_a = 0; i_a<l_msd_a; ++i_a) //array index
+  uint tpb = 128; //threads per block
+  calc_msd<<<(lma+tpb-1)/tpb,tpb>>>(lma,N,r,ma);
+  cuda_check(cudaMemcpy(hma,ma,lma*sizeof(float),cudaMemcpyDeviceToHost));
+  for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    s = i_a+1;
-    msd[i_a] = 0.0;
-    for (uint i_p = 0; i_p<(N-s); ++i_p) //particle index
-    {
-      msd[i_a] += length(hr[i_p+s]-hr[i_p]);
-    }
-    msd[i_a] /= (N-s);
-    msd_v[i_a].push_back(msd[i_a]);
+    msd_v[i_a].push_back(hma[i_a]);
   }
-  delete[] msd;
 }
 
 //calculate statistics

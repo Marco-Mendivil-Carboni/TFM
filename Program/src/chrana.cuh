@@ -99,7 +99,9 @@ class chrana : public chrdat //chromatin analysis
   idstat rcd_f_s[3][n_b]; //rcd final statistics
   idstat *msd_f_s; //msd final statistics
 
-  const uint l_msd_a; //length of msd arrays
+  const uint lma; //length of msd arrays
+  float *ma; //msd array
+  float *hma; //host msd array
 
   //Function
 

@@ -26,7 +26,7 @@ set xrange [0.05:0.25]
 set xlabel "$\\varphi$"
 set ylabel "$ R_g^2 $"
 set format y " %g "
-plot for [n=0:1] file(n) i 0 every ::1::1 u (phi(n)):1:(1/0):3\
+plot "../Simulations/analysis-summary.dat" u 2:7:(1/0):9\
          w xyerrorbars ls 11 notitle
 unset xrange
 

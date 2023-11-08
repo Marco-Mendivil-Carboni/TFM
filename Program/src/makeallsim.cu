@@ -64,7 +64,6 @@ int main(
   if (argc>3){ std::cout<<"extra arguments\n"; return EXIT_FAILURE;}
 
   //declare auxiliary variables
-  const std::string srd = "Simulations"; //simulation root directory
   uint n_s = std::stoi(argv[1]); //number of simulations
   uint fps = (argc==3)?std::stoi(argv[2]):1; //files per simulation
   std::string sim_dir; //simulation directory
@@ -79,7 +78,8 @@ int main(
   uint n_l; //number of lbs
 
   //open log file inside simulation root directory
-  mmc::logger::set_file(srd+"/all-messages.log");
+  pathstr = "Simulations/all-messages.log";
+  mmc::logger::set_file(pathstr);
 
   //record n_s and fps
   std::string msg = ""; //message
@@ -90,8 +90,8 @@ int main(
   //main try block
   try
   {
-    //open output file
-    pathstr = srd+"/analysis-summary.dat";
+    //open analysis summary
+    pathstr = "Simulations/analysis-summary.dat";
     out_f.open(pathstr);
     mmc::check_file(out_f,pathstr);
 
@@ -109,7 +109,7 @@ int main(
         for (laf = 0.05; laf<0.55; laf+=0.15)
         {
           //create simulation directory if it doesn't exist
-          sim_dir = srd;
+          sim_dir = "Simulations";
           sim_dir += "/"+mmc::cnfs(N,5,'0');
           sim_dir += "-"+mmc::cnfs(cvf,5,'0',3);
           sim_dir += "-"+mmc::cnfs(laf,5,'0',3);
@@ -151,7 +151,7 @@ int main(
       }
     }
 
-    //close output file
+    //close analysis summary
     out_f.close();
   }
   catch (const mmc::error &err) //caught error
