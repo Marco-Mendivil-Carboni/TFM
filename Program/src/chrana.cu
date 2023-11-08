@@ -73,11 +73,14 @@ void chrana::calc_ind_sim_stat()
   nop_s_v.push_back(nop_s);
 
   //calculate rcd statistics
-  tdstat rcd_s[n_b]; //rcd statistics
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  tdstat rcd_s[3][n_b]; //rcd statistics
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    calc_stats(rcd_v[i_b],rcd_s[i_b]);
-    rcd_s_v[i_b].push_back(rcd_s[i_b]);
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      calc_stats(rcd_v[i_t][i_b],rcd_s[i_t][i_b]);
+      rcd_s_v[i_t][i_b].push_back(rcd_s[i_t][i_b]);
+    }
   }
 
   //calculate msd statistics
@@ -113,21 +116,24 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   txt_out_f<<"\n\n";
 
   //save rcd statistics
-  tdstat rcd_s[n_b]; //rcd statistics
-  txt_out_f<<"#        r_b         avg   sqrt(var)         sem   f_n_b ter\n";
-  txt_out_f<<"    0.000000    0.000000    0.000000    0.000000       - yes\n";
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  tdstat rcd_s[3][n_b]; //rcd statistics
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    rcd_s[i_b] = rcd_s_v[i_b].back();
-    txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
-    txt_out_f<<cnfs(rcd_s[i_b].avg,12,' ',9);
-    txt_out_f<<cnfs(sqrt(rcd_s[i_b].var),12,' ',9);
-    txt_out_f<<cnfs(rcd_s[i_b].sem,12,' ',9);
-    txt_out_f<<cnfs(rcd_s[i_b].f_n_b,8,' ');
-    txt_out_f<<(rcd_s[i_b].ter?" yes":"  no");
-    txt_out_f<<"\n";
+    txt_out_f<<"#        r_b         avg   sqrt(var)         sem   f_n_b ter\n";
+    txt_out_f<<"    0.000000    0.000000    0.000000    0.000000       - yes\n";
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      rcd_s[i_t][i_b] = rcd_s_v[i_t][i_b].back();
+      txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
+      txt_out_f<<cnfs(rcd_s[i_t][i_b].avg,12,' ',9);
+      txt_out_f<<cnfs(sqrt(rcd_s[i_t][i_b].var),12,' ',9);
+      txt_out_f<<cnfs(rcd_s[i_t][i_b].sem,12,' ',9);
+      txt_out_f<<cnfs(rcd_s[i_t][i_b].f_n_b,8,' ');
+      txt_out_f<<(rcd_s[i_t][i_b].ter?" yes":"  no");
+      txt_out_f<<"\n";
+    }
+    txt_out_f<<"\n\n";
   }
-  txt_out_f<<"\n\n";
 
   //save msd statistics
   tdstat *msd_s = new tdstat[l_msd_a]; //msd statistics
@@ -180,9 +186,12 @@ void chrana::clear_ind_sim_data()
   nop_v.clear();
 
   //clear radial chromatin density vector
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    rcd_v[i_b].clear();
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      rcd_v[i_t][i_b].clear();
+    }
   }
 
   //clear mean spatial distance vector
@@ -205,9 +214,12 @@ void chrana::calc_fin_stat()
   calc_stats(nop_s_v,nop_f_s);
 
   //calculate rcd final statistics
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    calc_stats(rcd_s_v[i_b],rcd_f_s[i_b]);
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      calc_stats(rcd_s_v[i_t][i_b],rcd_f_s[i_t][i_b]);
+    }
   }
 
   //calculate msd final statistics
@@ -235,17 +247,20 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
   txt_out_f<<"\n\n";
 
   //save rcd final statistics
-  txt_out_f<<"#        r_b         avg   sqrt(var)         sem\n";
-  txt_out_f<<"    0.000000    0.000000    0.000000    0.000000\n";
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
-    txt_out_f<<cnfs(rcd_f_s[i_b].avg,12,' ',9);
-    txt_out_f<<cnfs(sqrt(rcd_f_s[i_b].var),12,' ',9);
-    txt_out_f<<cnfs(rcd_f_s[i_b].sem,12,' ',9);
-    txt_out_f<<"\n";
+    txt_out_f<<"#        r_b         avg   sqrt(var)         sem\n";
+    txt_out_f<<"    0.000000    0.000000    0.000000    0.000000\n";
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
+      txt_out_f<<cnfs(rcd_f_s[i_t][i_b].avg,12,' ',9);
+      txt_out_f<<cnfs(sqrt(rcd_f_s[i_t][i_b].var),12,' ',9);
+      txt_out_f<<cnfs(rcd_f_s[i_t][i_b].sem,12,' ',9);
+      txt_out_f<<"\n";
+    }
+    txt_out_f<<"\n\n";
   }
-  txt_out_f<<"\n\n";
 
   //save msd final statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem\n";
@@ -307,21 +322,29 @@ void chrana::calc_observables()
   nop_v.push_back(nop);
 
   //calculate the radial chromatin density
-  float rcd[n_b]; //radial chromatin density
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  float rcd[3][n_b]; //radial chromatin density
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    rcd[i_b] = 0.0;
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      rcd[i_t][i_b] = 0.0;
+    }
   }
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     float d_r = length(hr[i_p]); //radial distance
     uint i_b = n_b*d_r*d_r*d_r/(R*R*R); //bin index
-    rcd[i_b] += 1.0;
+    if (hpt[i_p]==LND){ rcd[0][i_b] += 1.0;}
+    if (hpt[i_p]==LAD){ rcd[1][i_b] += 1.0;}
+    rcd[2][i_b] += 1.0;
   }
-  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
-    rcd[i_b] /= N*(4.0/3.0)*M_PI*R*R*R/n_b;
-    rcd_v[i_b].push_back(rcd[i_b]);
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      rcd[i_t][i_b] /= N*(4.0/3.0)*M_PI*R*R*R/n_b;
+      rcd_v[i_t][i_b].push_back(rcd[i_t][i_b]);
+    }
   }
 
   //calculate the mean spatial distance
@@ -436,9 +459,12 @@ void calc_stats(
     //save the optimal termalization index
     if (mse<min_mse)
     {
-      s.i_t = i_t; min_mse = mse;
+      min_mse = mse;
+      s.i_t = i_t;
     }
   }
+
+  //determine if data has termalized
   if (s.i_t!=v.size()/2){ s.ter = true;} //termalized
   else{ s.ter = false;} //did not termalize
 
