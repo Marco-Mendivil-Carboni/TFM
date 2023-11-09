@@ -96,10 +96,10 @@ int main(
     mmc::check_file(out_f,pathstr);
 
     //write analysis summary header
-    out_f<<"#   N   cvf   laf ";
+    out_f<<"#analysis summary\n#   N   cvf   laf ";
     out_f<<"#dcm:    avg   sqrt(var)         sem ";
     out_f<<"#rg2:    avg   sqrt(var)         sem ";
-    out_f<<"#nop:    avg   sqrt(var)         sem\n";
+    out_f<<"#nop:    avg   sqrt(var)         sem"<<std::endl;
 
     //iterate over all simulation configurations
     for (N = 4'096; N<65'536; N*=2)
@@ -142,7 +142,7 @@ int main(
           getline(inp_f,fl); getline(inp_f,fl); getline(inp_f,fl);
           getline(inp_f,fl); out_f<<fl<<" "; getline(inp_f,fl);
           getline(inp_f,fl); out_f<<fl<<" "; getline(inp_f,fl);
-          getline(inp_f,fl); out_f<<fl<<"\n";
+          getline(inp_f,fl); out_f<<fl<<std::endl;
           inp_f.close();
 
           //record success message
