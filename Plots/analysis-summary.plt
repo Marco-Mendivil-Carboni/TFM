@@ -25,17 +25,17 @@ cvf(n)=(n+1)*0.1
 laf(n)=n*0.15+0.05
 
 analysis_summary="../Simulations/analysis-summary.dat"
-
 key(n)=sprintf("$\\varphi=%.3f$",cvf(n))
 file(n)=sprintf("../Simulations/%5d-%.3f-%.3f/analysis-fin.dat",N,cvf(n),laf)
 
 set multiplot layout 4,2 scale 0.98,0.98
 
+set format y " %g "
+
 set xrange [0.05:0.45]
-set yrange [0.0:4.0]
+set yrange [0.0:5.0]
 set xlabel "$\\varphi$"
 set ylabel "$ d_{cm} $"
-set format y " %g "
 plot analysis_summary i 0 u 2:($1==N&&$3==laf?$04:1/0):(1/0):6\
          w xyerrorbars ls 11 notitle
 unset xrange
@@ -45,7 +45,6 @@ set xrange [0.05:0.45]
 set yrange [100.0:600.0]
 set xlabel "$\\varphi$"
 set ylabel "$ R_g^2 $"
-set format y " %g "
 plot analysis_summary i 0 u 2:($1==N&&$3==laf?$07:1/0):(1/0):9\
          w xyerrorbars ls 11 notitle
 unset xrange
@@ -55,7 +54,6 @@ set xrange [0.05:0.45]
 set yrange [-0.1:0.0]
 set xlabel "$\\varphi$"
 set ylabel "$ S $"
-set format y " %g "
 plot analysis_summary i 0 u 2:($1==N&&$3==laf?$10:1/0):(1/0):12\
          w xyerrorbars ls 11 notitle
 unset xrange
@@ -65,7 +63,6 @@ set xrange [0:]
 set yrange [0:]
 set xlabel "$r$"
 set ylabel "$\\rho(r)$"
-set format y "$ %.1t\\cdot10^{%T} $"
 plot for [n=0:3] file(n) i 1+(x_p=0) u 1:2:(x_p):(x_p=$1):($2-$4):($2+$4)\
          w boxxyerror ls 1+n%4 notitle,\
      for [n=0:3] file(n) i 1 w fsteps ls 11+n%4 t key(n)
@@ -83,8 +80,8 @@ set logscale x
 set logscale y
 set xlabel "$s$"
 set ylabel "$d(s)$"
-set format y " %g "
-set xrange [1:8192]
+set autoscale xfixmin
+set autoscale xfixmax
 set autoscale yfixmin
 set autoscale yfixmax
 plot for [n=0:3] file(n) i 4 u 1:($2-$4):($2+$4)\

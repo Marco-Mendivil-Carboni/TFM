@@ -36,7 +36,7 @@ __global__ void calc_msd(
 chrana::chrana(parmap &par) //parameters
   : chrdat(par)
   , fpf {par.get_val<uint>("frames_per_file",100)}
-  , lma {(N/2)-1}
+  , lma {(N/4)-1}
 {
   //allocate memory
   msd_v = new std::vector<float>[lma];
@@ -377,7 +377,7 @@ void chrana::calc_observables()
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      rcd[i_t][i_b] /= N*(4.0/3.0)*M_PI*R*R*R/n_b;
+      rcd[i_t][i_b] /= (4.0/3.0)*M_PI*R*R*R/n_b;
       rcd_v[i_t][i_b].push_back(rcd[i_t][i_b]);
     }
   }
