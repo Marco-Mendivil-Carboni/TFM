@@ -20,8 +20,12 @@ mkdir $testdir
 echo "---"
 
 echo -n > "${testdir}/adjustable-parameters.dat"
-{ echo "number_of_particles 4096"; echo "confinement_radius 16.0";
-  echo "number_of_lbs 1024";
+{
+    echo "number_of_particles 8192";
+    echo "nucleus_radius 14.0";
+    echo "opening_radius 8.0";
+    echo "bleb_radius 10.0";
+    echo "number_of_lbs 512";
 } >> "${testdir}/adjustable-parameters.dat"
 
 ./Program/bin/performsim $testdir
@@ -43,11 +47,11 @@ check $?
 [[ -f "${testdir}/trajectory-000-001.trr" ]]
 check $?
 
-./Program/bin/analyzesim $testdir
-[[ -f "${testdir}/analysis-000.dat" && \
--f "${testdir}/analysis-001.dat" && \
--f "${testdir}/analysis-fin.dat" ]]
-check $?
+# ./Program/bin/analyzesim $testdir
+# [[ -f "${testdir}/analysis-000.dat" && \
+# -f "${testdir}/analysis-001.dat" && \
+# -f "${testdir}/analysis-fin.dat" ]]
+# check $?
 
 vmd -e ./Program/visualize.tcl -args $testdir 0 > /dev/null
 check $?

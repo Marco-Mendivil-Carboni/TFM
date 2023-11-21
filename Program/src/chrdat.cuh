@@ -31,6 +31,31 @@ enum ptype //particle type
   LAD //lamina associated domain
 };
 
+//Structures
+
+struct cngeom //cell nucleus geometry
+{
+  //Variables
+
+  float R_n; //nucleus radius
+  float R_o; //opening radius
+  float R_b; //bleb radius
+
+  float noc; //nucleus opening cosine
+  float boc; //bleb opening cosine
+
+  float nod; //nucleus opening distance
+  float bod; //bleb opening distance
+
+  float d_b; //distance to bleb
+  float d_m; //maximum distance
+
+  //Functions
+
+  //cell nucleus geometry constructor
+  cngeom(parmap &par); //parameters
+};
+
 //Classes
 
 class chrdat //chromatin data
@@ -68,9 +93,10 @@ class chrdat //chromatin data
   //Parameters and Variables
 
   const uint N; //number of particles
-  const float R; //confinement radius
+  const cngeom ng; //nucleus geometry
   const float T; //temperature
   const uint n_l; //number of lbs
+
   uint i_f; //frame index
   float t; //time
 

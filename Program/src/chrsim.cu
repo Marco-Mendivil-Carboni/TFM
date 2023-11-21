@@ -76,19 +76,86 @@ inline __device__ void calc_bf(
 }
 
 //calculate confinement force
-inline __device__ void calc_cf(
-  const float R, //confinement radius
+template <stype T> inline __device__ void calc_cf(
+  const cngeom ng, //nucleus geometry
   uint i_p, //particle index
   vec3f *r, //position array
   vec3f *f) //force array
 {
+  //declare auxiliary variables
+  vec3f r_i = r[i_p]; //particle position
+  vec3f r_b = {0.0,0.0,ng.nod+ng.bod}; //bleb position
+  vec3f r_r = r_i-r_b; //particle position relative to bleb
+  vec3f vwp; //wall-particle vector
+  float d_r; //radial distance
+  vec3f cf; //confinement force
+
+  //find confinement region and calculate vwp
+  if (r_i.z<ng.nod) //inside nucleus sphere
+  {
+    d_r = length(r_i);
+    if (+r_i.z/d_r<ng.noc) //outside opening
+    {
+      vwp = -r_i*(ng.R_n/d_r-1.0);
+    }
+    else //inside opening
+    {
+      d_r = sqrtf(r_i.x*r_i.x+r_i.y*r_i.y);
+      vwp.x = -r_i.x*(ng.R_o/d_r-1.0);
+      vwp.y = -r_i.y*(ng.R_o/d_r-1.0);
+      vwp.z = r_i.z-ng.nod;
+    }
+  }
+  else //inside nuclear bleb
+  {
+    d_r = length(r_r);
+    if (-r_r.z/d_r<ng.boc) //outside opening
+    {
+      vwp = -r_r*(ng.R_b/d_r-1.0);
+    }
+    else //inside opening
+    {
+      d_r = sqrtf(r_r.x*r_r.x+r_r.y*r_r.y);
+      vwp.x = -r_r.x*(ng.R_o/d_r-1.0);
+      vwp.y = -r_r.y*(ng.R_o/d_r-1.0);
+      vwp.z = r_r.z+ng.bod;
+    }
+  }
+
   //calculate confinement force
-  float d_r = length(r[i_p]); //radial distance
-  float dwp = R-d_r; //wall-particle distance
+  float dwp = length(vwp); //wall-particle distance
+  if (!isfinite(dwp)){ return;}
   if (dwp>rco){ return;}
-  vec3f cf = -r[i_p]/d_r; //confinement force
   float d2 = dwp*dwp; //dwp squared
-  cf *= (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2);
+  cf = (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vwp;
+
+  //add result to force array
+  f[i_p] += cf;
+}
+
+//calculate confinement force
+template <> inline __device__ void calc_cf<ICG>(
+  const cngeom ng, //nucleus geometry
+  uint i_p, //particle index
+  vec3f *r, //position array
+  vec3f *f) //force array
+{
+  //declare auxiliary variables
+  vec3f r_i = r[i_p]; //particle position
+  vec3f vwp; //wall-particle vector
+  float d_r; //radial distance
+  vec3f cf; //confinement force
+
+  //calculate vwp
+  d_r = length(r_i);
+  vwp = -r_i*(ng.R_n/d_r-1.0);
+
+  //calculate confinement force
+  float dwp = length(vwp); //wall-particle distance
+  if (!isfinite(dwp)){ return;}
+  if (dwp>rco){ return;}
+  float d2 = dwp*dwp; //dwp squared
+  cf = (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vwp;
 
   //add result to force array
   f[i_p] += cf;
@@ -278,7 +345,7 @@ __global__ void begin_iter(
 //execute 1st stage of the Runge-Kutta method
 template <stype T> __global__ void exec_RK_1(
   const uint N, //number of particles
-  const float R, //confinement radius
+  const cngeom ng, //nucleus geometry
   ptype *pt, //particle type array
   vec3f *r, //position array
   vec3f *f, //force array
@@ -294,7 +361,7 @@ template <stype T> __global__ void exec_RK_1(
 
   //calculate forces
   calc_bf(N,i_p,r,f);
-  calc_cf(R,i_p,r,f);
+  calc_cf<T>(ng,i_p,r,f);
   calc_srf<T>(pt,lr,pgp,lgp,i_p,r,f);
 
   //calculate extra position
@@ -304,7 +371,7 @@ template <stype T> __global__ void exec_RK_1(
 //execute 2nd stage of the Runge-Kutta method
 template <stype T> __global__ void exec_RK_2(
   const uint N, //number of particles
-  const float R, //confinement radius
+  const cngeom ng, //nucleus geometry
   ptype *pt, //particle type array
   vec3f *r, //position array
   vec3f *f, //force array
@@ -321,7 +388,7 @@ template <stype T> __global__ void exec_RK_2(
 
   //calculate forces
   calc_bf(N,i_p,er,ef);
-  calc_cf(R,i_p,er,ef);
+  calc_cf<T>(ng,i_p,er,ef);
   calc_srf<T>(pt,lr,pgp,lgp,i_p,er,ef);
 
   //calculate new position
@@ -337,7 +404,7 @@ chrsim::chrsim(parmap &par) //parameters
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",128)}
   , sd {static_cast<float>(sqrt(2.0*k_B*T*dt))}
-  , pg(N,aco,2*ceil(R/aco))
+  , pg(N,aco,2*ceil(ng.d_m/aco))
   , lg(n_l,pg)
 {
   //check parameters
@@ -407,9 +474,9 @@ void chrsim::generate_initial_condition()
       //make one Runge-Kutta iteration
       begin_iter<<<(N+tpb-1)/tpb,tpb>>>(N,f,ef,sd,rn,vps);
       pg.generate_arrays(tpb,r);
-      exec_RK_1<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,rn,pgp,lgp);
+      exec_RK_1<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,ng,pt,r,f,lr,er,rn,pgp,lgp);
       pg.generate_arrays(tpb,er);
-      exec_RK_2<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
+      exec_RK_2<ICG><<<(N+tpb-1)/tpb,tpb>>>(N,ng,pt,r,f,lr,er,ef,rn,pgp,lgp);
     }
 
     //copy position array to host
@@ -474,9 +541,9 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) //binary output file
       //make one Runge-Kutta iteration
       begin_iter<<<(N+tpb-1)/tpb,tpb>>>(N,f,ef,sd,rn,vps);
       pg.generate_arrays(tpb,r);
-      exec_RK_1<DST><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,rn,pgp,lgp);
+      exec_RK_1<DST><<<(N+tpb-1)/tpb,tpb>>>(N,ng,pt,r,f,lr,er,rn,pgp,lgp);
       pg.generate_arrays(tpb,er);
-      exec_RK_2<DST><<<(N+tpb-1)/tpb,tpb>>>(N,R,pt,r,f,lr,er,ef,rn,pgp,lgp);
+      exec_RK_2<DST><<<(N+tpb-1)/tpb,tpb>>>(N,ng,pt,r,f,lr,er,ef,rn,pgp,lgp);
     }
 
     //copy position array to host
@@ -514,7 +581,7 @@ void chrsim::set_lbs_positions()
     ran_dir = {sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
 
     //calculate position of next lbs
-    hlr[i_l] = (R-rco)*ran_dir;
+    hlr[i_l] = (ng.R_n-rco)*ran_dir;
 
     //check if position is acceptable
     bool p_a = true; //position is acceptable
@@ -523,6 +590,7 @@ void chrsim::set_lbs_positions()
       float dll = length(hlr[j_l]-hlr[i_l]); //lbs-lbs distance
       if (dll<2.0*lco){ p_a = false;}
     }
+    if (hlr[i_l].z/length(hlr[i_l])>ng.noc){ p_a = false;}
 
     if (!p_a){ --i_l;} //repeat
   }
@@ -620,7 +688,7 @@ void chrsim::perform_random_walk()
     if (!isfinite(hr[i_p].y)){ p_a = false;}
     if (!isfinite(hr[i_p].z)){ p_a = false;}
     float d_r = length(hr[i_p]); //radial distance
-    if ((R-d_r)<mis){ p_a = false;}
+    if ((ng.R_n-d_r)<mis){ p_a = false;}
 
     if (p_a) //continue
     {

@@ -25,7 +25,7 @@ int main(
   std::ofstream out_f; //output file
   std::ofstream n_out_f; //null output file
   uint N; //number of particles
-  float R; //confinement radius
+  float R_n; //nucleus radius
   uint n_l; //number of lbs
   const uint fpf = 10; //frames per file
   system_clock::time_point stp; //starting time point
@@ -47,10 +47,10 @@ int main(
       //set parameters
       std::stringstream par_s; //parameter stream
       N = pow(2,8+i_t);
-      R = 0.5+0.5*pow(N/0.2,1.0/3);
-      n_l = 0.2*4.0/pow(mmc::lco/(R-mmc::rco),2.0);
+      R_n = 0.5+0.5*pow(N/0.2,1.0/3);
+      n_l = 0.2*4.0/pow(mmc::lco/(R_n-mmc::rco),2.0);
       par_s<<"number_of_particles"<<" "<<mmc::cnfs(N,5,'0')<<std::endl;
-      par_s<<"confinement_radius"<<" "<<mmc::cnfs(R,5,'0',2)<<std::endl;
+      par_s<<"nucleus_radius"<<" "<<mmc::cnfs(R_n,5,'0',2)<<std::endl;
       par_s<<"number_of_lbs"<<" "<<mmc::cnfs(n_l,5,'0')<<std::endl;
       par_s<<"frames_per_file"<<" "<<mmc::cnfs(fpf,4,'0')<<std::endl;
       mmc::parmap par(par_s); //parameters

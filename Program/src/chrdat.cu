@@ -9,31 +9,57 @@ namespace mmc //Marco Mendívil Carboni
 
 //Functions
 
+//cell nucleus geometry constructor
+cngeom::cngeom(parmap &par) //parameters
+  : R_n {par.get_val<float>("nucleus_radius",0.0)}
+  , R_o {par.get_val<float>("opening_radius",0.0)}
+  , R_b {par.get_val<float>("bleb_radius",0.0)}
+  , noc {cos(asin(R_o/R_n))}
+  , boc {cos(asin(R_o/R_b))}
+  , nod {sqrt(R_n*R_n-R_o*R_o)}
+  , bod {sqrt(R_b*R_b-R_o*R_o)}
+  , d_b {nod+bod}
+  , d_m {d_b+R_b}
+{
+  //check parameters
+  if (!(0.0<R_n&&R_n<100.0)){ throw error("nucleus_radius out of range");}
+  if (!(0.0<=R_o&&R_o<R_n)){ throw error("opening_radius out of range");}
+  if (!(R_o<=R_b&&R_b<R_n)){ throw error("bleb_radius out of range");}
+
+  //record parameter values
+  std::string msg = ""; //message
+  msg += "R_n = "+cnfs(R_n,5,'0',2)+" ";
+  msg += "R_o = "+cnfs(R_o,5,'0',2)+" ";
+  msg += "R_b = "+cnfs(R_b,5,'0',2)+" ";
+  logger::record(msg);
+}
+
 //chromatin data constructor
 chrdat::chrdat(parmap &par) //parameters
   : N {par.get_val<uint>("number_of_particles",0)}
-  , R {par.get_val<float>("confinement_radius",-1.0)}
+  , ng(par)
   , T {par.get_val<float>("temperature",298.0)}
   , n_l {par.get_val<uint>("number_of_lbs",0)}
   , i_f {0}, t {0.0}
 {
   //check parameters
   if (!(1<=N&&N<100'000)){ throw error("number_of_particles out of range");}
-  if (!(0.0<R&&R<100.0)){ throw error("confinement_radius out of range");}
-  if (!(0.0<T&&T<1'000.0)){ throw error("temperature out of range");}
+  if (!(0.0<=T&&T<1'000.0)){ throw error("temperature out of range");}
   if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
-  float cvf = N*pow(0.5/(R-0.5),3.0); //chromatin volume fraction
+  float cvf = N*pow(0.5/(ng.R_n-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
-  float laf = n_l*pow(lco/(R-rco),2.0)/4.0; //lbs area fraction
+  float noacf = 2.0/(1.0+ng.noc); //nucleus opening area correction factor
+  float laf = noacf*n_l*pow(lco/(ng.R_n-rco),2.0)/4.0; //lbs area fraction
   if (laf>0.6){ throw error("lbs area fraction above 0.6");}
+
+  //record parameter values
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
-  msg_1 += "R = "+cnfs(R,5,'0',2)+" ";
   msg_1 += "T = "+cnfs(T,5,'0',1)+" ";
   logger::record(msg_1);
   std::string msg_2 = ""; //2nd message
-  msg_2 += "n_l = "+cnfs(n_l,5,'0')+" ";
   msg_2 += "cvf = "+cnfs(cvf,5,'0',3)+" ";
+  msg_2 += "n_l = "+cnfs(n_l,5,'0')+" ";
   msg_2 += "laf = "+cnfs(laf,5,'0',3)+" ";
   logger::record(msg_2);
 

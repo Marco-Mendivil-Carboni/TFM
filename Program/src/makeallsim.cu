@@ -74,7 +74,7 @@ int main(
   float cvf; //chromatin volume fraction
   float laf; //lbs area fraction
   uint N; //number of particles
-  float R; //confinement radius
+  float R_n; //nucleus radius
   uint n_l; //number of lbs
 
   //open log file inside simulation root directory
@@ -116,15 +116,15 @@ int main(
           std::filesystem::create_directory(sim_dir);
 
           //calculate parameters
-          R = 0.5+0.5*pow(N/cvf,1.0/3);
-          n_l = laf*4.0/pow(mmc::lco/(R-mmc::rco),2.0);
+          R_n = 0.5+0.5*pow(N/cvf,1.0/3);
+          n_l = laf*4.0/pow(mmc::lco/(R_n-mmc::rco),2.0);
 
           //write parameter file
           pathstr = sim_dir+"/adjustable-parameters.dat";
           par_f.open(pathstr);
           mmc::check_file(par_f,pathstr);
           par_f<<"number_of_particles "<<mmc::cnfs(N,5,'0')<<"\n";
-          par_f<<"confinement_radius "<<mmc::cnfs(R,5,'0',2)<<"\n";
+          par_f<<"nucleus_radius "<<mmc::cnfs(R_n,5,'0',2)<<"\n";
           par_f<<"number_of_lbs "<<mmc::cnfs(n_l,5,'0')<<"\n";
           par_f.close();
 

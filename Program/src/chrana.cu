@@ -519,7 +519,7 @@ void calc_stats(
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
     double w = 1.0/(v[i_e].sem*v[i_e].sem); //weight
-    if (!isnormal(w)) //skip if weight is not normal
+    if (!isfinite(w)) //skip if weight is not finite
     {
       continue;
     }
