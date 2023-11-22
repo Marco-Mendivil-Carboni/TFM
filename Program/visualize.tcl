@@ -55,8 +55,13 @@ if {$argc==2} {
 
     #set visualization preferences
     color Display Background white
+    display resize 720 1280
     display cuedensity 0.2
     display shadows on
+    display ambientocclusion on
+    display aoambient 0.8
+    display aodirect 0.6
+    axes location Off
 
     #load lamina binding sites
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
@@ -91,7 +96,7 @@ if {$argc==2} {
     set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
     set boa [expr asin($R_o/$R_b)-0.5*$::pi]
     draw material Transparent
-    for {set i 0} {$i < [expr $res]} {incr i} {
+    for {set i 0} {$i < $res} {incr i} {
         set theta_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
         set theta_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
         set z_ctr_a [expr $R_n*sin($theta_a)]
@@ -107,6 +112,11 @@ if {$argc==2} {
         set r_ctr_b [expr $R_b*cos($theta_b)]
         draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
     }
+
+    #change viewpoint
+    rotate x to 270.0
+    translate to 0.0 -0.4 0.0
+    scale by 0.8
 
     #load trajectory files
     set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
