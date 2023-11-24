@@ -41,11 +41,13 @@ chrdat::chrdat(parmap &par) //parameters
   , T {par.get_val<float>("temperature",298.0)}
   , n_l {par.get_val<uint>("number_of_lbs",0)}
   , i_f {0}, t {0.0}
+  , fpf {par.get_val<uint>("frames_per_file",128)}
 {
   //check parameters
   if (!(1<=N&&N<100'000)){ throw error("number_of_particles out of range");}
   if (!(0.0<=T&&T<1'000.0)){ throw error("temperature out of range");}
   if (!(n_l<100'000)){ throw error("number_of_lbs out of range");}
+  if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}
   float cvf = N*pow(0.5/(ng.R_n-0.5),3.0); //chromatin volume fraction
   if (cvf>0.5){ throw error("chromatin volume fraction above 0.5");}
   float noacf = 2.0/(1.0+ng.noc); //nucleus opening area correction factor
@@ -56,6 +58,7 @@ chrdat::chrdat(parmap &par) //parameters
   std::string msg_1 = ""; //1st message
   msg_1 += "N = "+cnfs(N,5,'0')+" ";
   msg_1 += "T = "+cnfs(T,5,'0',1)+" ";
+  msg_1 += "fpf = "+cnfs(fpf,4,'0')+" ";
   logger::record(msg_1);
   std::string msg_2 = ""; //2nd message
   msg_2 += "cvf = "+cnfs(cvf,5,'0',3)+" ";
@@ -156,7 +159,6 @@ void chrdat::read_frame_txt(std::ifstream &txt_inp_f) //text input file
 //write frame to binary file
 void chrdat::write_frame_bin(std::ofstream &bin_out_f) //binary output file
 {
-  //------------------------------note------------------------------
   //this is a minimal trr file writing routine that doesn't rely on \ 
   //the xdr library but only works with vmd in little endian systems
 

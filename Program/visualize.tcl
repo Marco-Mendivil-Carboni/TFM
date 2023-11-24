@@ -1,12 +1,10 @@
-#parameters
 set res 32
 set p_rad 5.0
 
-set ::pi 3.1415926535897931
 set ::ex {1.0 0.0 0.0}
 set ::ey {0.0 1.0 0.0}
 set ::ez {0.0 0.0 1.0}
-
+set ::pi 3.1415926535897931
 proc draw_ring { res z_ctr_a z_ctr_b r_ctr_a r_ctr_b theta_a theta_b} {
     for {set j 0} {$j < $res} {incr j} {
         set theta_c [expr 2.0*$::pi*($j+0.0)/$res]
@@ -55,12 +53,12 @@ if {$argc==2} {
 
     #set visualization preferences
     color Display Background white
-    display resize 720 1280
+    display resize 640 960
     display cuedensity 0.2
     display shadows on
     display ambientocclusion on
     display aoambient 0.8
-    display aodirect 0.6
+    display aodirect 0.8
     axes location Off
 
     #load lamina binding sites
@@ -114,8 +112,8 @@ if {$argc==2} {
     }
 
     #change viewpoint
-    rotate x to 270.0
-    translate to 0.0 -0.4 0.0
+    translate to 0.0 -0.5 0.0
+    rotate x to -90.0
     scale by 0.8
 
     #load trajectory files
@@ -126,3 +124,5 @@ if {$argc==2} {
     puts "You forgot the input."
     exit
 }
+
+# display resize 1200 1800

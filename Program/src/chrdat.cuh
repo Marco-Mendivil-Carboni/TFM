@@ -97,7 +97,9 @@ class chrdat //chromatin data
   const float T; //temperature
   const uint n_l; //number of lbs
 
+  const uint fpf; //frames per file
   uint i_f; //frame index
+
   float t; //time
 
   ptype *pt; //particle type array

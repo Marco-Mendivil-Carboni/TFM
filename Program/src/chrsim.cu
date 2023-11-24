@@ -400,7 +400,6 @@ template <stype T> __global__ void exec_RK_2(
 //chromatin simulation constructor
 chrsim::chrsim(parmap &par) //parameters
   : chrdat(par)
-  , fpf {par.get_val<uint>("frames_per_file",128)}
   , spf {par.get_val<uint>("steps_per_frame",1*2048)}
   , tpb {par.get_val<uint>("threads_per_block",128)}
   , sd {static_cast<float>(sqrt(2.0*k_B*T*dt))}
@@ -408,11 +407,9 @@ chrsim::chrsim(parmap &par) //parameters
   , lg(n_l,pg)
 {
   //check parameters
-  if (!(1<=fpf&&fpf<10'000)){ throw error("frames_per_file out of range");}
   if (!(1<=spf&&spf<10'000)){ throw error("steps_per_frame out of range");}
   if (!(1<=tpb&&tpb<1'025)){ throw error("threads_per_block out of range");}
   std::string msg = ""; //message
-  msg += "fpf = "+cnfs(fpf,4,'0')+" ";
   msg += "spf = "+cnfs(spf,4,'0')+" ";
   msg += "tpb = "+cnfs(tpb,4,'0')+" ";
   logger::record(msg);
@@ -715,12 +712,13 @@ uint chrsim::particle_overlaps()
 {
   //iterate over all pairs of non-bonded particles
   int po = 0; //particle overlaps
+  float dpp; //particle-particle distance
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     for (uint j_p = 0; (j_p+1)<i_p; ++j_p) //secondary particle index
     {
       //check if particles overlap
-      float dpp = length(hr[j_p]-hr[i_p]); //particle-particle distance
+      dpp = length(hr[j_p]-hr[i_p]);
       if (dpp<mis){ ++po;}
     }
   }

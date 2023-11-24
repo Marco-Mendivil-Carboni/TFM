@@ -35,8 +35,7 @@ __global__ void calc_msd(
 //chromatin analysis constructor
 chrana::chrana(parmap &par) //parameters
   : chrdat(par)
-  , fpf {par.get_val<uint>("frames_per_file",100)}
-  , lma {(N/4)-1}
+  , lma {(N/8)-1}
 {
   //allocate memory
   msd_v = new std::vector<float>[lma];
@@ -159,7 +158,7 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
       rcd_s[i_t][i_b] = rcd_s_v[i_t][i_b].back();
-      txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
+      txt_out_f<<cnfs(ng.d_m*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
       txt_out_f<<cnfs(rcd_s[i_t][i_b].avg,12,' ',9);
       txt_out_f<<cnfs(sqrt(rcd_s[i_t][i_b].var),12,' ',9);
       txt_out_f<<cnfs(rcd_s[i_t][i_b].sem,12,' ',9);
@@ -268,8 +267,7 @@ void chrana::calc_fin_stat()
 void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 {
   //save dcm, rg2 and nop final statistics
-  txt_out_f<<"#final analysis\n";
-  txt_out_f<<"#        avg   sqrt(var)         sem\n";
+  txt_out_f<<"#final analysis\n#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";
   txt_out_f<<cnfs(dcm_f_s.avg,12,' ',6)<<cnfs(sqrt(dcm_f_s.var),12,' ',6);
   txt_out_f<<cnfs(dcm_f_s.sem,12,' ',6)<<"\n";
@@ -288,7 +286,7 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
     txt_out_f<<"    0.000000    0.000000    0.000000    0.000000\n";
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      txt_out_f<<cnfs(R*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
+      txt_out_f<<cnfs(ng.d_m*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
       txt_out_f<<cnfs(rcd_f_s[i_t][i_b].avg,12,' ',9);
       txt_out_f<<cnfs(sqrt(rcd_f_s[i_t][i_b].var),12,' ',9);
       txt_out_f<<cnfs(rcd_f_s[i_t][i_b].sem,12,' ',9);
@@ -368,7 +366,7 @@ void chrana::calc_observables()
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     float d_r = length(hr[i_p]); //radial distance
-    uint i_b = n_b*d_r*d_r*d_r/(R*R*R); //bin index
+    uint i_b = n_b*d_r*d_r*d_r/(ng.d_m*ng.d_m*ng.d_m); //bin index
     if (hpt[i_p]==LND){ rcd[0][i_b] += 1.0;}
     if (hpt[i_p]==LAD){ rcd[1][i_b] += 1.0;}
     rcd[2][i_b] += 1.0;
@@ -377,7 +375,7 @@ void chrana::calc_observables()
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      rcd[i_t][i_b] /= (4.0/3.0)*M_PI*R*R*R/n_b;
+      rcd[i_t][i_b] /= (4.0/3.0)*M_PI*ng.d_m*ng.d_m*ng.d_m/n_b;
       rcd_v[i_t][i_b].push_back(rcd[i_t][i_b]);
     }
   }

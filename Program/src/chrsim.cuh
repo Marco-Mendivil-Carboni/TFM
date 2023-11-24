@@ -41,7 +41,6 @@ class chrsim : public chrdat //chromatin simulation
 
   //Parameters and Variables
 
-  const uint fpf; //frames per file
   const uint spf; //steps per frame
   const uint tpb; //threads per block
 
@@ -49,6 +48,7 @@ class chrsim : public chrdat //chromatin simulation
   vec3f *ef; //extra force array
 
   const float sd; //rn standard deviation
+
   vec3f *rn; //random number array
   void *vps; //void PRNG state array
 
