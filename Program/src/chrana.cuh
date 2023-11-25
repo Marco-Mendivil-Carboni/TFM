@@ -4,8 +4,7 @@
 //Includes
 
 #include "chrdat.cuh" //chromatin data
-
-#include <vector> //vector container class
+#include "sdstat.cuh" //simulation data statistics
 
 //Namespace
 
@@ -15,28 +14,6 @@ namespace mmc //Marco Mendívil Carboni
 //Constants
 
 static constexpr uint n_b = 128; //number of bins
-
-//Structures
-
-struct gdstat //generic data statistics
-{
-  double avg; //average
-  double var; //variance
-  double sem; //standard error of the mean
-};
-
-struct idstat : gdstat {}; //independent data statistics
-
-struct cdstat : gdstat //correlated data statistics
-{
-  uint f_n_b; //final number of blocks
-};
-
-struct tdstat : cdstat //time series data statistics
-{
-  uint i_t; //termalization index
-  bool ter; //termalized
-};
 
 //Classes
 
@@ -77,26 +54,15 @@ class chrana : public chrdat //chromatin analysis
 
   //Parameters and Variables
 
-  std::vector<float> t_v; //time vector
+  obsdat t_o; //time observable
 
-  std::vector<float> dcm_v; //center of mass distance vector
-  std::vector<float> rg2_v; //gyration radius squared vector
-  std::vector<float> nop_v; //nematic order parameter vector
-  std::vector<float> rcd_v[3][n_b]; //radial chromatin density vector
-  std::vector<float> *msd_v; //mean spatial distance vector
+  obsdat dcm_o; //center of mass distance observable
+  obsdat rg2_o; //gyration radius squared observable
+  obsdat nop_o; //nematic order parameter observable
 
-  std::vector<tdstat> dcm_s_v; //dcm statistics vector
-  std::vector<tdstat> rg2_s_v; //rg2 statistics vector
-  std::vector<tdstat> nop_s_v; //nop statistics vector
-  std::vector<tdstat> rcd_s_v[3][n_b]; //rcd statistics vector
-  std::vector<tdstat> *msd_s_v; //msd statistics vector
+  obsdat rcd_o[3][n_b]; //radial chromatin density observable
 
-  idstat dcm_f_s; //dcm final statistics
-  idstat rg2_f_s; //rg2 final statistics
-  idstat nop_f_s; //nop final statistics
-  idstat rcd_f_s[3][n_b]; //rcd final statistics
-  idstat *msd_f_s; //msd final statistics
-
+  obsdat *msd_o; //mean spatial distance observable
   const uint lma; //length of msd arrays
   float *ma; //msd array
   float *hma; //host msd array
@@ -106,28 +72,6 @@ class chrana : public chrdat //chromatin analysis
   //calculate observables
   void calc_observables();
 };
-
-//Functions
-
-//calculate statistics
-void calc_stats(
-  const std::vector<float> &v, //vector
-  idstat &s); //statistics
-
-//calculate statistics
-void calc_stats(
-  const std::vector<float> &v, //vector
-  cdstat &s); //statistics
-
-//calculate statistics
-void calc_stats(
-  const std::vector<float> &v, //vector
-  tdstat &s); //statistics
-
-//calculate statistics
-void calc_stats(
-  const std::vector<tdstat> &v, //vector
-  idstat &s); //statistics
 
 } //namespace mmc
 
