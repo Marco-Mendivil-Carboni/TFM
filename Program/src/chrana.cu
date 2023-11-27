@@ -38,7 +38,7 @@ chrana::chrana(parmap &par) //parameters
   , lma {(N/8)-1}
 {
   //allocate memory
-  msd_o = new obsdat[lma];
+  msd_o = new simobs[lma];
 
   //allocate device memory
   cuda_check(cudaMalloc(&ma,lma*sizeof(float)));
@@ -89,17 +89,17 @@ void chrana::calc_ind_sim_stat()
 {
   //calculate dcm statistics
   tdstat dcm_s; //dcm statistics //make a function for this ---------------------
-  calc_stats(dcm_o.cs_ts,dcm_s);
+  calc_stats(dcm_o.is_ts,dcm_s);
   dcm_o.is_sv.push_back(dcm_s);
 
   //calculate rg2 statistics
   tdstat rg2_s; //rg2 statistics
-  calc_stats(rg2_o.cs_ts,rg2_s);
+  calc_stats(rg2_o.is_ts,rg2_s);
   rg2_o.is_sv.push_back(rg2_s);
 
   //calculate nop statistics
   tdstat nop_s; //nop statistics
-  calc_stats(nop_o.cs_ts,nop_s);
+  calc_stats(nop_o.is_ts,nop_s);
   nop_o.is_sv.push_back(nop_s);
 
   //calculate rcd statistics
@@ -108,7 +108,7 @@ void chrana::calc_ind_sim_stat()
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      calc_stats(rcd_o[i_t][i_b].cs_ts,rcd_s[i_t][i_b]);
+      calc_stats(rcd_o[i_t][i_b].is_ts,rcd_s[i_t][i_b]);
       rcd_o[i_t][i_b].is_sv.push_back(rcd_s[i_t][i_b]);
     }
   }
@@ -117,7 +117,7 @@ void chrana::calc_ind_sim_stat()
   tdstat *msd_s = new tdstat[lma]; //msd statistics
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    calc_stats(msd_o[i_a].cs_ts,msd_s[i_a]);
+    calc_stats(msd_o[i_a].is_ts,msd_s[i_a]);
     msd_o[i_a].is_sv.push_back(msd_s[i_a]);
   }
   delete[] msd_s;
@@ -180,14 +180,14 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
   delete[] msd_s;
 
   //save current simulation time series of scalar observables
-  uint n_e = t_o.cs_ts.size(); //number of elements
+  uint n_e = t_o.is_ts.size(); //number of elements
   txt_out_f<<"#          t         dcm         rg2         nop\n";
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
-    txt_out_f<<cnfs(t_o.cs_ts[i_e],12,' ',2);
-    txt_out_f<<cnfs(dcm_o.cs_ts[i_e],12,' ',6);
-    txt_out_f<<cnfs(rg2_o.cs_ts[i_e],12,' ',6);
-    txt_out_f<<cnfs(nop_o.cs_ts[i_e],12,' ',6);
+    txt_out_f<<cnfs(t_o.is_ts[i_e],12,' ',2);
+    txt_out_f<<cnfs(dcm_o.is_ts[i_e],12,' ',6);
+    txt_out_f<<cnfs(rg2_o.is_ts[i_e],12,' ',6);
+    txt_out_f<<cnfs(nop_o.is_ts[i_e],12,' ',6);
     txt_out_f<<"\n";
   }
 
@@ -202,30 +202,30 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
 void chrana::clear_ind_sim_data()
 {
   //clear time vector
-  t_o.cs_ts.clear();
+  t_o.is_ts.clear();
 
   //clear center of mass distance vector
-  dcm_o.cs_ts.clear();
+  dcm_o.is_ts.clear();
 
   //clear gyration radius squared vector
-  rg2_o.cs_ts.clear();
+  rg2_o.is_ts.clear();
 
   //clear nematic order parameter vector
-  nop_o.cs_ts.clear();
+  nop_o.is_ts.clear();
 
   //clear radial chromatin density vector
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      rcd_o[i_t][i_b].cs_ts.clear();
+      rcd_o[i_t][i_b].is_ts.clear();
     }
   }
 
   //clear mean spatial distance vector
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    msd_o[i_a].cs_ts.clear();
+    msd_o[i_a].is_ts.clear();
   }
 }
 
@@ -313,7 +313,7 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
 void chrana::calc_observables()
 {
   //store time
-  t_o.cs_ts.push_back(t);
+  t_o.is_ts.push_back(t);
 
   //calculate the center of mass position
   vec3f cmr = {0.0,0.0,0.0}; //center of mass position
@@ -325,7 +325,7 @@ void chrana::calc_observables()
 
   //calculate the center of mass distance
   float dcm = length(cmr); //center of mass distance
-  dcm_o.cs_ts.push_back(dcm);
+  dcm_o.is_ts.push_back(dcm);
 
   //calculate the gyration radius squared
   float rg2 = 0.0; //gyration radius squared
@@ -334,7 +334,7 @@ void chrana::calc_observables()
     rg2 += dot(hr[i_p]-cmr,hr[i_p]-cmr);
   }
   rg2 /= N;
-  rg2_o.cs_ts.push_back(rg2);
+  rg2_o.is_ts.push_back(rg2);
 
   //calculate the nematic order parameter
   vec3f vec; //bond vector
@@ -347,7 +347,7 @@ void chrana::calc_observables()
     nop += 0.5*(3.0*cos*cos-1.0);
   }
   nop /= N-1.0;
-  nop_o.cs_ts.push_back(nop);
+  nop_o.is_ts.push_back(nop);
 
   //calculate the radial chromatin density
   float rcd[3][n_b]; //radial chromatin density
@@ -371,7 +371,7 @@ void chrana::calc_observables()
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
       rcd[i_t][i_b] /= (4.0/3.0)*M_PI*ng.d_m*ng.d_m*ng.d_m/n_b;
-      rcd_o[i_t][i_b].cs_ts.push_back(rcd[i_t][i_b]);
+      rcd_o[i_t][i_b].is_ts.push_back(rcd[i_t][i_b]);
     }
   }
 
@@ -381,7 +381,7 @@ void chrana::calc_observables()
   cuda_check(cudaMemcpy(hma,ma,lma*sizeof(float),cudaMemcpyDeviceToHost));
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    msd_o[i_a].cs_ts.push_back(hma[i_a]);
+    msd_o[i_a].is_ts.push_back(hma[i_a]);
   }
 }
 

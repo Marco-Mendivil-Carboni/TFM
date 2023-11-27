@@ -4,7 +4,7 @@
 //Includes
 
 #include "chrdat.cuh" //chromatin data
-#include "sdstat.cuh" //simulation data statistics
+#include "sostat.cuh" //simulation observable statistics
 
 //Namespace
 
@@ -54,15 +54,15 @@ class chrana : public chrdat //chromatin analysis
 
   //Parameters and Variables
 
-  obsdat t_o; //time observable
+  simobs t_o; //time observable
 
-  obsdat dcm_o; //center of mass distance observable
-  obsdat rg2_o; //gyration radius squared observable
-  obsdat nop_o; //nematic order parameter observable
+  simobs dcm_o; //center of mass distance observable
+  simobs rg2_o; //gyration radius squared observable
+  simobs nop_o; //nematic order parameter observable
 
-  obsdat rcd_o[3][n_b]; //radial chromatin density observable
+  simobs rcd_o[3][n_b]; //radial chromatin density observable
 
-  obsdat *msd_o; //mean spatial distance observable
+  simobs *msd_o; //mean spatial distance observable
   const uint lma; //length of msd arrays
   float *ma; //msd array
   float *hma; //host msd array

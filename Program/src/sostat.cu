@@ -1,6 +1,6 @@
 //Includes
 
-#include "sdstat.cuh" //simulation data statistics
+#include "sostat.cuh" //simulation observable statistics
 
 //Namespace
 
@@ -136,10 +136,7 @@ void calc_stats(
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
   {
     double w = 1.0/(v[i_e].sem*v[i_e].sem); //weight
-    if (!isfinite(w)) //skip if weight is not finite
-    {
-      continue;
-    }
+    if (!isfinite(w)){ continue;}
     m_1 += w*v[i_e].avg;
     m_2 += w*v[i_e].avg*v[i_e].avg;
     w_1 += w;

@@ -21,7 +21,7 @@ bin/measuresim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
 		bin/measuresim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
-bin/analyzesim: bin/util.o bin/chrdat.o bin/sdstat.o bin/chrana.o \
+bin/analyzesim: bin/util.o bin/chrdat.o bin/sostat.o bin/chrana.o \
 		bin/analyzesim.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
@@ -37,7 +37,7 @@ bin/analyzesim.o: src/analyzesim.cu bin/chrana.o
 bin/chrsim.o: src/chrsim.cu src/chrsim.cuh bin/chrdat.o bin/sugrid.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/chrana.o: src/chrana.cu src/chrana.cuh bin/chrdat.o bin/sdstat.o
+bin/chrana.o: src/chrana.cu src/chrana.cuh bin/chrdat.o bin/sostat.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/chrdat.o: src/chrdat.cu src/chrdat.cuh bin/util.o
@@ -46,7 +46,7 @@ bin/chrdat.o: src/chrdat.cu src/chrdat.cuh bin/util.o
 bin/sugrid.o: src/sugrid.cu src/sugrid.cuh bin/util.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/sdstat.o: src/sdstat.cu src/sdstat.cuh bin/util.o
+bin/sostat.o: src/sostat.cu src/sostat.cuh bin/util.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/util.o: src/util.cu src/util.cuh src/vect.cuh

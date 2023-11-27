@@ -1,5 +1,5 @@
-#ifndef MMC_SDSTAT_H
-#define MMC_SDSTAT_H
+#ifndef MMC_SOSTAT_H
+#define MMC_SOSTAT_H
 
 //Includes
 
@@ -34,9 +34,9 @@ struct tdstat : cdstat //time series data statistics
   bool ter; //termalized
 };
 
-struct obsdat //observable data
+struct simobs //simulation observable
 {
-  std::vector<float> cs_ts; //current simulation time series
+  std::vector<float> is_ts; //individual simulation time series
   std::vector<tdstat> is_sv; //individual simulation statistics vector
   idstat cs_fs; //combined simulations final statistics
 };
@@ -65,4 +65,4 @@ void calc_stats(
 
 } //namespace mmc
 
-#endif //MMC_SDSTAT_H
+#endif //MMC_SOSTAT_H
