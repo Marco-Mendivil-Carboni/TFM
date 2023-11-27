@@ -69,33 +69,33 @@ int main(
         inp_f.close();
       }
 
-      //calculate individual simulation statistics
-      ana.calc_ind_sim_stat();
+      //calculate last individual simulation statistics
+      ana.calc_last_is_stat();
 
-      //save individual simulation analysis results
+      //save last individual simulation statistics
       pathstr = sim_dir+"/analysis-";
       pathstr += mmc::cnfs(i_s,3,'0')+".dat";
       out_f.open(pathstr);
       mmc::check_file(out_f,pathstr);
-      ana.save_ind_sim_results(out_f);
+      ana.save_last_is_stat(out_f);
       out_f.close();
 
       //record success message
       msg = "analysis "+mmc::cnfs(i_s,3,'0')+" finished";
       mmc::logger::record(msg);
 
-      //clear individual simulation analysis data
-      ana.clear_ind_sim_data();
+      //clear individual simulation time series
+      ana.clear_is_ts();
     }
 
-    //calculate final statistics
-    ana.calc_fin_stat();
+    //calculate combined simulations final statistics
+    ana.calc_cs_final_stat();
 
-    //save final analysis results
+    //save combined simulations final statistics
     pathstr = sim_dir+"/analysis-fin.dat";
     out_f.open(pathstr);
     mmc::check_file(out_f,pathstr);
-    ana.save_fin_results(out_f);
+    ana.save_cs_final_stat(out_f);
     out_f.close();
 
     //record success message

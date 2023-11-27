@@ -9,6 +9,44 @@ namespace mmc //Marco Mendívil Carboni
 
 //Functions
 
+//calculate last individual simulation statistics
+void simobs::calc_last_is_stat()
+{
+  tdstat tas; //time series auxiliary statistics
+  calc_stats(is_ts,tas);
+  is_sv.push_back(tas);
+}
+
+//save last individual simulation statistics
+void simobs::save_last_is_stat(std::ofstream &txt_out_f) //text output file
+{
+  tdstat tas = is_sv.back(); //time series auxiliary statistics
+  txt_out_f<<cnfs(tas.avg,12,' ',6)<<cnfs(sqrt(tas.var),12,' ',6);
+  txt_out_f<<cnfs(tas.sem,12,' ',6)<<cnfs(tas.f_n_b,8,' ');
+  txt_out_f<<cnfs(tas.i_t,8,' ')<<(tas.ter?" yes":"  no")<<"\n";
+}
+
+//save last individual simulation statistics summary
+void simobs::save_last_is_stat_s(std::ofstream &txt_out_f) //text output file
+{
+  tdstat tas = is_sv.back(); //time series auxiliary statistics
+  txt_out_f<<cnfs(tas.avg,12,' ',6)<<cnfs(sqrt(tas.var),12,' ',6);
+  txt_out_f<<cnfs(tas.sem,12,' ',6)<<"\n";
+}
+
+//calculate combined simulations final statistics
+void simobs::calc_cs_final_stat()
+{
+  calc_stats(is_sv,cs_fs);
+}
+
+//save combined simulations final statistics
+void simobs::save_cs_final_stat(std::ofstream &txt_out_f) //text output file
+{
+  txt_out_f<<cnfs(cs_fs.avg,12,' ',6)<<cnfs(sqrt(cs_fs.var),12,' ',6);
+  txt_out_f<<cnfs(cs_fs.sem,12,' ',6)<<"\n";
+}
+
 //calculate statistics
 void calc_stats(
   const std::vector<float> &v, //vector

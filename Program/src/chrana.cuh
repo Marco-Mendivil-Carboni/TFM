@@ -35,20 +35,20 @@ class chrana : public chrdat //chromatin analysis
   //add trajectory file to analysis
   void add_trajectory_file(std::ifstream &bin_inp_f); //binary input file
 
-  //calculate individual simulation statistics
-  void calc_ind_sim_stat();
+  //calculate last individual simulation statistics
+  void calc_last_is_stat();
 
-  //save individual simulation analysis results
-  void save_ind_sim_results(std::ofstream &txt_out_f); //text output file
+  //save last individual simulation statistics
+  void save_last_is_stat(std::ofstream &txt_out_f); //text output file
 
-  //clear individual simulation analysis data
-  void clear_ind_sim_data();
+  //clear individual simulation time series
+  void clear_is_ts();
 
-  //calculate final statistics
-  void calc_fin_stat();
+  //calculate combined simulations final statistics
+  void calc_cs_final_stat();
 
-  //save final analysis results
-  void save_fin_results(std::ofstream &txt_out_f); //text output file
+  //save combined simulations final statistics
+  void save_cs_final_stat(std::ofstream &txt_out_f); //text output file
 
   private:
 

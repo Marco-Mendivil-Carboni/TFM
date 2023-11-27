@@ -84,102 +84,62 @@ void chrana::add_trajectory_file(std::ifstream &bin_inp_f) //binary input file
   }
 }
 
-//calculate individual simulation statistics
-void chrana::calc_ind_sim_stat()
+//calculate last individual simulation statistics
+void chrana::calc_last_is_stat()
 {
-  //calculate dcm statistics
-  tdstat dcm_s; //dcm statistics //make a function for this ---------------------
-  calc_stats(dcm_o.is_ts,dcm_s);
-  dcm_o.is_sv.push_back(dcm_s);
-
-  //calculate rg2 statistics
-  tdstat rg2_s; //rg2 statistics
-  calc_stats(rg2_o.is_ts,rg2_s);
-  rg2_o.is_sv.push_back(rg2_s);
-
-  //calculate nop statistics
-  tdstat nop_s; //nop statistics
-  calc_stats(nop_o.is_ts,nop_s);
-  nop_o.is_sv.push_back(nop_s);
-
-  //calculate rcd statistics
-  tdstat rcd_s[3][n_b]; //rcd statistics
+  dcm_o.calc_last_is_stat();
+  rg2_o.calc_last_is_stat();
+  nop_o.calc_last_is_stat();
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      calc_stats(rcd_o[i_t][i_b].is_ts,rcd_s[i_t][i_b]);
-      rcd_o[i_t][i_b].is_sv.push_back(rcd_s[i_t][i_b]);
+      rcd_o[i_t][i_b].calc_last_is_stat();
     }
   }
-
-  //calculate msd statistics
-  tdstat *msd_s = new tdstat[lma]; //msd statistics
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    calc_stats(msd_o[i_a].is_ts,msd_s[i_a]);
-    msd_o[i_a].is_sv.push_back(msd_s[i_a]);
+    msd_o[i_a].calc_last_is_stat();
   }
-  delete[] msd_s;
 }
 
-//save individual simulation analysis results
-void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
+//save last individual simulation statistics
+void chrana::save_last_is_stat(std::ofstream &txt_out_f) //text output file
 {
-  //save dcm, rg2 and nop statistics
+  //save dcm, rg2 and nop last individual simulation statistics
   txt_out_f<<"#individual simulation analysis\n";
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   txt_out_f<<"# center of mass distance:\n";
-  tdstat dcm_s = dcm_o.is_sv.back(); //dcm statistics //make function for this -------------
-  txt_out_f<<cnfs(dcm_s.avg,12,' ',6)<<cnfs(sqrt(dcm_s.var),12,' ',6);
-  txt_out_f<<cnfs(dcm_s.sem,12,' ',6)<<cnfs(dcm_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(dcm_s.i_t,8,' ')<<(dcm_s.ter?" yes":"  no")<<"\n";
+  dcm_o.save_last_is_stat(txt_out_f);
   txt_out_f<<"# gyration radius squared:\n";
-  tdstat rg2_s = rg2_o.is_sv.back(); //rg2 statistics
-  txt_out_f<<cnfs(rg2_s.avg,12,' ',6)<<cnfs(sqrt(rg2_s.var),12,' ',6);
-  txt_out_f<<cnfs(rg2_s.sem,12,' ',6)<<cnfs(rg2_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(rg2_s.i_t,8,' ')<<(rg2_s.ter?" yes":"  no")<<"\n";
+  rg2_o.save_last_is_stat(txt_out_f);
   txt_out_f<<"# nematic order parameter:\n";
-  tdstat nop_s = nop_o.is_sv.back(); //nop statistics
-  txt_out_f<<cnfs(nop_s.avg,12,' ',6)<<cnfs(sqrt(nop_s.var),12,' ',6);
-  txt_out_f<<cnfs(nop_s.sem,12,' ',6)<<cnfs(nop_s.f_n_b,8,' ');
-  txt_out_f<<cnfs(nop_s.i_t,8,' ')<<(nop_s.ter?" yes":"  no")<<"\n";
+  nop_o.save_last_is_stat(txt_out_f);
   txt_out_f<<"\n\n";
 
-  //save rcd statistics
-  tdstat rcd_s[3][n_b]; //rcd statistics
+  //save rcd last individual simulation statistics
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     txt_out_f<<"#        r_b         avg   sqrt(var)         sem\n";
     txt_out_f<<"    0.000000    0.000000    0.000000    0.000000\n";
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      rcd_s[i_t][i_b] = rcd_o[i_t][i_b].is_sv.back();
       txt_out_f<<cnfs(ng.d_m*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
-      txt_out_f<<cnfs(rcd_s[i_t][i_b].avg,12,' ',9); //make function for this ----------
-      txt_out_f<<cnfs(sqrt(rcd_s[i_t][i_b].var),12,' ',9);
-      txt_out_f<<cnfs(rcd_s[i_t][i_b].sem,12,' ',9);
-      txt_out_f<<"\n";
+      rcd_o[i_t][i_b].save_last_is_stat_s(txt_out_f);
     }
     txt_out_f<<"\n\n";
   }
 
-  //save msd statistics
-  tdstat *msd_s = new tdstat[lma]; //msd statistics //this will dissappear after using a function to print
+  //save msd last individual simulation statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem\n";
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    msd_s[i_a] = msd_o[i_a].is_sv.back();
     txt_out_f<<cnfs((i_a+1),6,' ');
-    txt_out_f<<cnfs(msd_s[i_a].avg,12,' ',6);
-    txt_out_f<<cnfs(sqrt(msd_s[i_a].var),12,' ',6);
-    txt_out_f<<cnfs(msd_s[i_a].sem,12,' ',6);
-    txt_out_f<<"\n";
+    msd_o[i_a].save_last_is_stat_s(txt_out_f);
   }
   txt_out_f<<"\n\n";
-  delete[] msd_s;
 
-  //save current simulation time series of scalar observables
+  //save dcm, rg2 and nop individual simulation time series
   uint n_e = t_o.is_ts.size(); //number of elements
   txt_out_f<<"#          t         dcm         rg2         nop\n";
   for (uint i_e = 0; i_e<n_e; ++i_e) //element index
@@ -190,30 +150,16 @@ void chrana::save_ind_sim_results(std::ofstream &txt_out_f) //text output file
     txt_out_f<<cnfs(nop_o.is_ts[i_e],12,' ',6);
     txt_out_f<<"\n";
   }
-
-  //check filestream
-  if (txt_out_f.fail())
-  {
-    throw mmc::error("failed to write results to text file");
-  }
+  txt_out_f<<"\n\n";
 }
 
-//clear individual simulation analysis data
-void chrana::clear_ind_sim_data()
+//clear individual simulation time series
+void chrana::clear_is_ts()
 {
-  //clear time vector
   t_o.is_ts.clear();
-
-  //clear center of mass distance vector
   dcm_o.is_ts.clear();
-
-  //clear gyration radius squared vector
   rg2_o.is_ts.clear();
-
-  //clear nematic order parameter vector
   nop_o.is_ts.clear();
-
-  //clear radial chromatin density vector
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
@@ -221,60 +167,46 @@ void chrana::clear_ind_sim_data()
       rcd_o[i_t][i_b].is_ts.clear();
     }
   }
-
-  //clear mean spatial distance vector
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     msd_o[i_a].is_ts.clear();
   }
 }
 
-//calculate final statistics
-void chrana::calc_fin_stat()
+//calculate combined simulations final statistics
+void chrana::calc_cs_final_stat()
 {
-  //calculate dcm final statistics
-  calc_stats(dcm_o.is_sv,dcm_o.cs_fs);
-
-  //calculate rg2 final statistics
-  calc_stats(rg2_o.is_sv,rg2_o.cs_fs);
-
-  //calculate nop final statistics
-  calc_stats(nop_o.is_sv,nop_o.cs_fs);
-
-  //calculate rcd final statistics
+  dcm_o.calc_cs_final_stat();
+  rg2_o.calc_cs_final_stat();
+  nop_o.calc_cs_final_stat();
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
-      calc_stats(rcd_o[i_t][i_b].is_sv,rcd_o[i_t][i_b].cs_fs);
+      rcd_o[i_t][i_b].calc_cs_final_stat();
     }
   }
-
-  //calculate msd final statistics
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
-    calc_stats(msd_o[i_a].is_sv,msd_o[i_a].cs_fs);
+    msd_o[i_a].calc_cs_final_stat();
   }
 }
 
-//save final analysis results
-void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
+//save combined simulations final statistics
+void chrana::save_cs_final_stat(std::ofstream &txt_out_f) //text output file
 {
-  //save dcm, rg2 and nop final statistics
+  //save dcm, rg2 and nop combined simulations final statistics
   txt_out_f<<"#combined simulations final analysis\n";
   txt_out_f<<"#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";
-  txt_out_f<<cnfs(dcm_o.cs_fs.avg,12,' ',6)<<cnfs(sqrt(dcm_o.cs_fs.var),12,' ',6);
-  txt_out_f<<cnfs(dcm_o.cs_fs.sem,12,' ',6)<<"\n";
+  dcm_o.save_cs_final_stat(txt_out_f);
   txt_out_f<<"# gyration radius squared:\n";
-  txt_out_f<<cnfs(rg2_o.cs_fs.avg,12,' ',6)<<cnfs(sqrt(rg2_o.cs_fs.var),12,' ',6);
-  txt_out_f<<cnfs(rg2_o.cs_fs.sem,12,' ',6)<<"\n";
+  rg2_o.save_cs_final_stat(txt_out_f);
   txt_out_f<<"# nematic order parameter:\n";
-  txt_out_f<<cnfs(nop_o.cs_fs.avg,12,' ',6)<<cnfs(sqrt(nop_o.cs_fs.var),12,' ',6);
-  txt_out_f<<cnfs(nop_o.cs_fs.sem,12,' ',6)<<"\n";
+  nop_o.save_cs_final_stat(txt_out_f);
   txt_out_f<<"\n\n";
 
-  //save rcd final statistics
+  //save rcd combined simulations final statistics
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     txt_out_f<<"#        r_b         avg   sqrt(var)         sem\n";
@@ -282,31 +214,19 @@ void chrana::save_fin_results(std::ofstream &txt_out_f) //text output file
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
     {
       txt_out_f<<cnfs(ng.d_m*pow((i_b+1.0)/n_b,1.0/3),12,' ',6);
-      txt_out_f<<cnfs(rcd_o[i_t][i_b].cs_fs.avg,12,' ',9);
-      txt_out_f<<cnfs(sqrt(rcd_o[i_t][i_b].cs_fs.var),12,' ',9);
-      txt_out_f<<cnfs(rcd_o[i_t][i_b].cs_fs.sem,12,' ',9);
-      txt_out_f<<"\n";
+      rcd_o[i_t][i_b].save_cs_final_stat(txt_out_f);
     }
     txt_out_f<<"\n\n";
   }
 
-  //save msd final statistics
+  //save msd combined simulations final statistics
   txt_out_f<<"#    s         avg   sqrt(var)         sem\n";
   for (uint i_a = 0; i_a<lma; ++i_a) //array index
   {
     txt_out_f<<cnfs((i_a+1),6,' ');
-    txt_out_f<<cnfs(msd_o[i_a].cs_fs.avg,12,' ',6);
-    txt_out_f<<cnfs(sqrt(msd_o[i_a].cs_fs.var),12,' ',6);
-    txt_out_f<<cnfs(msd_o[i_a].cs_fs.sem,12,' ',6);
-    txt_out_f<<"\n";
+    msd_o[i_a].save_cs_final_stat(txt_out_f);
   }
   txt_out_f<<"\n\n";
-
-  //check filestream
-  if (txt_out_f.fail())
-  {
-    throw mmc::error("failed to write results to text file");
-  }
 }
 
 //calculate observables
