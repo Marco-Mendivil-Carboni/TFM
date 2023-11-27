@@ -75,6 +75,18 @@ inline __device__ void calc_bf(
   f[i_p] += bf;
 }
 
+//calculate wall-particle force
+inline __device__ void calc_wpf(
+  vec3f vwp, //wall-particle vector
+  vec3f &cf) //confinement force
+{
+  //calculate Wang-Frenkel force
+  float dwp = length(vwp); //wall-particle distance
+  if (dwp>rco){ return;}
+  float d2 = dwp*dwp; //dwp squared
+  cf += (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vwp;
+}
+
 //calculate confinement force
 template <stype T> inline __device__ void calc_cf(
   const cngeom ng, //nucleus geometry
@@ -88,7 +100,7 @@ template <stype T> inline __device__ void calc_cf(
   vec3f r_r = r_i-r_b; //particle position relative to bleb
   vec3f vwp; //wall-particle vector
   float d_r; //radial distance
-  vec3f cf; //confinement force
+  vec3f cf = {0.0,0.0,0.0}; //confinement force
 
   //find confinement region and calculate vwp
   if (r_i.z<ng.nod) //inside nucleus sphere
@@ -121,13 +133,10 @@ template <stype T> inline __device__ void calc_cf(
       vwp.z = r_r.z+ng.bod;
     }
   }
+  if (!isfinite(length(vwp))){ return;}
 
-  //calculate confinement force
-  float dwp = length(vwp); //wall-particle distance
-  if (!isfinite(dwp)){ return;}
-  if (dwp>rco){ return;}
-  float d2 = dwp*dwp; //dwp squared
-  cf = (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vwp;
+  //calculate wall-particle force
+  calc_wpf(vwp,cf);
 
   //add result to force array
   f[i_p] += cf;
@@ -144,18 +153,15 @@ template <> inline __device__ void calc_cf<ICG>(
   vec3f r_i = r[i_p]; //particle position
   vec3f vwp; //wall-particle vector
   float d_r; //radial distance
-  vec3f cf; //confinement force
+  vec3f cf = {0.0,0.0,0.0}; //confinement force
 
   //calculate vwp
   d_r = length(r_i);
   vwp = -r_i*(ng.R_n/d_r-1.0);
+  if (!isfinite(length(vwp))){ return;}
 
-  //calculate confinement force
-  float dwp = length(vwp); //wall-particle distance
-  if (!isfinite(dwp)){ return;}
-  if (dwp>rco){ return;}
-  float d2 = dwp*dwp; //dwp squared
-  cf = (18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vwp;
+  //calculate wall-particle force
+  calc_wpf(vwp,cf);
 
   //add result to force array
   f[i_p] += cf;
