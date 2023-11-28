@@ -7,31 +7,27 @@ NVCCLINKS = -lcurand
 
 #Targets
 
-bin/makeallsim: bin/util.o bin/chrdat.o bin/makeallsim.o
-	$(NVCC) $(NVCCFLAGS) $^ -o $@
+all: bin/ccp-perform bin/ccp-profile bin/ccp-analyze
 
-bin/makeallsim.o: src/makeallsim.cu bin/performsim bin/analyzesim
-	$(NVCC) $(NVCCFLAGS) -c $< -o $@
-
-bin/performsim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
-		bin/performsim.o
+bin/ccp-perform: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
+		bin/ccp-perform.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
-bin/measuresim: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
-		bin/measuresim.o
+bin/ccp-profile: bin/util.o bin/chrdat.o bin/sugrid.o bin/chrsim.o \
+		bin/ccp-profile.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@ $(NVCCLINKS)
 
-bin/analyzesim: bin/util.o bin/chrdat.o bin/sostat.o bin/chrana.o \
-		bin/analyzesim.o
+bin/ccp-analyze: bin/util.o bin/chrdat.o bin/sostat.o bin/chrana.o \
+		bin/ccp-analyze.o
 	$(NVCC) $(NVCCFLAGS) $^ -o $@
 
-bin/performsim.o: src/performsim.cu bin/chrsim.o
+bin/ccp-perform.o: src/ccp-perform.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/measuresim.o: src/measuresim.cu bin/chrsim.o
+bin/ccp-profile.o: src/ccp-profile.cu bin/chrsim.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
-bin/analyzesim.o: src/analyzesim.cu bin/chrana.o
+bin/ccp-analyze.o: src/ccp-analyze.cu bin/chrana.o
 	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 bin/chrsim.o: src/chrsim.cu src/chrsim.cuh bin/chrdat.o bin/sugrid.o

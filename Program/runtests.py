@@ -43,13 +43,13 @@ with open(parfilepath,"w") as parfile:
 
 print("---")
 
-check(run(["./Program/bin/performsim",str(testdir)]).returncode)
+check(run(["./Program/bin/ccp-perform",str(testdir)]).returncode)
 
-check(run(["./Program/bin/performsim",str(testdir)]).returncode)
+check(run(["./Program/bin/ccp-perform",str(testdir)]).returncode)
 
-check(run(["./Program/bin/performsim",str(testdir),"0"]).returncode)
+check(run(["./Program/bin/ccp-perform",str(testdir),"0"]).returncode)
 
-check(run(["./Program/bin/analyzesim",str(testdir)]).returncode)
+check(run(["./Program/bin/ccp-analyze",str(testdir)]).returncode)
 
 check(run(["vmd","-e","./Program/visualize.tcl","-args",str(testdir),"0"],
     stdout=DEVNULL,stderr=DEVNULL).returncode)
