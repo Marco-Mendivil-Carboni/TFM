@@ -1,6 +1,6 @@
 #Imports
 
-from numpy import cos, arcsin
+from math import cos, asin
 
 from subprocess import run
 
@@ -69,7 +69,7 @@ for i, j in product(range(4),range(4)):
     simdir = simrootdir/"{:5.3f}-{:5.3f}".format(R_b, R_o)
     simdir.mkdir(exist_ok=True)
 
-    noacf = 2.0 / (1.0 + cos(arcsin(R_o / R_n)))
+    noacf = 2.0 / (1.0 + cos(asin(R_o / R_n)))
     n_l = laf * 4.0 / (((0.5 / (R_n - 1.154701)) ** 2) * noacf)
 
     with open(simdir/"adjustable-parameters.dat","w") as parfile:
