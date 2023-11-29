@@ -1,5 +1,7 @@
 #Imports
 
+from numpy import cos, arcsin
+
 from subprocess import run
 
 from pathlib import Path
@@ -52,3 +54,29 @@ for i, j, k in product(range(4),range(4),range(4)):
     makesim(simdir)
 
 #Make simulations with bleb
+
+simrootdir = Path("Simulations/with-bleb")
+
+N = 16384
+cvf = 0.4
+laf = 0.2
+R_n = 0.5 + 0.5 * ((N / cvf) ** (1 / 3))
+
+for i, j in product(range(4),range(4)):
+
+    R_b = R_n * (1 + i) / 4
+    R_o = R_b * (1 + j) / 4
+    simdir = simrootdir/"{:5.3f}-{:5.3f}".format(R_b, R_o)
+    simdir.mkdir(exist_ok=True)
+
+    noacf = 2.0 / (1.0 + cos(arcsin(R_o / R_n)))
+    n_l = laf * 4.0 / (((0.5 / (R_n - 1.154701)) ** 2) * noacf)
+
+    with open(simdir/"adjustable-parameters.dat","w") as parfile:
+        parfile.write("number_of_particles {:05.0f}\n".format(N))
+        parfile.write("nucleus_radius {:5.2f}\n".format(R_n))
+        parfile.write("opening_radius {:5.2f}\n".format(R_o))
+        parfile.write("bleb_radius {:5.2f}\n".format(R_b))
+        parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
+
+    makesim(simdir)
