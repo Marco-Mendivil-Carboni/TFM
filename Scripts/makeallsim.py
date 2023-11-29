@@ -29,36 +29,15 @@ def makesim(simdir):
     if len(list(simdir.glob(pattern))) == 0 or newsim:
         run(["./Program/bin/ccp-analyze",str(simdir)])
 
-#Define writeanasumline function
-
-def writeanasumline(simdir,anasumfile):
-    with open(simdir/"analysis-fin.dat","r") as anafile:
-        anafile.readline()
-        anafile.readline()
-        anafile.readline()
-        anasumfile.write(anafile.readline().strip("\n")+" ")
-        anafile.readline()
-        anasumfile.write(anafile.readline().strip("\n")+" ")
-        anafile.readline()
-        anasumfile.write(anafile.readline())
-
 #Make simulations without bleb
 
 simrootdir = Path("Simulations/without-bleb")
-
-anasumfile = open(simrootdir/"analysis-summary.dat","w")
-
-anasumfile.write("#analysis summary\n#   N   cvf   laf ")
-anasumfile.write("#dcm:    avg   sqrt(var)         sem ")
-anasumfile.write("#rg2:    avg   sqrt(var)         sem ")
-anasumfile.write("#nop:    avg   sqrt(var)         sem\n")
 
 for i, j, k in product(range(4),range(4),range(4)):
 
     N = 4096 * 2 ** i
     cvf = 0.1 + 0.1 * j
     laf = 0.05 + 0.15 * k
-
     simdir = simrootdir/"{:05}-{:5.3f}-{:5.3f}".format(N, cvf, laf)
     simdir.mkdir(exist_ok=True)
 
@@ -71,10 +50,5 @@ for i, j, k in product(range(4),range(4),range(4)):
         parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
 
     makesim(simdir)
-
-    anasumfile.write("{:05} {:5.3f} {:5.3f} ".format(N, cvf, laf))
-    writeanasumline(simdir,anasumfile)
-
-anasumfile.close()
 
 #Make simulations with bleb

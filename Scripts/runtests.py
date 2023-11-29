@@ -51,14 +51,14 @@ check(run(["./Program/bin/ccp-perform",str(testdir),"0"]).returncode)
 
 check(run(["./Program/bin/ccp-analyze",str(testdir)]).returncode)
 
-check(run(["vmd","-e","./Program/visualize.tcl","-args",str(testdir),"0"],
+check(run(["vmd","-e","./Scripts/visualize-wb.tcl","-args",str(testdir),"0"],
     stdout=DEVNULL,stderr=DEVNULL).returncode)
 
-check(run(["vmd","-e","./Program/visualize.tcl","-args",str(testdir),"1"],
+check(run(["vmd","-e","./Scripts/visualize-wb.tcl","-args",str(testdir),"1"],
     stdout=DEVNULL,stderr=DEVNULL).returncode)
 
-#Remove test directory
+#Delete test directory
 
-removetest = input("Remove test? (yes/no): ")
-if removetest == "yes":
+deletetest = input("Delete test? ")
+if deletetest == "yes":
     rmtree(testdir)

@@ -1,6 +1,3 @@
-set res 32
-set p_rad 5.0
-
 set ::ex {1.0 0.0 0.0}
 set ::ey {0.0 1.0 0.0}
 set ::ez {0.0 0.0 1.0}
@@ -60,6 +57,8 @@ if {$argc==2} {
     display aoambient 0.8
     display aodirect 0.8
     axes location Off
+    set res 32
+    set p_rad 5.0
 
     #load lamina binding sites
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
@@ -93,6 +92,7 @@ if {$argc==2} {
     set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
     set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
     set boa [expr asin($R_o/$R_b)-0.5*$::pi]
+    close $param_fp
     draw material Transparent
     for {set i 0} {$i < $res} {incr i} {
         set theta_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
