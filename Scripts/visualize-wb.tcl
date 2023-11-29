@@ -1,45 +1,43 @@
-set ::ex {1.0 0.0 0.0}
-set ::ey {0.0 1.0 0.0}
-set ::ez {0.0 0.0 1.0}
+#VMD visualization script
+
 set ::pi 3.1415926535897931
-proc draw_ring { res z_ctr_a z_ctr_b r_ctr_a r_ctr_b theta_a theta_b} {
+
+proc draw_ring {res z_a z_b r_a r_b a_a a_b} {
     for {set j 0} {$j < $res} {incr j} {
-        set theta_c [expr 2.0*$::pi*($j+0.0)/$res]
-        set theta_d [expr 2.0*$::pi*($j+1.0)/$res]
-        set x_v_0 [vecscale $::ex [expr $r_ctr_a*cos($theta_c)]]
-        set x_v_1 [vecscale $::ex [expr $r_ctr_a*cos($theta_d)]]
-        set x_v_2 [vecscale $::ex [expr $r_ctr_b*cos($theta_c)]]
-        set x_v_3 [vecscale $::ex [expr $r_ctr_b*cos($theta_d)]]
-        set y_v_0 [vecscale $::ey [expr $r_ctr_a*sin($theta_c)]]
-        set y_v_1 [vecscale $::ey [expr $r_ctr_a*sin($theta_d)]]
-        set y_v_2 [vecscale $::ey [expr $r_ctr_b*sin($theta_c)]]
-        set y_v_3 [vecscale $::ey [expr $r_ctr_b*sin($theta_d)]]
-        set z_v_0 [vecscale $::ez [expr $z_ctr_a]]
-        set z_v_1 [vecscale $::ez [expr $z_ctr_a]]
-        set z_v_2 [vecscale $::ez [expr $z_ctr_b]]
-        set z_v_3 [vecscale $::ez [expr $z_ctr_b]]
-        set v_0 [vecadd $x_v_0 $y_v_0 $z_v_0]
-        set v_1 [vecadd $x_v_1 $y_v_1 $z_v_1]
-        set v_2 [vecadd $x_v_2 $y_v_2 $z_v_2]
-        set v_3 [vecadd $x_v_3 $y_v_3 $z_v_3]
-        set x_n_0 [vecscale $::ex [expr cos($theta_c)*cos($theta_a)]]
-        set x_n_1 [vecscale $::ex [expr cos($theta_d)*cos($theta_a)]]
-        set x_n_2 [vecscale $::ex [expr cos($theta_c)*cos($theta_b)]]
-        set x_n_3 [vecscale $::ex [expr cos($theta_d)*cos($theta_b)]]
-        set y_n_0 [vecscale $::ey [expr sin($theta_c)*cos($theta_a)]]
-        set y_n_1 [vecscale $::ey [expr sin($theta_d)*cos($theta_a)]]
-        set y_n_2 [vecscale $::ey [expr sin($theta_c)*cos($theta_b)]]
-        set y_n_3 [vecscale $::ey [expr sin($theta_d)*cos($theta_b)]]
-        set z_n_0 [vecscale $::ez [expr sin($theta_a)]]
-        set z_n_1 [vecscale $::ez [expr sin($theta_a)]]
-        set z_n_2 [vecscale $::ez [expr sin($theta_b)]]
-        set z_n_3 [vecscale $::ez [expr sin($theta_b)]]
-        set n_0 [vecadd $x_n_0 $y_n_0 $z_n_0]
-        set n_1 [vecadd $x_n_1 $y_n_1 $z_n_1]
-        set n_2 [vecadd $x_n_2 $y_n_2 $z_n_2]
-        set n_3 [vecadd $x_n_3 $y_n_3 $z_n_3]
+        set a_c [expr 2.0*$::pi*($j+0.0)/$res]
+        set a_d [expr 2.0*$::pi*($j+1.0)/$res]
+        set v_0 [list [expr $r_a*cos($a_c)] [expr $r_a*sin($a_c)] [expr $z_a]]
+        set v_1 [list [expr $r_a*cos($a_d)] [expr $r_a*sin($a_d)] [expr $z_a]]
+        set v_2 [list [expr $r_b*cos($a_c)] [expr $r_b*sin($a_c)] [expr $z_b]]
+        set v_3 [list [expr $r_b*cos($a_d)] [expr $r_b*sin($a_d)] [expr $z_b]]
+        set n_0 [list [expr cos($a_c)*cos($a_a)] [expr sin($a_c)*cos($a_a)] [expr sin($a_a)]]
+        set n_1 [list [expr cos($a_d)*cos($a_a)] [expr sin($a_d)*cos($a_a)] [expr sin($a_a)]]
+        set n_2 [list [expr cos($a_c)*cos($a_b)] [expr sin($a_c)*cos($a_b)] [expr sin($a_b)]]
+        set n_3 [list [expr cos($a_d)*cos($a_b)] [expr sin($a_d)*cos($a_b)] [expr sin($a_b)]]
         draw trinorm $v_0 $v_1 $v_2 $n_0 $n_1 $n_2
         draw trinorm $v_3 $v_2 $v_1 $n_3 $n_2 $n_1
+    }
+}
+
+proc draw_nucleus {res R_n R_o R_b} {
+    set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
+    set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
+    set boa [expr asin($R_o/$R_b)-0.5*$::pi]
+    for {set i 0} {$i < $res} {incr i} {
+        set a_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
+        set a_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
+        set z_a [expr $R_n*sin($a_a)]
+        set z_b [expr $R_n*sin($a_b)]
+        set r_a [expr $R_n*cos($a_a)]
+        set r_b [expr $R_n*cos($a_b)]
+        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
+        set a_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
+        set a_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
+        set z_a [expr $d_b+$R_b*sin($a_a)]
+        set z_b [expr $d_b+$R_b*sin($a_b)]
+        set r_a [expr $R_b*cos($a_a)]
+        set r_b [expr $R_b*cos($a_b)]
+        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
     }
 }
 
@@ -59,6 +57,23 @@ if {$argc==2} {
     axes location Off
     set res 32
     set p_rad 5.0
+
+    #set geometry parameters
+    set R_o 0.0
+    set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
+    set param_fp [open $param_file "r"]
+    while {[gets $param_fp line] != -1} {
+        if {[regexp "nucleus_radius\\s+(.*)" $line all value]} {
+            set R_n [expr 10.0*$value]
+        }
+        if {[regexp "opening_radius\\s+(.*)" $line all value]} {
+            set R_o [expr 10.0*$value]
+        }
+        if {[regexp "bleb_radius\\s+(.*)" $line all value]} {
+            set R_b [expr 10.0*$value]
+        }
+    }
+    close $param_fp
 
     #load lamina binding sites
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
@@ -83,44 +98,11 @@ if {$argc==2} {
     mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
 
     #draw nucleus
-    set R_o 0.0
-    set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
-    set param_fp [open $param_file "r"]
-    while {[gets $param_fp line] != -1} {
-        if {[regexp "nucleus_radius\\s+(.*)" $line all value]} {
-            set R_n [expr 10.0*$value]
-        }
-        if {[regexp "opening_radius\\s+(.*)" $line all value]} {
-            set R_o [expr 10.0*$value]
-        }
-        if {[regexp "bleb_radius\\s+(.*)" $line all value]} {
-            set R_b [expr 10.0*$value]
-        }
-    }
-    close $param_fp
     draw material Transparent
     if {$R_o==0.0} {
         draw sphere {0 0 0} radius $R_n resolution $res
     } else {
-        set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
-        set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
-        set boa [expr asin($R_o/$R_b)-0.5*$::pi]
-        for {set i 0} {$i < $res} {incr i} {
-            set theta_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
-            set theta_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
-            set z_ctr_a [expr $R_n*sin($theta_a)]
-            set z_ctr_b [expr $R_n*sin($theta_b)]
-            set r_ctr_a [expr $R_n*cos($theta_a)]
-            set r_ctr_b [expr $R_n*cos($theta_b)]
-            draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
-            set theta_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
-            set theta_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
-            set z_ctr_a [expr $d_b+$R_b*sin($theta_a)]
-            set z_ctr_b [expr $d_b+$R_b*sin($theta_b)]
-            set r_ctr_a [expr $R_b*cos($theta_a)]
-            set r_ctr_b [expr $R_b*cos($theta_b)]
-            draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
-        }
+        draw_nucleus $res $R_n $R_o $R_b
     }
 
     #change viewpoint
