@@ -83,32 +83,44 @@ if {$argc==2} {
     mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
 
     #draw nucleus
+    set R_o 0.0
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
     set param_fp [open $param_file "r"]
-    set param_lines [split [read $param_fp] "\n"]
-    set R_n [expr 10.0*[scan [lindex $param_lines 1] "nucleus_radius %f"]]
-    set R_o [expr 10.0*[scan [lindex $param_lines 2] "opening_radius %f"]]
-    set R_b [expr 10.0*[scan [lindex $param_lines 3] "bleb_radius %f"]]
-    set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
-    set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
-    set boa [expr asin($R_o/$R_b)-0.5*$::pi]
+    while {[gets $param_fp line] != -1} {
+        if {[regexp "nucleus_radius\\s+(.*)" $line all value]} {
+            set R_n [expr 10.0*$value]
+        }
+        if {[regexp "opening_radius\\s+(.*)" $line all value]} {
+            set R_o [expr 10.0*$value]
+        }
+        if {[regexp "bleb_radius\\s+(.*)" $line all value]} {
+            set R_b [expr 10.0*$value]
+        }
+    }
     close $param_fp
     draw material Transparent
-    for {set i 0} {$i < $res} {incr i} {
-        set theta_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
-        set theta_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
-        set z_ctr_a [expr $R_n*sin($theta_a)]
-        set z_ctr_b [expr $R_n*sin($theta_b)]
-        set r_ctr_a [expr $R_n*cos($theta_a)]
-        set r_ctr_b [expr $R_n*cos($theta_b)]
-        draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
-        set theta_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
-        set theta_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
-        set z_ctr_a [expr $d_b+$R_b*sin($theta_a)]
-        set z_ctr_b [expr $d_b+$R_b*sin($theta_b)]
-        set r_ctr_a [expr $R_b*cos($theta_a)]
-        set r_ctr_b [expr $R_b*cos($theta_b)]
-        draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
+    if {$R_o==0.0} {
+        draw sphere {0 0 0} radius $R_n resolution $res
+    } else {
+        set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
+        set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
+        set boa [expr asin($R_o/$R_b)-0.5*$::pi]
+        for {set i 0} {$i < $res} {incr i} {
+            set theta_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
+            set theta_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
+            set z_ctr_a [expr $R_n*sin($theta_a)]
+            set z_ctr_b [expr $R_n*sin($theta_b)]
+            set r_ctr_a [expr $R_n*cos($theta_a)]
+            set r_ctr_b [expr $R_n*cos($theta_b)]
+            draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
+            set theta_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
+            set theta_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
+            set z_ctr_a [expr $d_b+$R_b*sin($theta_a)]
+            set z_ctr_b [expr $d_b+$R_b*sin($theta_b)]
+            set r_ctr_a [expr $R_b*cos($theta_a)]
+            set r_ctr_b [expr $R_b*cos($theta_b)]
+            draw_ring $res $z_ctr_a $z_ctr_b $r_ctr_a $r_ctr_b $theta_a $theta_b
+        }
     }
 
     #change viewpoint
