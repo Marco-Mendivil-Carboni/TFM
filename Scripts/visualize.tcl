@@ -19,34 +19,10 @@ proc draw_ring {res z_a z_b r_a r_b a_a a_b} {
     }
 }
 
-proc draw_nucleus {res R_n R_o R_b} {
-    set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
-    set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
-    set boa [expr asin($R_o/$R_b)-0.5*$::pi]
-    for {set i 0} {$i < $res} {incr i} {
-        set a_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
-        set a_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
-        set z_a [expr $R_n*sin($a_a)]
-        set z_b [expr $R_n*sin($a_b)]
-        set r_a [expr $R_n*cos($a_a)]
-        set r_b [expr $R_n*cos($a_b)]
-        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
-        set a_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
-        set a_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
-        set z_a [expr $d_b+$R_b*sin($a_a)]
-        set z_b [expr $d_b+$R_b*sin($a_b)]
-        set r_a [expr $R_b*cos($a_a)]
-        set r_b [expr $R_b*cos($a_b)]
-        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
-    }
-}
-
 if {$argc==2} {
-    #set sim_dir and sim_idx
     set sim_dir [lindex $argv 0]
     set sim_idx [lindex $argv 1]
 
-    #set visualization preferences
     color Display Background white
     display resize 640 960
     display cuedensity 0.2
@@ -55,11 +31,10 @@ if {$argc==2} {
     display aoambient 0.8
     display aodirect 0.8
     axes location Off
-    set res 32
-    set p_rad 5.0
 
-    #set geometry parameters
+    set res 32
     set R_o 0.0
+    set p_rad 5.0
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
     set param_fp [open $param_file "r"]
     while {[gets $param_fp line] != -1} {
@@ -75,7 +50,6 @@ if {$argc==2} {
     }
     close $param_fp
 
-    #load lamina binding sites
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
     mol new $gro_file autobonds off
     set sel [atomselect top "name C"]
@@ -83,7 +57,6 @@ if {$argc==2} {
     color Name "C" 2
     mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
 
-    #load initial condition
     set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
     mol new $gro_file autobonds off
     package require topotools
@@ -97,20 +70,35 @@ if {$argc==2} {
     color Name "B" 1
     mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
 
-    #draw nucleus
     draw material Transparent
     if {$R_o==0.0} {
         draw sphere {0 0 0} radius $R_n resolution $res
     } else {
-        draw_nucleus $res $R_n $R_o $R_b
+        set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
+        set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
+        set boa [expr asin($R_o/$R_b)-0.5*$::pi]
+        for {set i 0} {$i < $res} {incr i} {
+            set a_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
+            set a_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
+            set z_a [expr $R_n*sin($a_a)]
+            set z_b [expr $R_n*sin($a_b)]
+            set r_a [expr $R_n*cos($a_a)]
+            set r_b [expr $R_n*cos($a_b)]
+            draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
+            set a_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
+            set a_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
+            set z_a [expr $d_b+$R_b*sin($a_a)]
+            set z_b [expr $d_b+$R_b*sin($a_b)]
+            set r_a [expr $R_b*cos($a_a)]
+            set r_b [expr $R_b*cos($a_b)]
+            draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
+        }
     }
 
-    #change viewpoint
     translate to 0.0 -0.5 0.0
     rotate x to -90.0
     scale by 0.8
 
-    #load trajectory files
     set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
     set trr_files [lsort [glob $pattern]]
     foreach trr_file $trr_files { mol addfile $trr_file}
