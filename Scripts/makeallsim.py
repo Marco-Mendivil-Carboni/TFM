@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 #Imports
 
 from math import cos, asin
