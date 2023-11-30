@@ -24,7 +24,7 @@ def makesim(simdir):
     for simidx in range(numberofsim):
         pattern = "trajectory-{:03}-*".format(simidx)
         while len(list(simdir.glob(pattern))) < filespersim:
-            run(["./Program/bin/ccp-perform",str(simdir)],str(simidx))
+            run(["./Program/bin/ccp-perform",str(simdir),str(simidx)])
             newsim = True
 
     pattern = "analysis-*"

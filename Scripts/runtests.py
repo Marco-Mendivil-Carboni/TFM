@@ -51,10 +51,10 @@ check(run(["./Program/bin/ccp-perform",str(testdir),"0"]).returncode)
 
 check(run(["./Program/bin/ccp-analyze",str(testdir)]).returncode)
 
-check(run(["vmd","-e","./Scripts/visualize-wb.tcl","-args",str(testdir),"0"],
+check(run(["vmd","-e","./Scripts/visualize.tcl","-args",str(testdir),"0"],
     stdout=DEVNULL,stderr=DEVNULL).returncode)
 
-check(run(["vmd","-e","./Scripts/visualize-wb.tcl","-args",str(testdir),"1"],
+check(run(["vmd","-e","./Scripts/visualize.tcl","-args",str(testdir),"1"],
     stdout=DEVNULL,stderr=DEVNULL).returncode)
 
 #Delete test directory
