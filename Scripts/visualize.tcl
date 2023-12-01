@@ -2,20 +2,54 @@
 
 set ::pi 3.1415926535897931
 
+proc draw_ring_quad {res z_a z_b r_a r_b a_a a_b a_c a_d} {
+    set v_0 [list \
+        [expr $r_a*cos($a_c)] [expr $r_a*sin($a_c)] [expr $z_a]]
+    set v_1 [list \
+        [expr $r_a*cos($a_d)] [expr $r_a*sin($a_d)] [expr $z_a]]
+    set v_2 [list \
+        [expr $r_b*cos($a_c)] [expr $r_b*sin($a_c)] [expr $z_b]]
+    set v_3 [list \
+        [expr $r_b*cos($a_d)] [expr $r_b*sin($a_d)] [expr $z_b]]
+    set n_0 [list \
+        [expr cos($a_c)*cos($a_a)] [expr sin($a_c)*cos($a_a)] [expr sin($a_a)]]
+    set n_1 [list \
+        [expr cos($a_d)*cos($a_a)] [expr sin($a_d)*cos($a_a)] [expr sin($a_a)]]
+    set n_2 [list \
+        [expr cos($a_c)*cos($a_b)] [expr sin($a_c)*cos($a_b)] [expr sin($a_b)]]
+    set n_3 [list \
+        [expr cos($a_d)*cos($a_b)] [expr sin($a_d)*cos($a_b)] [expr sin($a_b)]]
+    draw trinorm $v_0 $v_1 $v_2 $n_0 $n_1 $n_2
+    draw trinorm $v_3 $v_2 $v_1 $n_3 $n_2 $n_1
+}
+
 proc draw_ring {res z_a z_b r_a r_b a_a a_b} {
     for {set j 0} {$j < $res} {incr j} {
         set a_c [expr 2.0*$::pi*($j+0.0)/$res]
         set a_d [expr 2.0*$::pi*($j+1.0)/$res]
-        set v_0 [list [expr $r_a*cos($a_c)] [expr $r_a*sin($a_c)] [expr $z_a]]
-        set v_1 [list [expr $r_a*cos($a_d)] [expr $r_a*sin($a_d)] [expr $z_a]]
-        set v_2 [list [expr $r_b*cos($a_c)] [expr $r_b*sin($a_c)] [expr $z_b]]
-        set v_3 [list [expr $r_b*cos($a_d)] [expr $r_b*sin($a_d)] [expr $z_b]]
-        set n_0 [list [expr cos($a_c)*cos($a_a)] [expr sin($a_c)*cos($a_a)] [expr sin($a_a)]]
-        set n_1 [list [expr cos($a_d)*cos($a_a)] [expr sin($a_d)*cos($a_a)] [expr sin($a_a)]]
-        set n_2 [list [expr cos($a_c)*cos($a_b)] [expr sin($a_c)*cos($a_b)] [expr sin($a_b)]]
-        set n_3 [list [expr cos($a_d)*cos($a_b)] [expr sin($a_d)*cos($a_b)] [expr sin($a_b)]]
-        draw trinorm $v_0 $v_1 $v_2 $n_0 $n_1 $n_2
-        draw trinorm $v_3 $v_2 $v_1 $n_3 $n_2 $n_1
+        draw_ring_quad $res $z_a $z_b $r_a $r_b $a_a $a_b $a_c $a_d
+    }
+}
+
+proc draw_nucleus_with_bleb {res R_n R_o R_b} {
+    set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
+    set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
+    set boa [expr asin($R_o/$R_b)-0.5*$::pi]
+    for {set i 0} {$i < $res} {incr i} {
+        set a_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
+        set a_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
+        set z_a [expr $R_n*sin($a_a)]
+        set z_b [expr $R_n*sin($a_b)]
+        set r_a [expr $R_n*cos($a_a)]
+        set r_b [expr $R_n*cos($a_b)]
+        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
+        set a_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
+        set a_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
+        set z_a [expr $d_b+$R_b*sin($a_a)]
+        set z_b [expr $d_b+$R_b*sin($a_b)]
+        set r_a [expr $R_b*cos($a_a)]
+        set r_b [expr $R_b*cos($a_b)]
+        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
     }
 }
 
@@ -74,25 +108,7 @@ if {$argc==2} {
     if {$R_o==0.0} {
         draw sphere {0 0 0} radius $R_n resolution $res
     } else {
-        set d_b [expr sqrt($R_n*$R_n-$R_o*$R_o)+sqrt($R_b*$R_b-$R_o*$R_o)]
-        set noa [expr 0.5*$::pi-asin($R_o/$R_n)]
-        set boa [expr asin($R_o/$R_b)-0.5*$::pi]
-        for {set i 0} {$i < $res} {incr i} {
-            set a_a [expr ($noa+$::pi*0.5)*($i+0.0)/$res-$::pi*0.5]
-            set a_b [expr ($noa+$::pi*0.5)*($i+1.0)/$res-$::pi*0.5]
-            set z_a [expr $R_n*sin($a_a)]
-            set z_b [expr $R_n*sin($a_b)]
-            set r_a [expr $R_n*cos($a_a)]
-            set r_b [expr $R_n*cos($a_b)]
-            draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
-            set a_a [expr ($::pi*0.5-$boa)*($i+0.0)/$res+$boa]
-            set a_b [expr ($::pi*0.5-$boa)*($i+1.0)/$res+$boa]
-            set z_a [expr $d_b+$R_b*sin($a_a)]
-            set z_b [expr $d_b+$R_b*sin($a_b)]
-            set r_a [expr $R_b*cos($a_a)]
-            set r_b [expr $R_b*cos($a_b)]
-            draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
-        }
+        draw_nucleus_with_bleb $res $R_n $R_o $R_b
     }
 
     translate to 0.0 -0.5 0.0
