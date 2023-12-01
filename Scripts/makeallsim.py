@@ -10,6 +10,19 @@ from pathlib import Path
 
 from itertools import product
 
+from signal import signal
+from signal import SIGUSR1
+
+#Define setstop function
+
+stop = False
+
+def setstop(sig,stack):
+    global stop
+    stop = True
+
+signal(SIGUSR1,setstop)
+
 #Define makesim function
 
 numberofsim = 4
@@ -32,6 +45,9 @@ def makesim(simdir):
     pattern = "analysis-*"
     if len(list(simdir.glob(pattern))) == 0 or newsim:
         run(["./Program/bin/ccp-analyze",str(simdir)])
+
+    if stop:
+        exit()
 
 #Make simulations without bleb
 
