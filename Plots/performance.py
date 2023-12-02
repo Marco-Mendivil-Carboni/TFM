@@ -1,40 +1,48 @@
 #Imports
 
+from pathlib import Path
+
 import pandas as pd
+
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 
-#Test
+#Set fixed parameters
 
-cm = 1 / 2.54
+mpl.use("pdf")
 
-mpl.use("pgf")
 mpl.rcParams["text.usetex"] = True
 mpl.rcParams["font.family"] = "serif"
-mpl.rcParams["pgf.rcfonts"] = False#neccesary?
-mpl.rcParams["pgf.texsystem"] = "pdflatex"#neccesary?
-plt.rcParams["figure.figsize"] = [12.00*cm,8.00*cm]
-plt.rcParams["figure.autolayout"] = True
-plt.rcParams["legend.frameon"] = False
 
-columns = ["N","t_e"]
+cm = 1 / 2.54
+mpl.rcParams["figure.figsize"] = [12.00 * cm, 8.00 * cm]
+mpl.rcParams["figure.constrained_layout.use"] = True
 
-df_A4000 = pd.read_csv("Plots/RTX-A4000.dat",sep=" ",header=None,names=columns)
-df_3050 = pd.read_csv("Plots/GeForce-RTX-3050.dat",sep=" ",header=None, 
-    names=columns)
-df_920M = pd.read_csv("Plots/GeForce-920M.dat",sep=" ",header=None,
-    names=columns)
+mpl.rcParams["legend.frameon"] = False
+
+#Load data into dataframe
+
+plotsrootdir = Path("Plots")
+datafilepath = plotsrootdir/"performance.dat"
+
+df_all = pd.read_csv(datafilepath,sep=" ",names=["GPU","N","t_e"])
+
+df_1 = df_all.loc[df_all["GPU"] == "GF-920M"]
+df_2 = df_all.loc[df_all["GPU"] == "GF-RTX-3050"]
+df_3 = df_all.loc[df_all["GPU"] == "RTX-A4000"]
+
+#Make performance plot
 
 plt.xscale("log")
 plt.yscale("log")
-plt.xlim([128,65536])
-plt.ylim([0.1,100.0])
+
 plt.xlabel("$N$")
 plt.ylabel("$t_e$ (ms)")
-plt.plot(df_920M.N,df_920M.t_e,marker="o",color="#d81e2c",label="GeForce-920M")
-plt.plot(df_3050.N,df_3050.t_e,marker="o",color="#a31cc5",
-         label="GeForce-RTX-3050")
-plt.plot(df_A4000.N,df_A4000.t_e,marker="o",color="#194bb2",label="RTX-A4000")
+
+plt.plot(df_1.N,df_1.t_e,marker="o",color="#d81e2c",label="GeForce-920M")
+plt.plot(df_2.N,df_2.t_e,marker="o",color="#a31cc5",label="GeForce-RTX-3050")
+plt.plot(df_3.N,df_3.t_e,marker="o",color="#194bb2",label="RTX-A4000")
+
 plt.legend(loc="upper left")
 
-plt.savefig("Plots/performance.pdf")
+plt.savefig(plotsrootdir/"performance.pdf")

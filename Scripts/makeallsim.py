@@ -11,7 +11,7 @@ from pathlib import Path
 from itertools import product
 
 from signal import signal
-from signal import SIGUSR1
+from signal import SIGINT
 
 #Define setstop function
 
@@ -21,7 +21,7 @@ def setstop(sig,stack):
     global stop
     stop = True
 
-signal(SIGUSR1,setstop)
+signal(SIGINT,setstop)
 
 #Define makesim function
 
