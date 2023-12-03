@@ -622,8 +622,12 @@ void chrsim::set_particle_types()
   {
     if (i_p==cde) //change domain type
     {
-      curandGenerateUniform(gen,&ran,1);
-      edl = -mdl*log(ran);
+      do
+      {
+        curandGenerateUniform(gen,&ran,1);
+        edl = -mdl*log(ran);
+      }
+      while ((edl/mdl)>5||edl<1.0);
       cde = i_p+edl;
       cpt = (cpt==LND)?LAD:LND;
     }

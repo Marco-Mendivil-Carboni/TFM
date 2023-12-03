@@ -11,7 +11,7 @@ from pathlib import Path
 from itertools import product
 
 from signal import signal
-from signal import SIGINT
+from signal import SIGUSR1
 
 #Define setstop function
 
@@ -21,7 +21,27 @@ def setstop(sig,stack):
     global stop
     stop = True
 
-signal(SIGINT,setstop)
+signal(SIGUSR1,setstop)
+
+#Define getsimname function
+
+def getsimname(N,R_n,R_o,R_b,n_l):
+    simname = "{:05.0}".format(N)
+    simname += "-{:05.2}".format(R_n)
+    simname += "-{:05.2}".format(R_o)
+    simname += "-{:05.2}".format(R_b)
+    simname += "-{:05.0}".format(n_l)
+    return simname
+
+#Define writeparam function
+
+def writeparam(simdir,N,R_n,R_o,R_b,n_l):
+    with open(simdir/"adjustable-parameters.dat","w") as parfile:
+        parfile.write("number_of_particles {:05.0f}\n".format(N))
+        parfile.write("nucleus_radius {:05.2f}\n".format(R_n))
+        parfile.write("opening_radius {:05.2f}\n".format(R_o))
+        parfile.write("bleb_radius {:05.2f}\n".format(R_b))
+        parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
 
 #Define makesim function
 
@@ -49,52 +69,36 @@ def makesim(simdir):
     if stop:
         exit()
 
-#Make simulations without bleb
+#Make simulations
 
-simrootdir = Path("Simulations/without-bleb")
+simrootdir = Path("Simulations")
 
-for i, j, k in product(range(4),range(4),range(4)):
+N = 32768
 
-    N = 4096 * 2 ** i
-    cvf = 0.1 + 0.1 * j
-    laf = 0.05 + 0.15 * k
-    simdir = simrootdir/"{:05}-{:5.3f}-{:5.3f}".format(N, cvf, laf)
-    simdir.mkdir(exist_ok=True)
+for i, j in product(range(3),range(3)):
+
+    cvf = 0.2 + 0.1 * i
+    laf = 0.00 + 0.25 * j
 
     R_n = 0.5 + 0.5 * ((N / cvf) ** (1 / 3))
+
+    R_o = 0.0
+    R_b = 0.0
+
     n_l = laf * 4.0 / ((0.5 / (R_n - 1.154701)) ** 2)
 
-    with open(simdir/"adjustable-parameters.dat","w") as parfile:
-        parfile.write("number_of_particles {:05.0f}\n".format(N))
-        parfile.write("nucleus_radius {:5.2f}\n".format(R_n))
-        parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
-
+    simdir = simrootdir/getsimname(N,R_n,R_o,R_b,n_l)
+    writeparam(simdir,N,R_n,R_o,R_b,n_l)
     makesim(simdir)
 
-#Make simulations with bleb
+    for k, l in product(range(2),range(2)):
 
-simrootdir = Path("Simulations/with-bleb")
+        R_b = R_n * ((1 + k) / 2)  ** (1 / 3)
+        R_o = R_b * ((1 + l) / 3)  ** (1 / 2)
 
-N = 16384
-cvf = 0.4
-laf = 0.2
-R_n = 0.5 + 0.5 * ((N / cvf) ** (1 / 3))
+        noacf = 2.0 / (1.0 + cos(asin(R_o / R_n)))
+        n_l = laf * 4.0 / (((0.5 / (R_n - 1.154701)) ** 2) * noacf)
 
-for i, j in product(range(4),range(4)):
-
-    R_b = R_n * (1 + i) / 4
-    R_o = R_b * (1 + j) / 4
-    simdir = simrootdir/"{:5.3f}-{:5.3f}".format(R_b, R_o)
-    simdir.mkdir(exist_ok=True)
-
-    noacf = 2.0 / (1.0 + cos(asin(R_o / R_n)))
-    n_l = laf * 4.0 / (((0.5 / (R_n - 1.154701)) ** 2) * noacf)
-
-    with open(simdir/"adjustable-parameters.dat","w") as parfile:
-        parfile.write("number_of_particles {:05.0f}\n".format(N))
-        parfile.write("nucleus_radius {:5.2f}\n".format(R_n))
-        parfile.write("opening_radius {:5.2f}\n".format(R_o))
-        parfile.write("bleb_radius {:5.2f}\n".format(R_b))
-        parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
-
-    makesim(simdir)
+        simdir = simrootdir/getsimname(N,R_n,R_o,R_b,n_l)
+        writeparam(simdir,N,R_n,R_o,R_b,n_l)
+        makesim(simdir)
