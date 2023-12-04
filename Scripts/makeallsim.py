@@ -26,11 +26,11 @@ signal(SIGUSR1,setstop)
 #Define getsimname function
 
 def getsimname(N,R_n,R_o,R_b,n_l):
-    simname = "{:05.0}".format(N)
-    simname += "-{:05.2}".format(R_n)
-    simname += "-{:05.2}".format(R_o)
-    simname += "-{:05.2}".format(R_b)
-    simname += "-{:05.0}".format(n_l)
+    simname = "{:05.0f}".format(N)
+    simname += "-{:05.2f}".format(R_n)
+    simname += "-{:05.2f}".format(R_o)
+    simname += "-{:05.2f}".format(R_b)
+    simname += "-{:05.0f}".format(n_l)
     return simname
 
 #Define writeparam function
@@ -45,8 +45,8 @@ def writeparam(simdir,N,R_n,R_o,R_b,n_l):
 
 #Define makesim function
 
-numberofsim = 4
-filespersim = 4
+numberofsim = 0
+filespersim = 0
 
 def makesim(simdir):
 
@@ -88,17 +88,21 @@ for i, j in product(range(3),range(3)):
     n_l = laf * 4.0 / ((0.5 / (R_n - 1.154701)) ** 2)
 
     simdir = simrootdir/getsimname(N,R_n,R_o,R_b,n_l)
+    simdir.mkdir(exist_ok=True)
+
     writeparam(simdir,N,R_n,R_o,R_b,n_l)
     makesim(simdir)
 
     for k, l in product(range(2),range(2)):
 
-        R_b = R_n * ((1 + k) / 2)  ** (1 / 3)
+        R_b = R_n * ((1 + k) / 3)  ** (1 / 3)
         R_o = R_b * ((1 + l) / 3)  ** (1 / 2)
 
         noacf = 2.0 / (1.0 + cos(asin(R_o / R_n)))
         n_l = laf * 4.0 / (((0.5 / (R_n - 1.154701)) ** 2) * noacf)
 
         simdir = simrootdir/getsimname(N,R_n,R_o,R_b,n_l)
+        simdir.mkdir(exist_ok=True)
+
         writeparam(simdir,N,R_n,R_o,R_b,n_l)
         makesim(simdir)

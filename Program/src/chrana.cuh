@@ -59,6 +59,8 @@ class chrana : public chrdat //chromatin analysis
   simobs dcm_o; //center of mass distance observable
   simobs rg2_o; //gyration radius squared observable
   simobs nop_o; //nematic order parameter observable
+  simobs nwp_o; //nucleus wall pressure observable
+  simobs ncf_o; //nucleus chromatin fraction observable
 
   simobs rcd_o[3][n_b]; //radial chromatin density observable
 

@@ -46,7 +46,7 @@ inline __device__ void calc_bf(
   //calculate bond vectors, inverse lengths and angle cosines
   for (uint i_b = 0; i_b<4; ++i_b) //bond index
   {
-    if ((i_p+i_b)>=2 && (i_p+i_b)<=N) //calculate variables if bond exists
+    if ((i_p+i_b)>=2&&(i_p+i_b)<=N) //calculate variables if bond exists
     {
       vec[i_b] = r[i_p+i_b-1]-r[i_p+i_b-2];
       il[i_b] = rsqrtf(dot(vec[i_b],vec[i_b]));
