@@ -93,7 +93,6 @@ void chrana::calc_last_is_stat()
   dcm_o.calc_last_is_stat();
   rg2_o.calc_last_is_stat();
   nop_o.calc_last_is_stat();
-  nwp_o.calc_last_is_stat();
   ncf_o.calc_last_is_stat();
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
@@ -120,8 +119,6 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) //text output file
   rg2_o.save_last_is_stat(txt_out_f);
   txt_out_f<<"# nematic order parameter:\n";
   nop_o.save_last_is_stat(txt_out_f);
-  txt_out_f<<"# nucleus wall pressure:\n";
-  nwp_o.save_last_is_stat(txt_out_f);
   txt_out_f<<"# nucleus chromatin fraction:\n";
   ncf_o.save_last_is_stat(txt_out_f);
   txt_out_f<<"\n\n";
@@ -147,19 +144,6 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) //text output file
     msd_o[i_a].save_last_is_stat_s(txt_out_f);
   }
   txt_out_f<<"\n\n";
-
-  //save dcm, rg2 and nop individual simulation time series
-  uint n_e = t_o.is_ts.size(); //number of elements
-  txt_out_f<<"#          t         dcm         rg2         nop\n";
-  for (uint i_e = 0; i_e<n_e; ++i_e) //element index
-  {
-    txt_out_f<<cnfs(t_o.is_ts[i_e],12,' ',2);
-    txt_out_f<<cnfs(dcm_o.is_ts[i_e],12,' ',6);
-    txt_out_f<<cnfs(rg2_o.is_ts[i_e],12,' ',6);
-    txt_out_f<<cnfs(nop_o.is_ts[i_e],12,' ',6);
-    txt_out_f<<"\n";
-  }
-  txt_out_f<<"\n\n";
 }
 
 //clear individual simulation time series
@@ -169,7 +153,6 @@ void chrana::clear_is_ts()
   dcm_o.is_ts.clear();
   rg2_o.is_ts.clear();
   nop_o.is_ts.clear();
-  nwp_o.is_ts.clear();
   ncf_o.is_ts.clear();
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
@@ -190,7 +173,6 @@ void chrana::calc_cs_final_stat()
   dcm_o.calc_cs_final_stat();
   rg2_o.calc_cs_final_stat();
   nop_o.calc_cs_final_stat();
-  nwp_o.calc_cs_final_stat();
   ncf_o.calc_cs_final_stat();
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
@@ -217,8 +199,6 @@ void chrana::save_cs_final_stat(std::ofstream &txt_out_f) //text output file
   rg2_o.save_cs_final_stat(txt_out_f);
   txt_out_f<<"# nematic order parameter:\n";
   nop_o.save_cs_final_stat(txt_out_f);
-  txt_out_f<<"# nucleus wall pressure:\n";
-  nwp_o.save_cs_final_stat(txt_out_f);
   txt_out_f<<"# nucleus chromatin fraction:\n";
   ncf_o.save_cs_final_stat(txt_out_f);
   txt_out_f<<"\n\n";
@@ -285,26 +265,6 @@ void chrana::calc_observables()
   }
   nop /= N-1.0;
   nop_o.is_ts.push_back(nop);
-
-  //calculate the nucleus wall pressure
-  vec3f vwp; //wall-particle vector
-  float d_r; //radial distance
-  float nwp = 0.0; //nucleus wall pressure
-  for (uint i_p = 0; i_p<N; ++i_p) //particle index
-  {
-    if (hr[i_p].z<ng.nod&&hr[i_p].z/d_r<ng.noc) //inside nucleus wall
-    {
-      d_r = length(hr[i_p]);
-      vwp = -hr[i_p]*(ng.R_n/d_r-1.0);
-    }
-    else{ continue;} //outside nucleus wall
-    float dwp = length(vwp); //wall-particle distance
-    if (dwp>rco){ continue;}
-    float d2 = dwp*dwp; //dwp squared
-    nwp += length((18.0*d2*d2-96.0*d2+96.0)/(d2*d2*d2*d2)*vwp);
-  }
-  nwp /= 2.0*(1.0+ng.noc)*M_PI*ng.R_n*ng.R_n;
-  nwp_o.is_ts.push_back(nwp);
 
   //calculate the nucleus chromatin fraction
   float ncf = 0.0; //nucleus wall pressure
