@@ -11,8 +11,7 @@ from io import StringIO
 
 #Set fixed parameters
 
-cm = 1 / 2.54
-mpl.rcParams["figure.figsize"] = [12.00 * cm, 8.00 * cm]
+mpl.rcParams["figure.figsize"] = [12.0,6.0]
 mpl.rcParams["figure.constrained_layout.use"] = True
 
 mpl.rcParams["legend.frameon"] = False
@@ -21,7 +20,7 @@ mpl.rcParams["legend.frameon"] = False
 
 def readblock(block):
     blockio = StringIO(block)
-    return pd.read_csv(blockio,delim_whitespace=True,header=None,comment="#")
+    return pd.read_csv(StringIO(block),delim_whitespace=True,comment="#",header=None)
 
 #Read analysis data
 
@@ -34,19 +33,22 @@ with open(filepath) as file:
 df_s = readblock(blocklist[0])
 df_s.columns = ["avg","sqrt(var)","sem"]
 df_s.index = ["dcm","rg2","nop","ncf"]
-print(df_s)
 
 df_rcd = list()
 for i_t in range(3):
     df_rcd.append(readblock(blocklist[i_t+1]))
     df_rcd[i_t].columns = ["r_b","avg","sqrt(var)","sem"]
-    print(df_rcd[i_t])
 
 df_msd = readblock(blocklist[4])
 df_msd.columns = ["s","avg","sqrt(var)","sem"]
-print(df_msd)
 
 #Make plots
+
+fig, ax = plt.subplots(2,2,height_ratios=[0.25,1])
+
+ax[0,0].table(cellText=df_s.values,rowLabels=df_s.index,colLabels=df_s.columns,loc="center")
+ax[0,0].axis("off")
+ax[0,1].axis("off")
 
 for i_t in range(3):
 
@@ -55,19 +57,17 @@ for i_t in range(3):
     y_min = df_rcd[i_t]["avg"]-df_rcd[i_t]["sem"]
     y_max = df_rcd[i_t]["avg"]+df_rcd[i_t]["sem"]
 
-    plt.step(x,y)
-    plt.fill_between(x,y_min,y_max,step="pre",color="k",alpha=0.25)
-
-plt.show()
+    ax[1,0].step(x,y)
+    ax[1,0].fill_between(x,y_min,y_max,step="pre",color="k",alpha=0.25)
 
 x = df_msd["s"]
 y = df_msd["avg"]
 y_min = df_msd["avg"]-df_msd["sem"]
 y_max = df_msd["avg"]+df_msd["sem"]
 
-plt.xscale("log")
-plt.yscale("log")
-plt.plot(x,y)
-plt.fill_between(x,y_min,y_max,color="k",alpha=0.25)
+ax[1,1].set_xscale("log")
+ax[1,1].set_yscale("log")
+ax[1,1].plot(x,y)
+ax[1,1].fill_between(x,y_min,y_max,color="k",alpha=0.25)
 
 plt.show()
