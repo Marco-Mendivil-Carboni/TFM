@@ -2,6 +2,8 @@
 
 #Imports
 
+from sys import argv
+
 from pathlib import Path
 
 import pandas as pd
@@ -19,16 +21,16 @@ mpl.rcParams["figure.constrained_layout.use"] = True
 
 mpl.rcParams["legend.frameon"] = False
 
-#Select simulation
+#Set simulation directory
 
-simrootdir = Path("Simulations")
-while True:
-    simname = input("Simulation name? ")
-    simdir = simrootdir/simname
-    if simdir.exists():
-        break
-    else:
-        print("Simulation not found")
+if len(argv) == 2:
+    simdir = Path(argv[1])
+else:
+    print("One command line argument required")
+    exit()
+if not simdir.exists():
+    print("Simulation not found")
+    exit()
 
 #Load data into dataframes
 
@@ -96,7 +98,7 @@ ax[1,1].fill_between(x,y_min,y_max,
 
 #View analysis
 
-man = plt.get_current_fig_manager()
-man.set_window_title(simname+" analysis")
+fm = plt.get_current_fig_manager()
+fm.set_window_title(str(simdir)+" analysis")
 
 plt.show()
