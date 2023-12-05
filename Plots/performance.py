@@ -20,7 +20,7 @@ mpl.rcParams["figure.constrained_layout.use"] = True
 
 mpl.rcParams["legend.frameon"] = False
 
-#Load data into dataframe
+#Load data into dataframes
 
 plotsrootdir = Path("Plots")
 datafilepath = plotsrootdir/"performance.dat"
@@ -39,9 +39,9 @@ plt.yscale("log")
 plt.xlabel("$N$")
 plt.ylabel("$t_e$ (ms)")
 
-plt.plot(df_1.N,df_1.t_e,marker="o",color="#d81e2c",label="GeForce-920M")
-plt.plot(df_2.N,df_2.t_e,marker="o",color="#a31cc5",label="GeForce-RTX-3050")
-plt.plot(df_3.N,df_3.t_e,marker="o",color="#194bb2",label="RTX-A4000")
+plt.plot(df_1.N,df_1.t_e,"o",color="#d81e2c",label="GeForce-920M")
+plt.plot(df_2.N,df_2.t_e,"o",color="#a31cc5",label="GeForce-RTX-3050")
+plt.plot(df_3.N,df_3.t_e,"o",color="#194bb2",label="RTX-A4000")
 
 plt.legend(loc="upper left")
 
