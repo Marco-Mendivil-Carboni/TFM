@@ -7,6 +7,8 @@ import pandas as pd
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 
+from io import StringIO
+
 #Set fixed parameters
 
 mpl.use("pdf")
@@ -22,27 +24,43 @@ mpl.rcParams["legend.frameon"] = False
 
 #Load data into dataframes
 
-plotsrootdir = Path("Plots")
-datafilepath = plotsrootdir/"performance.dat"
+simrootdir = Path("Simulations")
+datafilepath = simrootdir/"performance.dat"
 
-df_all = pd.read_csv(datafilepath,sep=" ",names=["GPU","N","t_e"])
+with open(datafilepath) as datafile:
+    blocklist = datafile.read().split("\n\n\n")
 
-df_1 = df_all.loc[df_all["GPU"] == "GF-920M"]
-df_2 = df_all.loc[df_all["GPU"] == "GF-RTX-3050"]
-df_3 = df_all.loc[df_all["GPU"] == "RTX-A4000"]
+df_1 = pd.read_csv(StringIO(blocklist[0]),
+    delim_whitespace=True,comment="#",header=None)
+df_1.columns = ["N","t_e"]
+
+df_2 = pd.read_csv(StringIO(blocklist[1]),
+    delim_whitespace=True,comment="#",header=None)
+df_2.columns = ["N","t_e"]
+
+df_3 = pd.read_csv(StringIO(blocklist[2]),
+    delim_whitespace=True,comment="#",header=None)
+df_3.columns = ["N","t_e"]
 
 #Make performance plot
 
-plt.xscale("log")
-plt.yscale("log")
+plotsrootdir = Path("Plots")
 
-plt.xlabel("$N$")
-plt.ylabel("$t_e$ (ms)")
+fig,ax = plt.subplots()
 
-plt.plot(df_1.N,df_1.t_e,"o",color="#d81e2c",label="GeForce-920M")
-plt.plot(df_2.N,df_2.t_e,"o",color="#a31cc5",label="GeForce-RTX-3050")
-plt.plot(df_3.N,df_3.t_e,"o",color="#194bb2",label="RTX-A4000")
+ax.set_xscale("log")
+ax.set_yscale("log")
 
-plt.legend(loc="upper left")
+ax.set_xlabel("$N$")
+ax.set_ylabel("$t_e$ (ms)")
 
-plt.savefig(plotsrootdir/"performance.pdf")
+ax.plot(df_1["N"],df_1["t_e"],
+    marker="o",color="#d81e2c",label="GeForce 920M")
+ax.plot(df_2["N"],df_2["t_e"],
+    marker="o",color="#a31cc5",label="GeForce RTX 3050")
+ax.plot(df_3["N"],df_3["t_e"],
+    marker="o",color="#194bb2",label="RTX A4000")
+
+ax.legend(loc="upper left")
+
+fig.savefig(plotsrootdir/"performance.pdf")

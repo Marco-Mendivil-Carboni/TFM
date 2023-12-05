@@ -21,10 +21,14 @@ mpl.rcParams["legend.frameon"] = False
 
 #Select simulation
 
-simname = input("Simulation name? ")
-
 simrootdir = Path("Simulations")
-simdir = simrootdir/simname
+while True:
+    simname = input("Simulation name? ")
+    simdir = simrootdir/simname
+    if simdir.exists():
+        break
+    else:
+        print("Simulation not found")
 
 #Load data into dataframes
 
@@ -65,6 +69,8 @@ ax[0,1].table(cellText=df_s.values,colLabels=df_s.columns,
     loc="center",colLoc="right",edges="horizontal")
 
 colorlist = ["#d81e2c","#a31cc5","#194bb2"]
+ax[1,0].set_xlabel("r_b")
+ax[1,0].set_ylabel("rcd")
 ax[1,0].autoscale(tight=True)
 for i_t in range(3):
     x = df_rcd[i_t]["r_b"]
@@ -77,6 +83,8 @@ for i_t in range(3):
 
 ax[1,1].set_xscale("log")
 ax[1,1].set_yscale("log")
+ax[1,1].set_xlabel("s")
+ax[1,1].set_ylabel("msd")
 ax[1,1].autoscale(tight=True)
 x = df_msd["s"]
 y = df_msd["avg"]
