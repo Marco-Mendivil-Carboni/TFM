@@ -110,7 +110,7 @@ void chrana::calc_last_is_stat()
 //save last individual simulation statistics
 void chrana::save_last_is_stat(std::ofstream &txt_out_f) //text output file
 {
-  //save dcm, rg2 and nop last individual simulation statistics
+  //save dcm, rg2, nop and ncf last individual simulation statistics
   txt_out_f<<"#individual simulation analysis\n";
   txt_out_f<<"#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   txt_out_f<<"# center of mass distance:\n";
@@ -190,7 +190,7 @@ void chrana::calc_cs_final_stat()
 //save combined simulations final statistics
 void chrana::save_cs_final_stat(std::ofstream &txt_out_f) //text output file
 {
-  //save dcm, rg2 and nop combined simulations final statistics
+  //save dcm, rg2, nop and ncf combined simulations final statistics
   txt_out_f<<"#combined simulations final analysis\n";
   txt_out_f<<"#        avg   sqrt(var)         sem\n";
   txt_out_f<<"# center of mass distance:\n";

@@ -45,8 +45,8 @@ def writeparam(simdir,N,R_n,R_o,R_b,n_l):
 
 #Define makesim function
 
-numberofsim = 0
-filespersim = 0
+numberofsim = 2
+filespersim = 2
 
 def makesim(simdir):
 
