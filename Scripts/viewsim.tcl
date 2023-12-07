@@ -67,8 +67,9 @@ if {$argc==2} {
     axes location Off
 
     set res 32
+    set r_p 5.0
+    set n_l 0
     set R_o 0.0
-    set p_rad 5.0
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
     set param_fp [open $param_file "r"]
     while {[gets $param_fp line] != -1} {
@@ -81,15 +82,20 @@ if {$argc==2} {
         if {[regexp "bleb_radius\\s+(.*)" $line all value]} {
             set R_b [expr 10.0*$value]
         }
+        if {[regexp "number_of_lbs\\s+(.*)" $line all value]} {
+            set n_l $value
+        }
     }
     close $param_fp
 
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
-    mol new $gro_file autobonds off
-    set sel [atomselect top "name C"]
-    $sel set radius $p_rad
-    color Name "C" 2
-    mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
+    if {$n_l>=1} {
+        mol new $gro_file autobonds off
+        set sel [atomselect top "name C"]
+        $sel set radius $r_p
+        color Name "C" 2
+        mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
+    }
 
     set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
     mol new $gro_file autobonds off
@@ -97,12 +103,12 @@ if {$argc==2} {
     set N [molinfo top get numatoms]
     for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
     set sel [atomselect top "name A"]
-    $sel set radius $p_rad
+    $sel set radius $r_p
     color Name "A" 0
     set sel [atomselect top "name B"]
-    $sel set radius $p_rad
+    $sel set radius $r_p
     color Name "B" 1
-    mol modstyle 0 top CPK 4.0 [expr 4.0*$p_rad/2.0] $res $res
+    mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
 
     draw material Transparent
     if {$R_o==0.0} {
