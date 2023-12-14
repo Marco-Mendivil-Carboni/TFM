@@ -26,10 +26,9 @@ int main(
   uint i_t_f; //trajectory file index
 
   //create log file in current working directory
-  uint ls = sim_dir.find_last_of("/"); //last separator
-  std::string simname = sim_dir.substr(ls+1); //simulation name
-  std::string logpath = simname+".log"; //log file path
-  mmc::logger::set_file(logpath);
+  time_t t_s = time(nullptr); //starting time
+  pathstr = std::to_string(t_s)+".log";
+  mmc::logger::set_file(pathstr);
 
   //main try block
   try
@@ -115,7 +114,8 @@ int main(
 
   //remove log file
   mmc::logger::set_file("/dev/null");
-  std::remove(logpath.c_str());
+  pathstr = std::to_string(t_s)+".log";
+  std::remove(pathstr.c_str());
 
   //exit program successfully
   return EXIT_SUCCESS;
