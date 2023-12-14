@@ -106,11 +106,9 @@ int main(
   {
     //exit program unsuccessfully
     mmc::logger::record(err.what());
-    mmc::logger::record("program exited unsuccessfully");
     return EXIT_FAILURE;
   }
 
   //exit program successfully
-  mmc::logger::record("program exited successfully");
   return EXIT_SUCCESS;
 }

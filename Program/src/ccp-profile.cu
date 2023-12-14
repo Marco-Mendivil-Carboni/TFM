@@ -55,10 +55,8 @@ int main(
       par_s<<"frames_per_file"<<" "<<mmc::cnfs(fpf,4,'0')<<std::endl;
       mmc::parmap par(par_s); //parameters
 
-      //initialize simulation
+      //initialize simulation and generate initial condition
       mmc::chrsim sim(par); //simulation
-
-      //generate initial condition
       sim.generate_initial_condition();
 
       //measure execution time
@@ -80,11 +78,9 @@ int main(
   {
     //exit program unsuccessfully
     mmc::logger::record(err.what());
-    mmc::logger::record("program exited unsuccessfully");
     return EXIT_FAILURE;
   }
 
   //exit program successfully
-  mmc::logger::record("program exited successfully");
   return EXIT_SUCCESS;
 }

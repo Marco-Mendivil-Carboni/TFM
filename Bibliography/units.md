@@ -26,3 +26,7 @@
 | $dt$           | $(1/2048)t_u$          | $1.7\text{ ns}$                   |
 
 > We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
+
+> We take $\sigma=12\text{ nm}$, slightly bigger than the experimental value ($11\text{ nm}$) to take into account the faint electrostatic repulsion. Although DNA is negatively charged and histones are positively charged the chromatin fiber as a whole is still somewhat negatively charged.
+
+> The Reynolds number is $\text{Re}=4.5\cdot 10^{-5}$.

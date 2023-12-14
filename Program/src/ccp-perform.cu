@@ -25,9 +25,11 @@ int main(
   uint i_s; //simulation index
   uint i_t_f; //trajectory file index
 
-  //open log file inside simulation directory
-  pathstr = sim_dir+"/all-messages.log";
-  mmc::logger::set_file(pathstr);
+  //create log file in current working directory
+  uint ls = sim_dir.find_last_of("/"); //last separator
+  std::string simname = sim_dir.substr(ls+1); //simulation name
+  std::string logpath = simname+".log"; //log file path
+  mmc::logger::set_file(logpath);
 
   //main try block
   try
@@ -108,11 +110,13 @@ int main(
   {
     //exit program unsuccessfully
     mmc::logger::record(err.what());
-    mmc::logger::record("program exited unsuccessfully");
     return EXIT_FAILURE;
   }
 
+  //remove log file
+  mmc::logger::set_file("/dev/null");
+  std::remove(logpath.c_str());
+
   //exit program successfully
-  mmc::logger::record("program exited successfully");
   return EXIT_SUCCESS;
 }

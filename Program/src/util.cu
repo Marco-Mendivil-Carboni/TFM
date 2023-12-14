@@ -4,7 +4,6 @@
 
 #include <iostream> //standard input/output stream objects
 
-#include <time.h> //time utilities library
 #include <glob.h> //pathname pattern matching types
 
 //Namespace
@@ -15,18 +14,15 @@ namespace mmc //Marco Mendívil Carboni
 //Functions
 
 //set log file and open it
-void logger::set_file(
-  const std::string &pathstr, //file path string
-  bool ovr) //overwrite file
+void logger::set_file(const std::string &pathstr) //file path string
 {
   logger &sin = get_instance(); //singleton instance
   if (sin.log_f.is_open()){ sin.log_f.close();}
-  if (pathstr==""){ sin.w_f = false; return;}
-  if (ovr){ sin.log_f.open(pathstr); sin.log_f.close();}
-  else{ sin.log_f.open(pathstr,std::ios::app); sin.log_f.close();}
+  sin.log_f.open(pathstr,std::ios::app);
+  sin.log_f.close();
   sin.log_f.open(pathstr,std::ios::in|std::ios::ate);
   if (sin.log_f.is_open()){ sin.w_f = true;}
-  else{ sin.w_f = false; std::cout<<"unable to open "<<pathstr<<std::endl;}
+  else{ sin.w_f = false;}
 }
 
 //log message with timestamp
@@ -35,8 +31,8 @@ void logger::record(const std::string &msg) //message
   logger &sin = get_instance(); //singleton instance
   time_t now = time(nullptr); //current time
   tm *now_info = localtime(&now); //curent time information
-  char timestr[22]; //timestamp C-style string
-  strftime(timestr,22,"[%d/%m/%y %H:%M:%S] ",now_info);
+  char timestr[21]; //timestamp C-style string
+  strftime(timestr,21,"[%d/%m/%y %H:%M:%S] ",now_info);
   if (sin.w_f)
   {
     sin.log_f<<timestr<<msg<<std::endl;

@@ -23,9 +23,7 @@ class logger //basic logger
   //Functions
 
   //set log file and open it
-  static void set_file(
-    const std::string &pathstr, //file path string
-    bool ovr = false); //overwrite file
+  static void set_file(const std::string &pathstr); //file path string
 
   //log message with timestamp
   static void record(const std::string &msg); //message
@@ -78,10 +76,7 @@ class parmap : public std::map<std::string,std::string> //parameter map
   {
     T val; //parameter value
     if (find(key)==end()){ val = def_val;}
-    else
-    {
-      std::stringstream{at(key)}>>val;
-    }
+    else{ std::stringstream{at(key)}>>val;}
     return val;
   }
 };
@@ -113,10 +108,7 @@ template <typename T> void check_file(
   T &s_f, //stream file 
   const std::string &pathstr) //file path string
 {
-  if (!s_f.is_open())
-  {
-    throw error("unable to open "+pathstr);
-  }
+  if (!s_f.is_open()){ throw error("unable to open "+pathstr);}
 }
 
 } //namespace mmc
