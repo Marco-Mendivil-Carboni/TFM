@@ -46,7 +46,7 @@ def writeparam(simdir,N,R_n,R_o,R_b,n_l):
 #Define makesim function
 
 numberofsim = 2
-filespersim = 2
+filespersim = 8
 
 def makesim(simdir):
 
@@ -75,30 +75,20 @@ simrootdir = Path("Simulations")
 
 N = 32768
 
-for i, j in product(range(3),range(3)):
+for i, j in product(range(3),range(1)):
 
     cvf = 0.2 + 0.1 * i
     laf = 0.00 + 0.25 * j
 
     R_n = 0.5 + 0.5 * ((N / cvf) ** (1 / 3))
 
-    R_o = 0.0
-    R_b = 0.0
-
-    n_l = laf * 4.0 / ((0.5 / (R_n - 1.154701)) ** 2)
-
-    simdir = simrootdir/getsimname(N,R_n,R_o,R_b,n_l)
-    simdir.mkdir(exist_ok=True)
-
-    writeparam(simdir,N,R_n,R_o,R_b,n_l)
-    makesim(simdir)
-
-    for k, l in product(range(2),range(2)):
+    for k, l in product(range(1),range(2)):
 
         R_b = R_n * ((1 + k) / 3)  ** (1 / 3)
         R_o = R_b * ((1 + l) / 3)  ** (1 / 2)
 
         noacf = 2.0 / (1.0 + cos(asin(R_o / R_n)))
+
         n_l = laf * 4.0 / (((0.5 / (R_n - 1.154701)) ** 2) * noacf)
 
         simdir = simrootdir/getsimname(N,R_n,R_o,R_b,n_l)
