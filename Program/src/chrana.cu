@@ -277,7 +277,13 @@ void chrana::calc_observables()
   ncf_o.is_ts.push_back(ncf);
 
   //calculate the radial chromatin density
+  float vol_t; //total volume inside
+  float r_b[n_b]; //bin radius
   float rcd[3][n_b]; //radial chromatin density
+  for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+  {
+    r_b[i_b] = ng.R_n*pow((i_b+1.0)/n_b,1.0/3);
+  }
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {
     for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
@@ -288,11 +294,29 @@ void chrana::calc_observables()
   for (uint i_p = 0; i_p<N; ++i_p) //particle index
   {
     float d_r = length(hr[i_p]); //radial distance
-    uint i_b = n_b*d_r*d_r*d_r/(ng.R_n*ng.R_n*ng.R_n); //bin index
-    if (i_b>=n_b){ continue;}
-    if (hpt[i_p]==LND){ rcd[0][i_b] += 1.0;}
-    if (hpt[i_p]==LAD){ rcd[1][i_b] += 1.0;}
-    rcd[2][i_b] += 1.0;
+    for (uint i_b = 0; i_b<n_b; ++i_b) //bin index
+    {
+      if ((d_r-1.0)>r_b[i_b]){ vol_t = 0.0;}
+      else if ((d_r+1.0)<r_b[i_b]){ vol_t = (4.0/3.0)*M_PI;}
+      else
+      {
+        float cos_a = (d_r*d_r+1.0-r_b[i_b]*r_b[i_b])/(2.0*d_r);
+        float cos_b = (r_b[i_b]*r_b[i_b]+d_r*d_r-1.0)/(2.0*r_b[i_b]*d_r);
+        float vol_a = (1.0/3.0)*M_PI*(2.0+cos_a)*(1.0-cos_a)*(1.0-cos_a);
+        float vol_b = (1.0/3.0)*M_PI*r_b[i_b]*r_b[i_b]*r_b[i_b]
+                                    *(2.0+cos_b)*(1.0-cos_b)*(1.0-cos_b);
+        vol_t = vol_a+vol_b;
+      }
+      if (hpt[i_p]==LND){ rcd[0][i_b] += vol_t;}
+      if (hpt[i_p]==LAD){ rcd[1][i_b] += vol_t;}
+      rcd[2][i_b] += vol_t;
+      if (i_b!=(n_b-1))
+      {
+        if (hpt[i_p]==LND){ rcd[0][i_b+1] -= vol_t;}
+        if (hpt[i_p]==LAD){ rcd[1][i_b+1] -= vol_t;}
+        rcd[2][i_b+1] -= vol_t;
+      }
+    }
   }
   for (uint i_t = 0; i_t<3; ++i_t) //type index
   {

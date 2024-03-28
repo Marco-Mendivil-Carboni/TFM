@@ -1,0 +1,12 @@
+
+- fuerza radial (en una corona de anchura 0.25 R) magnitud: 0.5 y 2.0 ?
+
+- diferenciar interacciones entre distintos tipos de partículas -> separación de fases ?
+
+- introducir dos estados de las partículas: condensado y no condensado
+    + con una longitud de enlace variable (doble pozo)
+    + con el modelo Hip-Hop (potencial diédrico)
+
+- añadir fuerza en las simulaciones con lámina para R = 28 y 35
+
+- tres fuerzas: nula (ya hecha), positiva y negativa

@@ -74,21 +74,13 @@ def makesim(simdir):
 simrootdir = Path("Simulations")
 
 N = 32768
+cvf = 0.1
+R_n = 0.5 + 0.5 * ((N / cvf) ** (1 / 3))
+laf = 0.4
+n_l = laf * 4.0 / ((0.5 / (R_n - 1.154701)) ** 2)
 
-for i in range(2):
+simdir = simrootdir/getsimname(N,R_n,0.0,0.0,n_l)
+simdir.mkdir(exist_ok=True)
 
-    cvf = 0.4 - 0.2 * i
-
-    R_n = 0.5 + 0.5 * ((N / cvf) ** (1 / 3))
-
-    for j in range(i + 1):
-
-        laf = 0.5 * j
-
-        n_l = laf * 4.0 / ((0.5 / (R_n - 1.154701)) ** 2)
-
-        simdir = simrootdir/getsimname(N,R_n,0.0,0.0,n_l)
-        simdir.mkdir(exist_ok=True)
-
-        writeparam(simdir,N,R_n,0.0,0.0,n_l)
-        makesim(simdir)
+writeparam(simdir,N,R_n,0.0,0.0,n_l)
+makesim(simdir)

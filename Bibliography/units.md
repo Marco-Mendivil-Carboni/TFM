@@ -22,7 +22,7 @@
 | $k_e$          | $128e_u/l_u^2$         | $3.6\text{ pN / nm}$              |
 | $k_b$          | $2e_u$                 | $8.2\text{ pN nm}$                |
 | $\sigma$       | $1l_u$                 | $12\text{ nm}$                    |
-| $\varepsilon$  | $0.5e_u$               | $2.05\text{ pN nm}$               |
+| $\varepsilon$  | $1e_u$                 | $4.1\text{ pN nm}$                |
 | $dt$           | $(1/2048)t_u$          | $1.7\text{ ns}$                   |
 
 > We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.

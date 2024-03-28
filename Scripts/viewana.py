@@ -13,6 +13,8 @@ from matplotlib import pyplot as plt
 
 from io import StringIO
 
+import numpy as np
+
 #Set fixed parameters
 
 cm = 1 / 2.54
@@ -89,6 +91,9 @@ for i_t in range(3):
     ax[1,0].step(x,y,color=colorlist[i_t])
     ax[1,0].fill_between(x,y_min,y_max,step="pre",
         color=colorlist[i_t],linewidth=0.0,alpha=0.50)
+
+# aux = np.append(x,y,axis=1)
+np.savetxt("003.txt", np.c_[x,y])
 
 ax[1,1].set_xscale("log")
 ax[1,1].set_yscale("log")
