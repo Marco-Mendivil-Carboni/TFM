@@ -30,8 +30,8 @@ struct cdstat : gdstat //correlated data statistics
 
 struct tdstat : cdstat //time series data statistics
 {
-  uint i_t; //termalization index
-  bool ter; //termalized
+  uint i_t; //thermalization index
+  bool thm; //thermalized
 };
 
 struct simobs //simulation observable

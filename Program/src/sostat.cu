@@ -23,7 +23,7 @@ void simobs::save_last_is_stat(std::ofstream &txt_out_f) //text output file
   tdstat tas = is_sv.back(); //time series auxiliary statistics
   txt_out_f<<cnfs(tas.avg,12,' ',6)<<cnfs(sqrt(tas.var),12,' ',6);
   txt_out_f<<cnfs(tas.sem,12,' ',6)<<cnfs(tas.f_n_b,8,' ');
-  txt_out_f<<cnfs(tas.i_t,8,' ')<<(tas.ter?" yes":"  no")<<"\n";
+  txt_out_f<<cnfs(tas.i_t,8,' ')<<(tas.thm?" yes":"  no")<<"\n";
 }
 
 //save last individual simulation statistics summary
@@ -125,13 +125,13 @@ void calc_stats(
   idstat ias; //independent auxiliary statistics
   cdstat cas; //correlated auxiliary statistics
 
-  //estimate termalization (by the marginal standard error rule)
+  //estimate thermalization (by the marginal standard error rule)
   double mse; //marginal standard error
   double min_mse = INFINITY; //minimum mse
   for(uint d = 2; d<128; d*=2) //denominator
   {
-    //remove termalization vector elements
-    uint i_t = v.size()/d; //termalization index
+    //remove thermalization vector elements
+    uint i_t = v.size()/d; //thermalization index
     av = {v.begin()+i_t,v.end()};
     uint n_e = av.size(); //number of elements
 
@@ -139,7 +139,7 @@ void calc_stats(
     calc_stats(av,ias);
     mse = ias.var*(n_e-1)/(n_e*n_e);
 
-    //save the optimal termalization index
+    //save the optimal thermalization index
     if (mse<min_mse)
     {
       min_mse = mse;
@@ -147,9 +147,9 @@ void calc_stats(
     }
   }
 
-  //determine if data has termalized
-  if (s.i_t!=v.size()/2){ s.ter = true;} //termalized
-  else{ s.ter = false;} //did not termalize
+  //determine if data has thermalized
+  if (s.i_t!=v.size()/2){ s.thm = true;} //thermalized
+  else{ s.thm = false;} //did not thermalize
 
   //calculate the rest of the statistics
   av = {v.begin()+s.i_t,v.end()};
