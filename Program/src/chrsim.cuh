@@ -1,78 +1,76 @@
 #ifndef MMC_CHRSIM_H
 #define MMC_CHRSIM_H
 
-//Includes
+// Includes
 
 #include "chrdat.cuh" //chromatin data
 #include "sugrid.cuh" //sorted uniform grid
 
-//Namespace
+// Namespace
 
-namespace mmc //Marco Mendívil Carboni
+namespace mmc // Marco Mendívil Carboni
 {
 
-//Classes
+// Classes
 
-class chrsim : public chrdat //chromatin simulation
+class chrsim : public chrdat // chromatin simulation
 {
-  public:
+public:
+  // Functions
 
-  //Functions
+  // chromatin simulation constructor
+  chrsim(parmap &par); // parameters
 
-  //chromatin simulation constructor
-  chrsim(parmap &par); //parameters
-
-  //chromatin simulation destructor
+  // chromatin simulation destructor
   ~chrsim();
 
-  //generate a random initial condition
+  // generate a random initial condition
   void generate_initial_condition();
 
-  //save simulation state to binary file
-  void save_checkpoint(std::ofstream &bin_out_f); //binary output file
+  // save simulation state to binary file
+  void save_checkpoint(std::ofstream &bin_out_f); // binary output file
 
-  //load simulation state from binary file
-  void load_checkpoint(std::ifstream &bin_inp_f); //binary input file
+  // load simulation state from binary file
+  void load_checkpoint(std::ifstream &bin_inp_f); // binary input file
 
-  //run simulation and write trajectory to binary file
-  void run_simulation(std::ofstream &bin_out_f); //binary output file
+  // run simulation and write trajectory to binary file
+  void run_simulation(std::ofstream &bin_out_f); // binary output file
 
-  private:
+private:
+  // Parameters and Variables
 
-  //Parameters and Variables
+  const uint spf; // steps per frame
+  const uint tpb; // threads per block
 
-  const uint spf; //steps per frame
-  const uint tpb; //threads per block
+  vec3f *er; // extra position array
+  vec3f *ef; // extra force array
 
-  vec3f *er; //extra position array
-  vec3f *ef; //extra force array
+  const float sd; // rn standard deviation
 
-  const float sd; //rn standard deviation
+  vec3f *rn; // random number array
+  void *vps; // void PRNG state array
 
-  vec3f *rn; //random number array
-  void *vps; //void PRNG state array
+  sugrid pg; // particle grid
+  sugrid *pgp; // particle grid pointer
 
-  sugrid pg; //particle grid
-  sugrid *pgp; //particle grid pointer
+  sugrid lg; // lbs grid
+  sugrid *lgp; // lbs grid pointer
 
-  sugrid lg; //lbs grid
-  sugrid *lgp; //lbs grid pointer
+  // Functions
 
-  //Functions
-
-  //set random lbs positions
+  // set random lbs positions
   void set_lbs_positions();
 
-  //set random particle types
+  // set random particle types
   void set_particle_types();
 
-  //perform a confined random walk
+  // perform a confined random walk
   void perform_random_walk();
 
-  //count particle overlaps
+  // count particle overlaps
   uint particle_overlaps();
 };
 
-} //namespace mmc
+} // namespace mmc
 
-#endif //MMC_CHRSIM_H
+#endif // MMC_CHRSIM_H

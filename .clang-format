@@ -1,0 +1,6 @@
+BasedOnStyle: LLVM
+
+AlignAfterOpenBracket: DontAlign
+AlignTrailingComments: false
+
+BreakBeforeBraces: Allman

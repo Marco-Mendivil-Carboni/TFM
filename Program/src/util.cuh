@@ -1,7 +1,7 @@
 #ifndef MMC_UTIL_H
 #define MMC_UTIL_H
 
-//Includes
+// Includes
 
 #include "vect.cuh" //vector types
 
@@ -9,108 +9,123 @@
 #include <iomanip> //input/output parametric manipulators
 #include <map> //map container classes
 
-//Namespace
+// Namespace
 
-namespace mmc //Marco Mendívil Carboni
+namespace mmc // Marco Mendívil Carboni
 {
 
-//Classes
+// Classes
 
-class logger //basic logger
+class logger // basic logger
 {
-  public:
-  
-  //Functions
+public:
+  // Functions
 
-  //set log file and open it
-  static void set_file(const std::string &pathstr); //file path string
+  // set log file and open it
+  static void set_file(const std::string &pathstr); // file path string
 
-  //log message with timestamp
-  static void record(const std::string &msg); //message
+  // log message with timestamp
+  static void record(const std::string &msg); // message
 
-  //show progress percentage
-  static void show_prog_pc(float prog_pc); //progress percentage
+  // show progress percentage
+  static void show_prog_pc(float prog_pc); // progress percentage
 
-  private:
+private:
+  // Variables
 
-  //Variables
+  bool w_f = false; // write output to file
+  std::ofstream log_f; // log file
 
-  bool w_f = false; //write output to file
-  std::ofstream log_f; //log file
+  // Functions
 
-  //Functions
-
-  //basic logger constructor
+  // basic logger constructor
   logger();
 
-  //basic logger destructor
+  // basic logger destructor
   ~logger();
 
-  //return singleton instance
+  // return singleton instance
   static logger &get_instance();
 };
 
-class error : public std::runtime_error //generic exception type
+class error : public std::runtime_error // generic exception type
 {
-  public:
+public:
+  // Functions
 
-  //Functions
-
-  //generic exception type constructor
-  error(const std::string &msg); //error message
+  // generic exception type constructor
+  error(const std::string &msg); // error message
 };
 
-class parmap : public std::map<std::string,std::string> //parameter map
+class parmap : public std::map<std::string, std::string> // parameter map
 {
-  public:
+public:
+  // Functions
 
-  //Functions
+  // parmap constructor
+  parmap(std::istream &par_s); // parameter stream
 
-  //parmap constructor
-  parmap(std::istream &par_s); //parameter stream
-
-  //get parameter value
-  template <typename T> T get_val(
-    std::string key, //parameter key
-    T def_val) //default value
+  // get parameter value
+  template <typename T>
+  T get_val(std::string key, // parameter key
+      T def_val) // default value
   {
-    T val; //parameter value
-    if (find(key)==end()){ val = def_val;}
-    else{ std::stringstream{at(key)}>>val;}
+    T val; // parameter value
+    if (find(key) == end())
+    {
+      val = def_val;
+    }
+    else
+    {
+      std::stringstream{at(key)} >> val;
+    }
     return val;
   }
 };
 
-//Functions
+// Functions
 
-//check for errors in cuda runtime API call
-void cuda_check(cudaError_t rtn_val); //cuda runtime API call return value
+// check for errors in cuda runtime API call
+void cuda_check(cudaError_t rtn_val); // cuda runtime API call return value
 
-//count files matching pattern
-uint glob_count(const std::string &pathpat); //file path pattern
+// count files matching pattern
+uint glob_count(const std::string &pathpat); // file path pattern
 
-//convert number to formatted string
-template <typename T> std::string cnfs(
-  T num, //number
-  int len = 0, //length
-  char fillc = ' ', //filler character
-  int prc = 0) //precision
+// convert number to formatted string
+template <typename T>
+std::string cnfs(T num, // number
+    int len = 0, // length
+    char fillc = ' ', // filler character
+    int prc = 0) // precision
 {
-  std::stringstream num_str; //number stringstream
-  if (len>0){ num_str<<std::setw(len);}
-  if (fillc!=' '){ num_str<<std::setfill(fillc);}
-  if (prc>0){ num_str<<std::setprecision(prc)<<std::fixed;}
-  num_str<<num; return num_str.str();
+  std::stringstream num_str; // number stringstream
+  if (len > 0)
+  {
+    num_str << std::setw(len);
+  }
+  if (fillc != ' ')
+  {
+    num_str << std::setfill(fillc);
+  }
+  if (prc > 0)
+  {
+    num_str << std::setprecision(prc) << std::fixed;
+  }
+  num_str << num;
+  return num_str.str();
 }
 
-//check file is open or else throw
-template <typename T> void check_file(
-  T &s_f, //stream file 
-  const std::string &pathstr) //file path string
+// check file is open or else throw
+template <typename T>
+void check_file(T &s_f, // stream file
+    const std::string &pathstr) // file path string
 {
-  if (!s_f.is_open()){ throw error("unable to open "+pathstr);}
+  if (!s_f.is_open())
+  {
+    throw error("unable to open " + pathstr);
+  }
 }
 
-} //namespace mmc
+} // namespace mmc
 
-#endif //MMC_UTIL_H
+#endif // MMC_UTIL_H
