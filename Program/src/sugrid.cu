@@ -1,8 +1,8 @@
 // Includes
 
-#include "sugrid.cuh" //chromatin simulation
+#include "sugrid.cuh" // chromatin simulation
 
-#include <cub/device/device_radix_sort.cuh> //cub parallel radix sort
+#include <cub/device/device_radix_sort.cuh> // cub parallel radix sort
 
 // Namespace
 

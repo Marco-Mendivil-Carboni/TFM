@@ -1,10 +1,8 @@
 // Includes
 
-#include "util.cuh" //general utilities
+#include "util.cuh" // general utilities
 
-#include <iostream> //standard input/output stream objects
-
-#include <glob.h> //pathname pattern matching types
+#include <glob.h> // pathname pattern matching types
 
 // Namespace
 

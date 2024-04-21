@@ -3,9 +3,9 @@
 
 // Includes
 
-#include "util.cuh" //general utilities
+#include "util.cuh" // general utilities
 
-#include <vector> //vector container class
+#include <vector> // vector container class
 
 // Namespace
 

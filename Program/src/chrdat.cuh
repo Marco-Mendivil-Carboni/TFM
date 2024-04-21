@@ -3,7 +3,7 @@
 
 // Includes
 
-#include "util.cuh" //general utilities
+#include "util.cuh" // general utilities
 
 // Namespace
 

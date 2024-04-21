@@ -1,6 +1,6 @@
 // Includes
 
-#include "sostat.cuh" //simulation observable statistics
+#include "sostat.cuh" // simulation observable statistics
 
 // Namespace
 

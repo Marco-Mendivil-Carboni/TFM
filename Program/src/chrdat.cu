@@ -1,6 +1,6 @@
 // Includes
 
-#include "chrdat.cuh" //chromatin data
+#include "chrdat.cuh" // chromatin data
 
 // Namespace
 

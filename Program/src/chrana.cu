@@ -1,6 +1,6 @@
 // Includes
 
-#include "chrana.cuh" //chromatin analysis
+#include "chrana.cuh" // chromatin analysis
 
 // Namespace
 

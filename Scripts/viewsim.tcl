@@ -58,7 +58,7 @@ if {$argc==2} {
     set sim_idx [lindex $argv 1]
 
     color Display Background white
-    display resize 640 960
+    display resize 960 960
     display cuedensity 0.2
     display shadows on
     display ambientocclusion on
@@ -89,7 +89,7 @@ if {$argc==2} {
     close $param_fp
 
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
-    if {$n_l>=1} {
+    if {$n_l!=0} {
         mol new $gro_file autobonds off
         set sel [atomselect top "name C"]
         $sel set radius $r_p
@@ -117,16 +117,22 @@ if {$argc==2} {
         draw_nucleus_with_bleb $res $R_n $R_o $R_b
     }
 
-    translate to 0.0 -0.5 0.0
-    rotate x to -90.0
-    scale by 0.8
-
     set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
     set trr_files [lsort [glob $pattern]]
     foreach trr_file $trr_files { mol addfile $trr_file}
+
+    mol top 0
+    display resetview
+
+    if {$R_o!=0.0} {
+        display resize 640 960
+        translate to 0.0 -0.5 0.0
+        rotate x to -90.0
+        scale by 0.8
+    }
 } else {
     puts "You forgot the input."
     exit
 }
 
-# display resize 1200 1800
+# display resize 1200 / 1800 1800

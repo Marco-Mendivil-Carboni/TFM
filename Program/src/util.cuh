@@ -3,11 +3,12 @@
 
 // Includes
 
-#include "vect.cuh" //vector types
+#include "vect.cuh" // vector types
 
-#include <fstream> //file stream classes
-#include <iomanip> //input/output parametric manipulators
-#include <map> //map container classes
+#include <fstream> // file stream classes
+#include <iomanip> // input/output parametric manipulators
+#include <iostream> // standard input/output stream objects
+#include <map> // map container classes
 
 // Namespace
 

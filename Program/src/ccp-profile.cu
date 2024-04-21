@@ -1,9 +1,8 @@
 // Includes
 
-#include "chrsim.cuh" //chromatin simulation
+#include "chrsim.cuh" // chromatin simulation
 
-#include <chrono> //time library
-#include <iostream> //standard input/output stream objects
+#include <chrono> // time library
 
 // Functions
 

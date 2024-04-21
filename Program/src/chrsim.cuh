@@ -3,8 +3,8 @@
 
 // Includes
 
-#include "chrdat.cuh" //chromatin data
-#include "sugrid.cuh" //sorted uniform grid
+#include "chrdat.cuh" // chromatin data
+#include "sugrid.cuh" // sorted uniform grid
 
 // Namespace
 

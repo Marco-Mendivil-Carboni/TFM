@@ -1,8 +1,6 @@
 // Includes
 
-#include "chrana.cuh" //chromatin analysis
-
-#include <iostream> //standard input/output stream objects
+#include "chrana.cuh" // chromatin analysis
 
 // Functions
 

@@ -1,10 +1,8 @@
 // Includes
 
-#include "chrsim.cuh" //chromatin simulation
+#include "chrsim.cuh" // chromatin simulation
 
-#include <time.h> //time utilities library
-
-#include <curand_kernel.h> //cuRAND device functions
+#include <curand_kernel.h> // cuRAND device functions
 
 // Namespace
 

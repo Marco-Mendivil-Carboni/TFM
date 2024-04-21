@@ -3,8 +3,8 @@
 
 // Includes
 
-#include "chrdat.cuh" //chromatin data
-#include "sostat.cuh" //simulation observable statistics
+#include "chrdat.cuh" // chromatin data
+#include "sostat.cuh" // simulation observable statistics
 
 // Namespace
 
