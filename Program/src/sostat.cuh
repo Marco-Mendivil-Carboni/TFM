@@ -21,9 +21,9 @@ struct gdstat // generic data statistics
   double sem; // standard error of the mean
 };
 
-struct idstat : gdstat
+struct idstat : gdstat // independent data statistics
 {
-}; // independent data statistics
+};
 
 struct cdstat : gdstat // correlated data statistics
 {

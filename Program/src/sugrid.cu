@@ -21,10 +21,7 @@ __global__ void calc_indexes(const uint n_o, // number of objects
 {
   // calculate object index
   int i_o = blockIdx.x * blockDim.x + threadIdx.x; // object index
-  if (i_o >= n_o)
-  {
-    return;
-  }
+  if (i_o >= n_o) { return; }
   uoi[i_o] = i_o;
 
   // calculate auxiliary variables
@@ -43,10 +40,7 @@ __global__ void set_cells_empty(const uint n_c, // number of cells
 {
   // calculate limit array index
   int lai = blockIdx.x * blockDim.x + threadIdx.x; // limit array index
-  if (lai >= n_c)
-  {
-    return;
-  }
+  if (lai >= n_c) { return; }
 
   // set beginning and end of cells
   beg[lai] = 0;
@@ -61,10 +55,7 @@ __global__ void find_cells_limits(const uint n_o, // number of objects
 {
   // calculate sorted array index
   int sai = blockIdx.x * blockDim.x + threadIdx.x; // sorted array index
-  if (sai >= n_o)
-  {
-    return;
-  }
+  if (sai >= n_o) { return; }
 
   // set beginning and end of cells
   int ci_curr = sci[sai]; // current cell index
@@ -79,10 +70,7 @@ __global__ void find_cells_limits(const uint n_o, // number of objects
     beg[ci_curr] = sai;
     end[ci_prev] = sai;
   }
-  if (sai == n_o - 1)
-  {
-    end[ci_curr] = sai + 1;
-  }
+  if (sai == n_o - 1) { end[ci_curr] = sai + 1; }
 }
 
 // Host Functions

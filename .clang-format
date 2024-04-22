@@ -3,4 +3,6 @@ BasedOnStyle: LLVM
 AlignAfterOpenBracket: DontAlign
 AlignTrailingComments: false
 
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 BreakBeforeBraces: Allman

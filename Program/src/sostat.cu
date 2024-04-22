@@ -143,14 +143,8 @@ void calc_stats(const std::vector<float> &v, // vector
   }
 
   // determine if data has thermalized
-  if (s.i_t != v.size() / 2)
-  {
-    s.thm = true;
-  } // thermalized
-  else
-  {
-    s.thm = false;
-  } // did not thermalize
+  if (s.i_t != v.size() / 2) { s.thm = true; } // thermalized
+  else { s.thm = false; } // did not thermalize
 
   // calculate the rest of the statistics
   av = {v.begin() + s.i_t, v.end()};
@@ -174,10 +168,7 @@ void calc_stats(const std::vector<tdstat> &v, // vector
   for (uint i_e = 0; i_e < n_e; ++i_e) // element index
   {
     double w = 1.0 / (v[i_e].sem * v[i_e].sem); // weight
-    if (!isfinite(w))
-    {
-      w = 1.0;
-    }
+    if (!isfinite(w)) { w = 1.0; }
     m_1 += w * v[i_e].avg;
     m_2 += w * v[i_e].avg * v[i_e].avg;
     w_1 += w;

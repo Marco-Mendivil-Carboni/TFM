@@ -79,10 +79,7 @@ inline __device__ void calc_wpf(vec3f vwp, // wall-particle vector
 {
   // calculate Wang-Frenkel force
   float dwp = length(vwp); // wall-particle distance
-  if (dwp > rco)
-  {
-    return;
-  }
+  if (dwp > rco) { return; }
   float d2 = dwp * dwp; // dwp squared
   cf += (18.0 * d2 * d2 - 96.0 * d2 + 96.0) / (d2 * d2 * d2 * d2) * vwp;
 }
@@ -133,10 +130,7 @@ inline __device__ void calc_cf(const cngeom ng, // nucleus geometry
       vwp.z = r_r.z + ng.bod;
     }
   }
-  if (!isfinite(length(vwp)))
-  {
-    return;
-  }
+  if (!isfinite(length(vwp))) { return; }
 
   // calculate wall-particle force
   calc_wpf(vwp, cf);
@@ -161,10 +155,7 @@ inline __device__ void calc_cf<ICG>(const cngeom ng, // nucleus geometry
   // calculate vwp
   d_r = length(r_i);
   vwp = -r_i * (ng.R_n / d_r - 1.0);
-  if (!isfinite(length(vwp)))
-  {
-    return;
-  }
+  if (!isfinite(length(vwp))) { return; }
 
   // calculate wall-particle force
   calc_wpf(vwp, cf);
@@ -180,10 +171,7 @@ inline __device__ void calc_ppf(vec3f vpp, // particle-particle vector
 {
   // calculate Wang-Frenkel force
   float dpp = length(vpp); // particle-particle distance
-  if (dpp > aco)
-  {
-    return;
-  }
+  if (dpp > aco) { return; }
   float d2 = dpp * dpp; // dpp squared
   srf += e_p * (18.0 * d2 * d2 - 96.0 * d2 + 96.0) / (d2 * d2 * d2 * d2) * vpp;
 }
@@ -195,10 +183,7 @@ inline __device__ void calc_ppf<ICG>(vec3f vpp, // particle-particle vector
 {
   // calculate Soft-Repulsive force
   float dpp = length(vpp); // particle-particle distance
-  if (dpp > rco)
-  {
-    return;
-  }
+  if (dpp > rco) { return; }
   srf += 128.0 * (3.0 * rco - 3.0 * dpp) * vpp;
 }
 
@@ -209,10 +194,7 @@ inline __device__ void calc_lpf(vec3f vlp, // lbs-particle vector
 {
   // calculate Binding force
   float dlp = length(vlp); // lbs-particle distance
-  if (dlp > lco)
-  {
-    return;
-  }
+  if (dlp > lco) { return; }
   float nd = (dlp / lco); // normalized dlp
   float d2 = nd * nd; // normalized dlp squared
   srf += e_l * (8.0 / (3.0 * lco * lco)) * (d2 * d2 * d2 - 1.0) * vlp;
@@ -306,10 +288,7 @@ inline __device__ void calc_srf(ptype *pt, // particle type array
       {
         // calculate neighbour cell index
         nci = iofst + nir.x + nir.y * cps + nir.z * cps * cps;
-        if (nci >= n_c)
-        {
-          continue;
-        }
+        if (nci >= n_c) { continue; }
 
         // calculate short-range forces with cell's objects
         calc_cell_srf<T>(pt, lr, pgp, lgp, i_p, r_i, nci, r, srf);
@@ -330,10 +309,7 @@ __global__ void init_ps(const uint N, // number of particles
 {
   // calculate particle index
   uint i_p = blockIdx.x * blockDim.x + threadIdx.x; // particle index
-  if (i_p >= N)
-  {
-    return;
-  }
+  if (i_p >= N) { return; }
 
   // initialize PRNG state
   prng *ps = static_cast<prng *>(vps); // PRNG state array
@@ -350,10 +326,7 @@ __global__ void begin_iter(const uint N, // number of particles
 {
   // calculate particle index
   uint i_p = blockIdx.x * blockDim.x + threadIdx.x; // particle index
-  if (i_p >= N)
-  {
-    return;
-  }
+  if (i_p >= N) { return; }
 
   // calculate random numbers
   prng *ps = static_cast<prng *>(vps); // PRNG state array
@@ -386,10 +359,7 @@ __global__ void exec_RK_1(const uint N, // number of particles
 {
   // calculate particle index
   uint i_p = blockIdx.x * blockDim.x + threadIdx.x; // particle index
-  if (i_p >= N)
-  {
-    return;
-  }
+  if (i_p >= N) { return; }
 
   // calculate forces
   calc_bf(N, i_p, r, f);
@@ -416,10 +386,7 @@ __global__ void exec_RK_2(const uint N, // number of particles
 {
   // calculate particle index
   uint i_p = blockIdx.x * blockDim.x + threadIdx.x; // particle index
-  if (i_p >= N)
-  {
-    return;
-  }
+  if (i_p >= N) { return; }
 
   // calculate forces
   calc_bf(N, i_p, er, ef);
@@ -631,20 +598,11 @@ void chrsim::set_lbs_positions()
     for (uint j_l = 0; j_l < i_l; ++j_l) // secondary lbs index
     {
       float dll = length(hlr[j_l] - hlr[i_l]); // lbs-lbs distance
-      if (dll < 2.0 * lco)
-      {
-        p_a = false;
-      }
+      if (dll < 2.0 * lco) { p_a = false; }
     }
-    if (hlr[i_l].z / length(hlr[i_l]) > ng.noc)
-    {
-      p_a = false;
-    }
+    if (hlr[i_l].z / length(hlr[i_l]) > ng.noc) { p_a = false; }
 
-    if (!p_a)
-    {
-      --i_l;
-    } // repeat
+    if (!p_a) { --i_l; } // repeat
   }
 
   // copy host lbs position array to device
@@ -744,23 +702,11 @@ void chrsim::perform_random_walk()
 
     // check if new position is acceptable
     bool p_a = true; // position is acceptable
-    if (!isfinite(hr[i_p].x))
-    {
-      p_a = false;
-    }
-    if (!isfinite(hr[i_p].y))
-    {
-      p_a = false;
-    }
-    if (!isfinite(hr[i_p].z))
-    {
-      p_a = false;
-    }
+    if (!isfinite(hr[i_p].x)) { p_a = false; }
+    if (!isfinite(hr[i_p].y)) { p_a = false; }
+    if (!isfinite(hr[i_p].z)) { p_a = false; }
     float d_r = length(hr[i_p]); // radial distance
-    if ((ng.R_n - d_r) < mis)
-    {
-      p_a = false;
-    }
+    if ((ng.R_n - d_r) < mis) { p_a = false; }
 
     if (p_a) // continue
     {
@@ -770,14 +716,8 @@ void chrsim::perform_random_walk()
     else // go back
     {
       ++att;
-      if (att > 1024)
-      {
-        i_p = 1 + i_p * 3 / 4;
-      }
-      else
-      {
-        --i_p;
-      }
+      if (att > 1024) { i_p = 1 + i_p * 3 / 4; }
+      else { --i_p; }
     }
   }
 
@@ -800,10 +740,7 @@ uint chrsim::particle_overlaps()
     {
       // check if particles overlap
       dpp = length(hr[j_p] - hr[i_p]);
-      if (dpp < mis)
-      {
-        ++po;
-      }
+      if (dpp < mis) { ++po; }
     }
   }
   return po;

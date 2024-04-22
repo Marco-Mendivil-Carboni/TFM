@@ -15,21 +15,12 @@ namespace mmc // Marco Mendívil Carboni
 void logger::set_file(const std::string &pathstr) // file path string
 {
   logger &sin = get_instance(); // singleton instance
-  if (sin.log_f.is_open())
-  {
-    sin.log_f.close();
-  }
+  if (sin.log_f.is_open()) { sin.log_f.close(); }
   sin.log_f.open(pathstr, std::ios::app);
   sin.log_f.close();
   sin.log_f.open(pathstr, std::ios::in | std::ios::ate);
-  if (sin.log_f.is_open())
-  {
-    sin.w_f = true;
-  }
-  else
-  {
-    sin.w_f = false;
-  }
+  if (sin.log_f.is_open()) { sin.w_f = true; }
+  else { sin.w_f = false; }
 }
 
 // log message with timestamp
@@ -40,10 +31,7 @@ void logger::record(const std::string &msg) // message
   tm *now_info = localtime(&now); // curent time information
   char timestr[21]; // timestamp C-style string
   strftime(timestr, 21, "[%d/%m/%y %H:%M:%S] ", now_info);
-  if (sin.w_f)
-  {
-    sin.log_f << timestr << msg << std::endl;
-  }
+  if (sin.w_f) { sin.log_f << timestr << msg << std::endl; }
   std::cout << timestr << msg << std::endl;
 }
 
@@ -110,14 +98,8 @@ uint glob_count(const std::string &pathpat) // file path pattern
   if (rtn_val != 0)
   {
     globfree(&glob_sr);
-    if (rtn_val == GLOB_NOMATCH)
-    {
-      return 0;
-    }
-    else
-    {
-      throw error("unable to find matches of " + pathpat);
-    }
+    if (rtn_val == GLOB_NOMATCH) { return 0; }
+    else { throw error("unable to find matches of " + pathpat); }
   }
   else
   {

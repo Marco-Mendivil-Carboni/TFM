@@ -17,10 +17,7 @@ __global__ void calc_msd(const uint lma, // length of msd arrays
 {
   // calculate array index
   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
-  if (i_a >= lma)
-  {
-    return;
-  }
+  if (i_a >= lma) { return; }
 
   // calculate the mean spatial distance
   ma[i_a] = 0.0;
@@ -271,14 +268,8 @@ void chrana::calc_observables()
   float ncf = 0.0; // nucleus wall pressure
   for (uint i_p = 0; i_p < N; ++i_p) // particle index
   {
-    if (hr[i_p].z < ng.nod)
-    {
-      ncf += 1.0;
-    }
-    else
-    {
-      continue;
-    }
+    if (hr[i_p].z < ng.nod) { ncf += 1.0; }
+    else { continue; }
   }
   ncf /= N;
   ncf_o.is_ts.push_back(ncf);
@@ -296,18 +287,9 @@ void chrana::calc_observables()
   {
     float d_r = length(hr[i_p]); // radial distance
     uint i_b = n_b * d_r * d_r * d_r / (ng.R_n * ng.R_n * ng.R_n); // bin index
-    if (i_b >= n_b)
-    {
-      continue;
-    }
-    if (hpt[i_p] == LND)
-    {
-      rcd[0][i_b] += 1.0;
-    }
-    if (hpt[i_p] == LAD)
-    {
-      rcd[1][i_b] += 1.0;
-    }
+    if (i_b >= n_b) { continue; }
+    if (hpt[i_p] == LND) { rcd[0][i_b] += 1.0; }
+    if (hpt[i_p] == LAD) { rcd[1][i_b] += 1.0; }
     rcd[2][i_b] += 1.0;
   }
   for (uint i_t = 0; i_t < 3; ++i_t) // type index

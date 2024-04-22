@@ -95,6 +95,7 @@ if {$argc==2} {
         $sel set radius $r_p
         color Name "C" 2
         mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
+        mol rename top {lamina}
     }
 
     set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
@@ -109,6 +110,7 @@ if {$argc==2} {
     $sel set radius $r_p
     color Name "B" 1
     mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
+    mol rename top {chromatin}
 
     draw material Transparent
     if {$R_o==0.0} {
@@ -134,5 +136,3 @@ if {$argc==2} {
     puts "You forgot the input."
     exit
 }
-
-# display resize 1200 / 1800 1800

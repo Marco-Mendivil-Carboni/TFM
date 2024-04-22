@@ -26,10 +26,7 @@ cngeom::cngeom(parmap &par) // parameters
   {
     throw error("opening_radius out of range");
   }
-  if (!(R_o <= R_b && R_b < R_n))
-  {
-    throw error("bleb_radius out of range");
-  }
+  if (!(R_o <= R_b && R_b < R_n)) { throw error("bleb_radius out of range"); }
 
   // record parameter values
   std::string msg = ""; // message
@@ -51,30 +48,18 @@ chrdat::chrdat(parmap &par) // parameters
   {
     throw error("number_of_particles out of range");
   }
-  if (!(0.0 <= T && T < 1'000.0))
-  {
-    throw error("temperature out of range");
-  }
-  if (!(n_l < 100'000))
-  {
-    throw error("number_of_lbs out of range");
-  }
+  if (!(0.0 <= T && T < 1'000.0)) { throw error("temperature out of range"); }
+  if (!(n_l < 100'000)) { throw error("number_of_lbs out of range"); }
   if (!(1 <= fpf && fpf < 10'000))
   {
     throw error("frames_per_file out of range");
   }
   float cvf = N * pow(0.5 / (ng.R_n - 0.5), 3.0); // chromatin volume fraction
-  if (cvf > 0.5)
-  {
-    throw error("chromatin volume fraction above 0.5");
-  }
+  if (cvf > 0.5) { throw error("chromatin volume fraction above 0.5"); }
   float noacf = 2.0 / (1.0 + ng.noc); // nucleus opening area correction factor
   float laf =
       noacf * n_l * pow(lco / (ng.R_n - rco), 2.0) / 4.0; // lbs area fraction
-  if (laf > 0.6)
-  {
-    throw error("lbs area fraction above 0.6");
-  }
+  if (laf > 0.6) { throw error("lbs area fraction above 0.6"); }
 
   // record parameter values
   std::string msg_1 = ""; // 1st message

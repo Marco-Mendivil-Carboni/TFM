@@ -72,14 +72,8 @@ public:
       T def_val) // default value
   {
     T val; // parameter value
-    if (find(key) == end())
-    {
-      val = def_val;
-    }
-    else
-    {
-      std::stringstream{at(key)} >> val;
-    }
+    if (find(key) == end()) { val = def_val; }
+    else { std::stringstream{at(key)} >> val; }
     return val;
   }
 };
@@ -100,18 +94,9 @@ std::string cnfs(T num, // number
     int prc = 0) // precision
 {
   std::stringstream num_str; // number stringstream
-  if (len > 0)
-  {
-    num_str << std::setw(len);
-  }
-  if (fillc != ' ')
-  {
-    num_str << std::setfill(fillc);
-  }
-  if (prc > 0)
-  {
-    num_str << std::setprecision(prc) << std::fixed;
-  }
+  if (len > 0) { num_str << std::setw(len); }
+  if (fillc != ' ') { num_str << std::setfill(fillc); }
+  if (prc > 0) { num_str << std::setprecision(prc) << std::fixed; }
   num_str << num;
   return num_str.str();
 }
@@ -121,10 +106,7 @@ template <typename T>
 void check_file(T &s_f, // stream file
     const std::string &pathstr) // file path string
 {
-  if (!s_f.is_open())
-  {
-    throw error("unable to open " + pathstr);
-  }
+  if (!s_f.is_open()) { throw error("unable to open " + pathstr); }
 }
 
 } // namespace mmc
