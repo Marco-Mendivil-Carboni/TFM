@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Imports
 
@@ -41,33 +41,24 @@ if not simdir.exists():
 # Load data into dataframes
 
 parfilepath = simdir / "adjustable-parameters.dat"
-df_par = pd.read_csv(parfilepath, delim_whitespace=True, comment="#", header=None)
+df_par = pd.read_csv(parfilepath, sep="\\s+", comment="#", header=None)
 
 anafilepath = simdir / "analysis-fin.dat"
 with open(anafilepath) as anafile:
     blocklist = anafile.read().split("\n\n\n")
 
-df_s = pd.read_csv(
-    StringIO(blocklist[0]), delim_whitespace=True, comment="#", header=None
-)
+df_s = pd.read_csv(StringIO(blocklist[0]), sep="\\s+", comment="#", header=None)
 df_s.columns = ["avg", "sqrt(var)", "sem"]
 df_s.insert(loc=0, column="simobs", value=["dcm", "rg2", "nop", "ncf"])
 
 df_rcd = list()
 for i_t in range(3):
     df_rcd.append(
-        pd.read_csv(
-            StringIO(blocklist[i_t + 1]),
-            delim_whitespace=True,
-            comment="#",
-            header=None,
-        )
+        pd.read_csv(StringIO(blocklist[i_t + 1]), sep="\\s+", comment="#", header=None)
     )
     df_rcd[i_t].columns = ["r_b", "avg", "sqrt(var)", "sem"]
 
-df_msd = pd.read_csv(
-    StringIO(blocklist[4]), delim_whitespace=True, comment="#", header=None
-)
+df_msd = pd.read_csv(StringIO(blocklist[4]), sep="\\s+", comment="#", header=None)
 df_msd.columns = ["s", "avg", "sqrt(var)", "sem"]
 
 # Make analysis plots
