@@ -141,7 +141,7 @@ template <stype T> inline __device__ void calc_cf(
   //temporary -------------------------------------------------------------------
   float dwp = length(vwp); //wall-particle distance
   if (dwp>ng.R_n/4){ return;}
-  cf += (-1.0/8)*(vwp/dwp);
+  cf += (+1.0/8)*(vwp/dwp);
   //-----------------------------------------------------------------------------
 
   //add result to force array
