@@ -1,72 +1,71 @@
 \chapter{Introducción}
 \label{cap:introduction}
 
-Para comprobar la validez de la ecuación de Young-Laplace,
-\begin{equation}
-  \Delta P=\frac{2\gamma}{R_c},
-\end{equation}
-debemos estimar la diferencia de presión y el radio de curvatura. Para lo primero basta con calcular $\bar{f}^s_i \ \forall i$, las fuerzas ejercidas por la superficie sobre cada partícula, que incluyen la fuerza repulsiva de la pared y la fuerza atractiva de los enlaces a la lamina. Entonces a cada lado de la apertura,
-\begin{equation}
-  P=\left\langle-\frac{1}{S}\sum_i\bar{f}^s_i\cdot\hat{n}\right\rangle
-\end{equation}
-Hay formas equivalentes de calcular la presión pero son más complicadas.
+\section{Motivación}
 
-En cambio no está tan claro como estimar $R_c$. Se podría intentar ajustar a la distribución promedio de las partículas una superficie esférica pero no he encontrado la forma de hacerlo y he optado por otro camino. Sea $N$ el número de partículas totales y $N'$ las que han ``translocado'' (aquellas con $||\bar{r}_i||>R_n$), si suponemos que la densidad es la misma a ambos lados de la abertura entonces,
-\begin{equation}
-  \frac{N-N'}{V_n^a+V_n^b}=\frac{N'}{V_c}\Rightarrow V_c=\frac{V_n^a+V_n^b}{N/N'-1}
-\end{equation}
-donde claramente $V_n^a+V_n^b=\tfrac{4}{3}\pi R_n^3$. Es un ejercicio de geometría sencillo hallar $V_c$ en función de $R_c$. Resulta que,
-\begin{equation}
-  V_c=\frac{\pi}{3}R_c^3\left(2\pm\sqrt{1-(R_o/R_c)^2}\right)\left(1\mp\sqrt{1-(R_o/R_c)^2}\right)^2-V_n^b
-\end{equation}
-donde
-\begin{equation}
-  V_n^b=\frac{\pi}{3}R_n^3\left(2+\sqrt{1-(R_o/R_n)^2}\right)\left(1-\sqrt{1-(R_o/R_n)^2}\right)^2
-\end{equation}
-Ahora solo queda invertir esta relación y obtener $R_c$ en función de $V_c$, que a su vez podemos expresar en función de $N'$. Utilizando WolframAlpha obtenemos que,
-\begin{equation}
-  R_c=\frac{1}{4\tilde{V}}\left(\Gamma^{1/3}+R_o^4+R_o^8\Gamma^{-1/3}\right)
-\end{equation}
-donde
-\begin{equation}
-  \Gamma=R_o^{12}+8R_o^6\tilde{V}^2+4\sqrt{R_o^{18}\tilde{V}^2+5R_o^{12}\tilde{V}^4+8R_o^6\tilde{V}^6+4\tilde{V}^8}+8\tilde{V}^4
-\end{equation}
-y $\tilde{V}=\frac{3}{\pi}\left(V_c+V_n^b\right)$.
+\section{Objetivos}
 
-\begin{figure}
-  \centering
-  \begin{tikzpicture}
-    \fill [color1!25] (-2.0,2.0) arc (135:405:{2.0*sqrt(2.0)});
-    \fill [color2!25] (2.0,2.0) arc (45:135:{2.0*sqrt(2.0)});
-    \fill [color3!25] (2.0,2.0) arc (0:180:2.0) arc (135:45:{2.0*sqrt(2.0)});
-    \draw [dashed] (0.0,{-2.0*sqrt(2.0)}) -- (0.0,{4.0+2.0*sqrt(2.0)});
-    \draw (-2.0,2.0) arc (135:405:{2.0*sqrt(2.0)});
-    \draw [dashed] (2.0,2.0) arc (45:135:{2.0*sqrt(2.0)});
-    \draw [dashed,latex-latex] (0.0,0.0) -- (2.0,2.0) node[midway,above left] {$R_n$};
-    \draw [dashed] (-2.0,2.0) -- (0.0,2.0);
-    \draw [dashed,latex-latex] (0.0,2.0) -- (2.0,2.0) node[midway,above] {$R_o$};
-    \draw (2.0,2.0) arc (0:180:2.0);
-    \draw [dashed,latex-latex] (0.0,2.0) -- ({sqrt(2.0)},{2.0+sqrt(2.0)}) node[midway,above left] {$R_c$};
-    \draw (2.0,2.0) arc (-45:225:{2.0*sqrt(2.0)});
-    \draw [dashed,latex-latex] (0.0,4.0) -- (2.0,6.0) node[midway,above left] {$R_b$};
-    \node [above left] at (-0.5,1.0) {$V_n^a$};
-    \node [above left] at (-0.5,2.0) {$V_n^b$};
-    \node [above left] at (-0.5,3.0) {$V_c$};
-  \end{tikzpicture}
-  \caption{Geometría del problema.}
-  \label{fig:geometry}
-\end{figure}
+\section{La física de polímeros}
 
-\begin{figure}
-  \centering
-  \includegraphics{../Plots/curvature-radius.pdf}
-  \caption{Radio de curvatura.}
-  \label{fig:R_c}
-\end{figure}
+% Para comprobar la validez de la ecuación de Young-Laplace,
+% \begin{equation}
+%   \Delta P=\frac{2\gamma}{R_c},
+% \end{equation}
+% debemos estimar la diferencia de presión y el radio de curvatura. Para lo primero basta con calcular $\bar{f}^s_i \ \forall i$, las fuerzas ejercidas por la superficie sobre cada partícula, que incluyen la fuerza repulsiva de la pared y la fuerza atractiva de los enlaces a la lamina. Entonces a cada lado de la apertura,
+% \begin{equation}
+%   P=\left\langle-\frac{1}{S}\sum_i\bar{f}^s_i\cdot\hat{n}\right\rangle
+% \end{equation}
+% Hay formas equivalentes de calcular la presión pero son más complicadas.
 
-\begin{figure}
-  \centering
-  \includegraphics{../Plots/performance.pdf}
-  \caption{Rendimiento.}
-  \label{fig:performance}
-\end{figure}
+% En cambio no está tan claro como estimar $R_c$. Se podría intentar ajustar a la distribución promedio de las partículas una superficie esférica pero no he encontrado la forma de hacerlo y he optado por otro camino. Sea $N$ el número de partículas totales y $N'$ las que han ``translocado'' (aquellas con $||\bar{r}_i||>R_n$), si suponemos que la densidad es la misma a ambos lados de la abertura entonces,
+% \begin{equation}
+%   \frac{N-N'}{V_n^a+V_n^b}=\frac{N'}{V_c}\Rightarrow V_c=\frac{V_n^a+V_n^b}{N/N'-1}
+% \end{equation}
+% donde claramente $V_n^a+V_n^b=\tfrac{4}{3}\pi R_n^3$. Es un ejercicio de geometría sencillo hallar $V_c$ en función de $R_c$. Resulta que,
+% \begin{equation}
+%   V_c=\frac{\pi}{3}R_c^3\left(2\pm\sqrt{1-(R_o/R_c)^2}\right)\left(1\mp\sqrt{1-(R_o/R_c)^2}\right)^2-V_n^b
+% \end{equation}
+% donde
+% \begin{equation}
+%   V_n^b=\frac{\pi}{3}R_n^3\left(2+\sqrt{1-(R_o/R_n)^2}\right)\left(1-\sqrt{1-(R_o/R_n)^2}\right)^2
+% \end{equation}
+% Ahora solo queda invertir esta relación y obtener $R_c$ en función de $V_c$, que a su vez podemos expresar en función de $N'$. Utilizando WolframAlpha obtenemos que,
+% \begin{equation}
+%   R_c=\frac{1}{4\tilde{V}}\left(\Gamma^{1/3}+R_o^4+R_o^8\Gamma^{-1/3}\right)
+% \end{equation}
+% donde
+% \begin{equation}
+%   \Gamma=R_o^{12}+8R_o^6\tilde{V}^2+4\sqrt{R_o^{18}\tilde{V}^2+5R_o^{12}\tilde{V}^4+8R_o^6\tilde{V}^6+4\tilde{V}^8}+8\tilde{V}^4
+% \end{equation}
+% y $\tilde{V}=\frac{3}{\pi}\left(V_c+V_n^b\right)$.
+
+% \begin{figure}
+%   \centering
+%   \begin{tikzpicture}
+%     \fill [color1!25] (-2.0,2.0) arc (135:405:{2.0*sqrt(2.0)});
+%     \fill [color2!25] (2.0,2.0) arc (45:135:{2.0*sqrt(2.0)});
+%     \fill [color3!25] (2.0,2.0) arc (0:180:2.0) arc (135:45:{2.0*sqrt(2.0)});
+%     \draw [dashed] (0.0,{-2.0*sqrt(2.0)}) -- (0.0,{4.0+2.0*sqrt(2.0)});
+%     \draw (-2.0,2.0) arc (135:405:{2.0*sqrt(2.0)});
+%     \draw [dashed] (2.0,2.0) arc (45:135:{2.0*sqrt(2.0)});
+%     \draw [dashed,latex-latex] (0.0,0.0) -- (2.0,2.0) node[midway,above left] {$R_n$};
+%     \draw [dashed] (-2.0,2.0) -- (0.0,2.0);
+%     \draw [dashed,latex-latex] (0.0,2.0) -- (2.0,2.0) node[midway,above] {$R_o$};
+%     \draw (2.0,2.0) arc (0:180:2.0);
+%     \draw [dashed,latex-latex] (0.0,2.0) -- ({sqrt(2.0)},{2.0+sqrt(2.0)}) node[midway,above left] {$R_c$};
+%     \draw (2.0,2.0) arc (-45:225:{2.0*sqrt(2.0)});
+%     \draw [dashed,latex-latex] (0.0,4.0) -- (2.0,6.0) node[midway,above left] {$R_b$};
+%     \node [above left] at (-0.5,1.0) {$V_n^a$};
+%     \node [above left] at (-0.5,2.0) {$V_n^b$};
+%     \node [above left] at (-0.5,3.0) {$V_c$};
+%   \end{tikzpicture}
+%   \caption{Geometría del problema.}
+%   \label{fig:geometry}
+% \end{figure}
+
+% \begin{figure}
+%   \centering
+%   \includegraphics{../Plots/curvature-radius.pdf}
+%   \caption{Radio de curvatura.}
+%   \label{fig:R_c}
+% \end{figure}
