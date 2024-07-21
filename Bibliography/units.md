@@ -1,32 +1,62 @@
 
 # Units
 
+## Parameters and constants
+
++ According to Robinson et al. there are 11 nucleosomes for each 11 nm of heterochromatin fiber, which is 33 nm wide.
+
++ We will consider that each one of our particles has 33 nucleosomes and thus a diameter of 33 nm.
+
++ Although in the euchromatic state nucleosomes are not organized in a well-defined and stable manner they interact strongly in various ways forming the so called TADs (Topologically Associating Domains). Inside this domains the nuclesomes are presumably very close together so assuming that they ocuppy a similar volume as in the heterochromatin state is justified.
+
++ As Safran mentions, we can more or less associate LADs to heterochromatin and non-LADs to euchromatin so in our model we will use only two types of particles for simplicity:
+    + A: LAD heterochromatin
+    + B: non-LAD euchromatin
+
++ According to Bystricky et al. heterochromatin has a persistance length of $\sim$ 200 nm so in our model A particles will have $k_b=6$.
+
++ While euchromatin has virtually no persistance length at this scale so B particles will have $k_b=0$.
+
++ As explained by Camara the compaction and rigidity of heterochromatin makes it self-attractive due to depletion attraction. Meanwhile euchromatin is much softer and does not interact with itself through this mecanism. Camara also mentions that inactive regions (that is heterochromatin like domains) have higher self-affinity. Thus we will consider that A particles are purely repulsive while B particles are self-attractive (with a variable value of $\varepsilon$).
+
++ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to BioNumbers the nucleolus has an average diameter of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume and probably represent an even lower fraction of the genome despite their crucial biological function.
+
++ The exact value of the elastic constant is not really relevant in this context as long as it is high enough to keep the distance between bonded particles from fluctuating too much. According to Falo et al. the statiscal properties of an elastic freely jointed chain only depend on the elastic constant through the fraction $2/(1+\beta k_el_0^2)$ so taking $k_e=128$ should suffice.
+
++ With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the  unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the  features seen on experiments.
+
++ The modifiable parameters of the model are:
+    + Temperature (fixed, 298 K)
+    + Number of particles (fixed, 16384?)
+    + A-B particle sequence
+    + Nucleus radius (and the geometry of the bleb)
+    + Number of lbs
+    + A-particles self-attraction? (use a fixed $\varepsilon$ for the repulsive part?)
+
+> I still have to estimate and fix the depth of the lbs potential well and maybe the value of $\varepsilon$.
+
+| name           | value (PU)             | value (SI)                        |
+|----------------|------------------------|-----------------------------------|
+| $\xi$          | $1m_u/t_u$             | $3\pi\eta d=0.27\text{ pg / us}$  |
+| $k_B$          | $(1/298)e_u/\text{K}$  | $0.014\text{ pN nm / K}$          |
+| $l_0$          | $1l_u$                 | $33\text{ nm}$                    |
+| $k_e$          | $128e_u/l_u^2$         | $0.48\text{ pN / nm}$             |
+| $k_b^A$        | $6e_u$                 | $25\text{ pN nm}$                 |
+| $\sigma$       | $1l_u$                 | $33\text{ nm}$                    |
+| $\varepsilon$  | $0.5e_u$               | $2.05\text{ pN nm}$               |
+| $dt$           | $(1/2048)t_u$          | $35\text{ ns}$                    |
+
++ We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
+
++ The Reynolds number is $\text{Re}=\rho v_ul_u/\eta=1.7\cdot 10^{-5}$.
+
 ## Program units
 
 | quantity     | unit                              |
 |--------------|-----------------------------------|
-| length       | $\sigma=12\text{ nm}$             |
+| length       | $\sigma=33\text{ nm}$             |
 | energy       | $k_BT=4.1\text{ pN nm}$           |
-| time         | $\xi\sigma^2/k_BT=3.5\text{ us}$  |
+| time         | $\xi\sigma^2/k_BT=72\text{ us}$   |
 | temperature  | $1\text{ K}$                      |
-| force        | $e_u/l_u=0.34\text{ pN}$          |
-| velocity     | $l_u/t_u=3.4\text{ nm / us}$      |
-
-## Parameters and constants
-
-| name           | value (PU)             | value (SI)                        |
-|----------------|------------------------|-----------------------------------|
-| $\xi$          | $1m_u/t_u$             | $3\pi\eta d=0.10\text{ pg / us}$  |
-| $k_B$          | $(1/298)e_u/\text{K}$  | $0.0138\text{ pN nm / K}$         |
-| $l_0$          | $1l_u$                 | $12\text{ nm}$                    |
-| $k_e$          | $128e_u/l_u^2$         | $3.6\text{ pN / nm}$              |
-| $k_b$          | $2e_u$                 | $8.2\text{ pN nm}$                |
-| $\sigma$       | $1l_u$                 | $12\text{ nm}$                    |
-| $\varepsilon$  | $0.5e_u$               | $2.05\text{ pN nm}$               |
-| $dt$           | $(1/2048)t_u$          | $1.7\text{ ns}$                   |
-
-> We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
-
-> We take $\sigma=12\text{ nm}$, slightly bigger than the experimental value ($11\text{ nm}$) to take into account the faint electrostatic repulsion. Although DNA is negatively charged and histones are positively charged the chromatin fiber as a whole is still somewhat negatively charged.
-
-> The Reynolds number is $\text{Re}=4.5\cdot 10^{-5}$.
+| force        | $e_u/l_u=0.12\text{ pN}$          |
+| velocity     | $l_u/t_u=0.46\text{ nm / us}$     |

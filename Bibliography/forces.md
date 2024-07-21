@@ -41,6 +41,8 @@ $$
 
 ## Wang-Frenkel potential
 
+For brevity, from here onwards distances will be expressed in dimensionless form in units of $\sigma$.
+
 $$
 V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} \varepsilon \left(\frac{1}{d _{ij} ^{2}} - 1\right)\left(\frac{4}{d _{ij} ^{2}} - 1\right) ^{2}
 $$
