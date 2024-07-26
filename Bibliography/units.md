@@ -9,31 +9,31 @@
 
 + Although in the euchromatic state nucleosomes are not organized in a well-defined and stable manner they interact strongly in various ways forming the so called TADs (Topologically Associating Domains). Inside this domains the nuclesomes are presumably very close together so assuming that they ocuppy a similar volume as in the heterochromatin state is justified.
 
-+ As Safran mentions, we can more or less associate LADs to heterochromatin and non-LADs to euchromatin so in our model we will use only two types of particles for simplicity:
++ As Bajpai et al. mention, we can more or less associate LADs to heterochromatin and non-LADs to euchromatin so in our model we will use only two types of particles for simplicity:
     + A: LAD heterochromatin
     + B: non-LAD euchromatin
+
++ Despite what one may think at first according to Bajpai at al. the exact sequence of particles used in this kind of models does not change significantly the results, as long as the statistical properties of the sequences are similar. Nonetheless, we will base the sequence of our coarse grained model on experimental data. We will use the segments of H3K27me3, an epigenetic modification of histones, in the Drosophila genome (obtained from the GEO NCBI database: [link1](https://www.ncbi.nlm.nih.gov/gdv/browser/geo/?id=GSE16245) and [link2](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE16245)) which accoring to Ho et al. are higly correlated (on Drosophila) with euchromatin. The correlation of this segments with LADs is not that clear but as we have said this is just an example sequence and we do not expect our results to depend much on this choice. We will also separate the polymer at the end of each chromosome?
 
 + According to Bystricky et al. heterochromatin has a persistance length of $\sim$ 200 nm so in our model A particles will have $k_b=6$.
 
 + While euchromatin has virtually no persistance length at this scale so B particles will have $k_b=0$.
 
-+ As explained by Camara the compaction and rigidity of heterochromatin makes it self-attractive due to depletion attraction. Meanwhile euchromatin is much softer and does not interact with itself through this mecanism. Camara also mentions that inactive regions (that is heterochromatin like domains) have higher self-affinity. Thus we will consider that A particles are purely repulsive while B particles are self-attractive (with a variable value of $\varepsilon$).
++ As explained by Camara the compaction and rigidity of heterochromatin makes it self-attractive due to depletion attraction. Meanwhile euchromatin is much softer and does not interact with itself through this mecanism. Camara also mentions that inactive regions (that is heterochromatin like domains) have higher self-affinity. Thus we will consider that A particles are purely repulsive while B particles are self-attractive.
 
-+ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to BioNumbers the nucleolus has an average diameter of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume and probably represent an even lower fraction of the genome despite their crucial biological function.
++ Thanks to the wonderful work of Falk et al. we can make an educated guess of the interaction strengths between our two types of particles. In their more elaborate model with three types of particles (one for euchromatin and two for heterochromatin) they found that euchromatin interacted very little with itself and the other types of particles so we can safely make it purely repulsive for simplicity. The interaction strength between heterochromatin particles was different for the two types of heterochromatin particles but their average was of the order of $0.5k_BT$ which is be the value we will use.
+
++ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to BioNumbers the nucleolus has an average diameter of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
 
 + The exact value of the elastic constant is not really relevant in this context as long as it is high enough to keep the distance between bonded particles from fluctuating too much. According to Falo et al. the statiscal properties of an elastic freely jointed chain only depend on the elastic constant through the fraction $2/(1+\beta k_el_0^2)$ so taking $k_e=128$ should suffice.
 
 + With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the  unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the  features seen on experiments.
 
 + The modifiable parameters of the model are:
-    + Temperature (fixed, 298 K)
-    + Number of particles (fixed, 16384?)
-    + A-B particle sequence
-    + Nucleus radius (and the geometry of the bleb)
-    + Number of lbs
-    + A-particles self-attraction? (use a fixed $\varepsilon$ for the repulsive part?)
+    + Nucleus radius (and the geometry of the bleb?)
+    + Number of lamina binding sites
 
-> I still have to estimate and fix the depth of the lbs potential well and maybe the value of $\varepsilon$.
+> Change lbs potential well cutoff radius to 1. This is small enough for there to be only one particle at a time inside the well. Estimate its depth as 2 or 4 just to make it bigger than Falk's but smaller than Bajpai's. Cite Maji.
 
 | name           | value (PU)             | value (SI)                        |
 |----------------|------------------------|-----------------------------------|

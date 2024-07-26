@@ -25,7 +25,7 @@ mpl.rcParams["legend.frameon"] = False
 # Load data into dataframes
 
 simrootdir = Path("Simulations")
-datafilepath = simrootdir / "performance.dat"
+datafilepath = simrootdir / "performance.txt"
 
 with open(datafilepath) as datafile:
     blocklist = datafile.read().split("\n\n\n")
