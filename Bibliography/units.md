@@ -13,7 +13,9 @@
     + A: LAD heterochromatin
     + B: non-LAD euchromatin
 
-+ Despite what one may think at first according to Bajpai at al. the exact sequence of particles used in this kind of models does not change significantly the results, as long as the statistical properties of the sequences are similar. Nonetheless, we will base the sequence of our coarse grained model on experimental data. We will use the segments of H3K27me3, an epigenetic modification of histones, in the Drosophila genome (obtained from the GEO NCBI database: [link1](https://www.ncbi.nlm.nih.gov/gdv/browser/geo/?id=GSE16245) and [link2](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE16245)) which accoring to Ho et al. are higly correlated (on Drosophila) with euchromatin. The correlation of this segments with LADs is not that clear but as we have said this is just an example sequence and we do not expect our results to depend much on this choice. We will also separate the polymer at the end of each chromosome?
++ Despite what one may think at first according to Bajpai at al. the exact sequence of particles used in this kind of models does not change significantly the results, as long as the statistical properties of the sequences are similar. Nonetheless, we will base the sequence of our coarse grained model on experimental data. We will use the lamina-associated domains in the Drosophila genome reported by Ho et al. to determine the A particles of our polymer.
+
+> We will also separate the polymer at the end of each one of the 6 chromosomes, whose lengths we have obtained from the [GEO NCBI database](https://www.ncbi.nlm.nih.gov/gdv/browser/geo/?id=GSE16245).
 
 + According to Bystricky et al. heterochromatin has a persistance length of $\sim$ 200 nm so in our model A particles will have $k_b=6$.
 
