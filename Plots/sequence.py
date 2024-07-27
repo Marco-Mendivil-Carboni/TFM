@@ -35,8 +35,8 @@ chr_len = {
 
 # Load data into a dataframe
 
-simrootdir = Path("Bibliography")
-datafilepath = simrootdir / "LADs.txt"
+datadir = Path("Bibliography")
+datafilepath = datadir / "LADs.txt"
 
 df_seq = pd.read_csv(datafilepath, sep="\\s+", header=None)
 
@@ -46,39 +46,51 @@ df_seq = df_seq.drop(columns="_")
 # Transform sequence data
 
 chr_len_sum = 0
-chr_lim = []
-
+chr_lim = [0]
 for chr in chr_len:
     df_seq.loc[df_seq["chr"] == chr, "beg"] += chr_len_sum
     df_seq.loc[df_seq["chr"] == chr, "end"] += chr_len_sum
     chr_len_sum += chr_len[chr]
     chr_lim.append(chr_len_sum)
-
 print("chr_len_sum = {:_}".format(chr_len_sum))
+print("chr_lim :", chr_lim)
 
 df_cg_seq = df_seq.copy()
 df_cg_seq["beg"] = df_cg_seq["beg"] // bp_part
 df_cg_seq["end"] = df_cg_seq["end"] // bp_part
-
 n_part = chr_len_sum // bp_part
-
+cg_chr_lim = [lim // bp_part for lim in chr_lim]
 print("n_part = {:_}".format(n_part))
+print("cg_chr_lim :", cg_chr_lim)
 
 df_seq["len"] = df_seq["end"] - df_seq["beg"]
 df_seq["beg_len"] = df_seq[["beg", "len"]].apply(tuple, axis=1)
-
-df_cg_seq["len"] = df_cg_seq["end"] - df_cg_seq["beg"]
-df_cg_seq["beg_len"] = df_cg_seq[["beg", "len"]].apply(tuple, axis=1)
-
 seq_ratio = df_seq["len"].sum() / chr_len_sum
 print("seq_ratio = {:.4f}".format(seq_ratio))
 
+df_cg_seq["len"] = df_cg_seq["end"] - df_cg_seq["beg"]
+df_cg_seq["beg_len"] = df_cg_seq[["beg", "len"]].apply(tuple, axis=1)
 cg_seq_ratio = df_cg_seq["len"].sum() / n_part
 print("cg_seq_ratio = {:.4f}".format(cg_seq_ratio))
 
+# Save coarse grained sequence
+
+outputdir = Path("Program")
+
+filename = outputdir / "sequence.txt"
+file = open(filename, "w")
+for i_p in range(n_part):
+    after_beg = df_cg_seq["beg"] <= i_p
+    before_end = i_p < df_cg_seq["end"]
+    if (after_beg & before_end).sum() > 0:
+        file.write("A")
+    else:
+        file.write("B")
+file.close()
+
 # Make sequence plot
 
-plotsrootdir = Path("Plots")
+plotsdir = Path("Plots")
 
 fig, ax = plt.subplots(2)
 
@@ -96,12 +108,13 @@ ax[1].broken_barh(df_cg_seq["beg_len"], (0, 1), linewidth=0.5, color="#d37b81")
 
 for lim in chr_lim:
     ax[0].axvline(lim, linestyle="--", linewidth=0.5, color="gray")
-    ax[1].axvline(lim // bp_part, linestyle="--", linewidth=0.5, color="gray")
+for lim in cg_chr_lim:
+    ax[1].axvline(lim, linestyle="--", linewidth=0.5, color="gray")
 
 ax[0].set_xlim(0, chr_len_sum)
-ax[0].set_ylim(0, 1)
-
 ax[1].set_xlim(0, n_part)
+
+ax[0].set_ylim(0, 1)
 ax[1].set_ylim(0, 1)
 
-fig.savefig(plotsrootdir / "sequence.pdf")
+fig.savefig(plotsdir / "sequence.pdf")
