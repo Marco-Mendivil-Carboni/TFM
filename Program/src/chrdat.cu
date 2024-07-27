@@ -55,7 +55,7 @@ chrdat::chrdat(parmap &par) // parameters
     throw error("frames_per_file out of range");
   }
   float cvf = N * pow(0.5 / (ng.R_n - 0.5), 3.0); // chromatin volume fraction
-  if (cvf > 0.5) { throw error("chromatin volume fraction above 0.5"); }
+  if (cvf > 0.4) { throw error("chromatin volume fraction above 0.4"); }
   float noacf = 2.0 / (1.0 + ng.noc); // nucleus opening area correction factor
   float laf =
       noacf * n_l * pow(lco / (ng.R_n - rco), 2.0) / 4.0; // lbs area fraction
@@ -170,8 +170,18 @@ void chrdat::write_frame_bin(std::ofstream &bin_out_f) // binary output file
   //the xdr library but only works with vmd in little endian systems
 
   // frame header, for more information on its contents see chemfiles
-  uint header[18] = {1993, 1, 0, 0, 0, 0, 0, 0, 0, 0, 3 * N * 4, 0, 0, N, i_f,
-      0, reinterpret_cast<uint &>(t), 0};
+  uint header[18] = {1993, // magic number
+                     1, // trr version
+                     0,         0,
+                     0,         0,
+                     0,         0,
+                     0,         0,
+                     3 * N * 4, // position array size
+                     0,         0,
+                     N, // number of particles
+                     i_f, // frame index
+                     0,         reinterpret_cast<uint &>(t), // time
+                     0};
 
   // write chromatin data
   bin_out_f.write(reinterpret_cast<char *>(header), sizeof(header));

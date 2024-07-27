@@ -23,13 +23,14 @@ using prng = curandStatePhilox4_32_10; // PRNG type
 enum stype // simulation type
 {
   DST, // default simulation type
-  ICG // initial condition generation
+  ICG, // initial condition generation
 };
 
 // Device Functions
 
 // calculate bonded forces
-inline __device__ void calc_bf(const uint N, // number of particles
+inline __device__ void calc_bf(
+    const uint N, // number of particles
     ptype *pt, // particle type array
     uint i_p, // particle index
     vec3f *r, // position array
@@ -78,7 +79,8 @@ inline __device__ void calc_bf(const uint N, // number of particles
 }
 
 // calculate wall-particle force
-inline __device__ void calc_wpf(vec3f vwp, // wall-particle vector
+inline __device__ void calc_wpf(
+    vec3f vwp, // wall-particle vector
     vec3f &cf) // confinement force
 {
   // calculate Wang-Frenkel force
@@ -90,7 +92,8 @@ inline __device__ void calc_wpf(vec3f vwp, // wall-particle vector
 
 // calculate confinement force
 template <stype T>
-inline __device__ void calc_cf(const cngeom ng, // nucleus geometry
+inline __device__ void calc_cf(
+    const cngeom ng, // nucleus geometry
     uint i_p, // particle index
     vec3f *r, // position array
     vec3f *f) // force array
@@ -145,7 +148,8 @@ inline __device__ void calc_cf(const cngeom ng, // nucleus geometry
 
 // calculate confinement force
 template <>
-inline __device__ void calc_cf<ICG>(const cngeom ng, // nucleus geometry
+inline __device__ void calc_cf<ICG>(
+    const cngeom ng, // nucleus geometry
     uint i_p, // particle index
     vec3f *r, // position array
     vec3f *f) // force array
@@ -170,7 +174,8 @@ inline __device__ void calc_cf<ICG>(const cngeom ng, // nucleus geometry
 
 // calculate particle-particle force
 template <stype T>
-inline __device__ void calc_ppf(vec3f vpp, // particle-particle vector
+inline __device__ void calc_ppf(
+    vec3f vpp, // particle-particle vector
     vec3f &srf) // short-range forces
 {
   // calculate Wang-Frenkel force
@@ -182,7 +187,8 @@ inline __device__ void calc_ppf(vec3f vpp, // particle-particle vector
 
 // calculate particle-particle force
 template <>
-inline __device__ void calc_ppf<ICG>(vec3f vpp, // particle-particle vector
+inline __device__ void calc_ppf<ICG>( // calculate particle-particle force
+    vec3f vpp, // particle-particle vector
     vec3f &srf) // short-range forces
 {
   // calculate Soft-Repulsive force
@@ -193,7 +199,8 @@ inline __device__ void calc_ppf<ICG>(vec3f vpp, // particle-particle vector
 
 // calculate lbs-particle force
 template <stype T>
-inline __device__ void calc_lpf(vec3f vlp, // lbs-particle vector
+inline __device__ void calc_lpf(
+    vec3f vlp, // lbs-particle vector
     vec3f &srf) // short-range forces
 {
   // calculate Binding force
@@ -206,14 +213,16 @@ inline __device__ void calc_lpf(vec3f vlp, // lbs-particle vector
 
 // calculate lbs-particle force
 template <>
-inline __device__ void calc_lpf<ICG>(vec3f vlp, // lbs-particle vector
-    vec3f &srf)
+inline __device__ void calc_lpf<ICG>(
+    vec3f vlp, // lbs-particle vector
+    vec3f &srf) // short-range forces
 {
-} // short-range forces
+}
 
 // calculate short-range forces with cell's objects
 template <stype T>
-inline __device__ void calc_cell_srf(ptype *pt, // particle type array
+inline __device__ void calc_cell_srf(
+    ptype *pt, // particle type array
     vec3f *lr, // lbs position array
     sugrid *pgp, // particle grid pointer
     sugrid *lgp, // lbs grid pointer
@@ -264,7 +273,8 @@ inline __device__ void calc_cell_srf(ptype *pt, // particle type array
 
 // calculate short-range forces
 template <stype T>
-inline __device__ void calc_srf(ptype *pt, // particle type array
+inline __device__ void calc_srf(
+    ptype *pt, // particle type array
     vec3f *lr, // lbs position array
     sugrid *pgp, // particle grid pointer
     sugrid *lgp, // lbs grid pointer
@@ -307,7 +317,8 @@ inline __device__ void calc_srf(ptype *pt, // particle type array
 // Global Functions
 
 // initialize PRNG state array
-__global__ void init_ps(const uint N, // number of particles
+__global__ void init_ps(
+    const uint N, // number of particles
     void *vps, // void PRNG state array
     uint pseed) // PRNG seed
 {
@@ -321,7 +332,8 @@ __global__ void init_ps(const uint N, // number of particles
 }
 
 // begin Runge-Kutta iteration
-__global__ void begin_iter(const uint N, // number of particles
+__global__ void begin_iter(
+    const uint N, // number of particles
     vec3f *f, // force array
     vec3f *ef, // extra force array
     float sd, // standard deviation
@@ -350,7 +362,8 @@ __global__ void begin_iter(const uint N, // number of particles
 
 // execute 1st stage of the Runge-Kutta method
 template <stype T>
-__global__ void exec_RK_1(const uint N, // number of particles
+__global__ void exec_RK_1(
+    const uint N, // number of particles
     const cngeom ng, // nucleus geometry
     ptype *pt, // particle type array
     vec3f *r, // position array
@@ -376,7 +389,8 @@ __global__ void exec_RK_1(const uint N, // number of particles
 
 // execute 2nd stage of the Runge-Kutta method
 template <stype T>
-__global__ void exec_RK_2(const uint N, // number of particles
+__global__ void exec_RK_2(
+    const uint N, // number of particles
     const cngeom ng, // nucleus geometry
     ptype *pt, // particle type array
     vec3f *r, // position array

@@ -10,7 +10,8 @@ namespace mmc // Marco Mendívil Carboni
 // Global Functions
 
 // calculate the mean spatial distance
-__global__ void calc_msd(const uint lma, // length of msd arrays
+__global__ void calc_msd(
+    const uint lma, // length of msd arrays
     const uint N, // number of particles
     vec3f *r, // position array
     float *ma) // msd array

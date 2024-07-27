@@ -62,19 +62,23 @@ struct simobs // simulation observable
 // Functions
 
 // calculate statistics
-void calc_stats(const std::vector<float> &v, // vector
+void calc_stats(
+    const std::vector<float> &v, // vector
     idstat &s); // statistics
 
 // calculate statistics
-void calc_stats(const std::vector<float> &v, // vector
+void calc_stats(
+    const std::vector<float> &v, // vector
     cdstat &s); // statistics
 
 // calculate statistics
-void calc_stats(const std::vector<float> &v, // vector
+void calc_stats(
+    const std::vector<float> &v, // vector
     tdstat &s); // statistics
 
 // calculate statistics
-void calc_stats(const std::vector<tdstat> &v, // vector
+void calc_stats(
+    const std::vector<tdstat> &v, // vector
     idstat &s); // statistics
 
 } // namespace mmc

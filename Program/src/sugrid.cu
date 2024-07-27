@@ -12,7 +12,8 @@ namespace mmc // Marco Mendívil Carboni
 // Global Functions
 
 // calculate cell and object indexes
-__global__ void calc_indexes(const uint n_o, // number of objects
+__global__ void calc_indexes(
+    const uint n_o, // number of objects
     const float csl, // cell side length
     const uint cps, // cells per side
     uint *uci, // unsorted cell index array
@@ -34,7 +35,8 @@ __global__ void calc_indexes(const uint n_o, // number of objects
 }
 
 // set cells empty
-__global__ void set_cells_empty(const uint n_c, // number of cells
+__global__ void set_cells_empty(
+    const uint n_c, // number of cells
     uint *beg, // cell beginning array
     uint *end) // cell end array
 {
@@ -48,7 +50,8 @@ __global__ void set_cells_empty(const uint n_c, // number of cells
 }
 
 // find beginning and end of each cell
-__global__ void find_cells_limits(const uint n_o, // number of objects
+__global__ void find_cells_limits(
+    const uint n_o, // number of objects
     uint *sci, // sorted cell index array
     uint *beg, // cell beginning array
     uint *end) // cell end array
@@ -76,7 +79,8 @@ __global__ void find_cells_limits(const uint n_o, // number of objects
 // Host Functions
 
 // sorted uniform grid constructor
-sugrid::sugrid(const uint n_o, // number of objects
+sugrid::sugrid(
+    const uint n_o, // number of objects
     const float csl, // cell side length
     const uint cps) // cells per side
     : n_o{n_o}, csl{csl}, cps{cps}, n_c{cps * cps * cps}
@@ -95,7 +99,8 @@ sugrid::sugrid(const uint n_o, // number of objects
 }
 
 // sorted uniform grid delegating constructor
-sugrid::sugrid(const uint n_o, // number of objects
+sugrid::sugrid(
+    const uint n_o, // number of objects
     const sugrid &g) // grid
     : sugrid(n_o, g.csl, g.cps)
 {
@@ -117,7 +122,8 @@ sugrid::~sugrid()
 }
 
 // generate grid arrays
-void sugrid::generate_arrays(int tpb, // threads per block
+void sugrid::generate_arrays(
+    int tpb, // threads per block
     vec3f *r) // position array
 {
   calc_indexes<<<(n_o + tpb - 1) / tpb, tpb>>>(n_o, csl, cps, uci, uoi, r);

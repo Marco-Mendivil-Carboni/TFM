@@ -34,19 +34,22 @@ struct sugrid // sorted uniform grid
   // Functions
 
   // sorted uniform grid constructor
-  sugrid(const uint n_o, // number of objects
+  sugrid(
+      const uint n_o, // number of objects
       const float csl, // cell side length
       const uint cps); // cells per side
 
   // sorted uniform grid delegating constructor
-  sugrid(const uint n_o, // number of objects
+  sugrid(
+      const uint n_o, // number of objects
       const sugrid &g); // grid
 
   // sorted uniform grid destructor
   ~sugrid();
 
   // generate grid arrays
-  void generate_arrays(int tpb, // threads per block
+  void generate_arrays(
+      int tpb, // threads per block
       vec3f *r); // position array
 };
 

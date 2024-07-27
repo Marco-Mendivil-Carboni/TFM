@@ -68,7 +68,8 @@ public:
 
   // get parameter value
   template <typename T>
-  T get_val(std::string key, // parameter key
+  T get_val(
+      std::string key, // parameter key
       T def_val) // default value
   {
     T val; // parameter value
@@ -88,7 +89,8 @@ uint glob_count(const std::string &pathpat); // file path pattern
 
 // convert number to formatted string
 template <typename T>
-std::string cnfs(T num, // number
+std::string cnfs(
+    T num, // number
     int len = 0, // length
     char fillc = ' ', // filler character
     int prc = 0) // precision
@@ -103,7 +105,8 @@ std::string cnfs(T num, // number
 
 // check file is open or else throw
 template <typename T>
-void check_file(T &s_f, // stream file
+void check_file(
+    T &s_f, // stream file
     const std::string &pathstr) // file path string
 {
   if (!s_f.is_open()) { throw error("unable to open " + pathstr); }

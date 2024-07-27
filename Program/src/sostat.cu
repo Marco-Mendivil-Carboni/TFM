@@ -45,7 +45,8 @@ void simobs::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
 }
 
 // calculate statistics
-void calc_stats(const std::vector<float> &v, // vector
+void calc_stats(
+    const std::vector<float> &v, // vector
     idstat &s) // statistics
 {
   // calculate the first two raw moments
@@ -67,7 +68,8 @@ void calc_stats(const std::vector<float> &v, // vector
 }
 
 // calculate statistics
-void calc_stats(const std::vector<float> &v, // vector
+void calc_stats(
+    const std::vector<float> &v, // vector
     cdstat &s) // statistics
 {
   // declare auxiliary variables
@@ -112,7 +114,8 @@ void calc_stats(const std::vector<float> &v, // vector
 }
 
 // calculate statistics
-void calc_stats(const std::vector<float> &v, // vector
+void calc_stats(
+    const std::vector<float> &v, // vector
     tdstat &s) // statistics
 {
   // declare auxiliary variables
@@ -156,7 +159,8 @@ void calc_stats(const std::vector<float> &v, // vector
 }
 
 // calculate statistics
-void calc_stats(const std::vector<tdstat> &v, // vector
+void calc_stats(
+    const std::vector<tdstat> &v, // vector
     idstat &s) // statistics
 {
   // calculate the first two weighted raw moments

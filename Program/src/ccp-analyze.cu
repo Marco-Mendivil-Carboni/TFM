@@ -5,7 +5,8 @@
 // Functions
 
 // main function
-int main(const int argc, // argument count
+int main(
+    const int argc, // argument count
     const char **argv) // argument vector
 {
   // check command-line arguments
