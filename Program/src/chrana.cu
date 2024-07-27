@@ -288,8 +288,8 @@ void chrana::calc_observables()
     float d_r = length(hr[i_p]); // radial distance
     uint i_b = n_b * d_r * d_r * d_r / (ng.R_n * ng.R_n * ng.R_n); // bin index
     if (i_b >= n_b) { continue; }
-    if (hpt[i_p] == LND) { rcd[0][i_b] += 1.0; }
-    if (hpt[i_p] == LAD) { rcd[1][i_b] += 1.0; }
+    if (hpt[i_p] == LADh) { rcd[0][i_b] += 1.0; }
+    if (hpt[i_p] == LNDe) { rcd[1][i_b] += 1.0; }
     rcd[2][i_b] += 1.0;
   }
   for (uint i_t = 0; i_t < 3; ++i_t) // type index

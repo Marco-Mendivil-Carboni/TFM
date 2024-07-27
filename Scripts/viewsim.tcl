@@ -95,7 +95,7 @@ if {$argc==2} {
         $sel set radius $r_p
         color Name "C" 2
         mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
-        mol rename top {lamina}
+        mol rename top {lamina binding sites}
     }
 
     set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
@@ -105,10 +105,10 @@ if {$argc==2} {
     for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
     set sel [atomselect top "name A"]
     $sel set radius $r_p
-    color Name "A" 0
+    color Name "A" 1
     set sel [atomselect top "name B"]
     $sel set radius $r_p
-    color Name "B" 1
+    color Name "B" 0
     mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
     mol rename top {chromatin}
 
@@ -132,6 +132,8 @@ if {$argc==2} {
         rotate x to -90.0
         scale by 0.8
     }
+
+    mol top 1
 } else {
     puts "You forgot the input."
     exit

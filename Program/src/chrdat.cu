@@ -65,11 +65,11 @@ chrdat::chrdat(parmap &par) // parameters
   std::string msg_1 = ""; // 1st message
   msg_1 += "N = " + cnfs(N, 5, '0') + " ";
   msg_1 += "T = " + cnfs(T, 5, '0', 1) + " ";
+  msg_1 += "n_l = " + cnfs(n_l, 5, '0') + " ";
   msg_1 += "fpf = " + cnfs(fpf, 4, '0') + " ";
   logger::record(msg_1);
   std::string msg_2 = ""; // 2nd message
   msg_2 += "cvf = " + cnfs(cvf, 5, '0', 3) + " ";
-  msg_2 += "n_l = " + cnfs(n_l, 5, '0') + " ";
   msg_2 += "laf = " + cnfs(laf, 5, '0', 3) + " ";
   logger::record(msg_2);
 
@@ -111,7 +111,7 @@ void chrdat::write_frame_txt(std::ofstream &txt_out_f) // text output file
   char ptc; // particle type character
   for (uint i_p = 0; i_p < N; ++i_p) // particle index
   {
-    ptc = (hpt[i_p] == LND) ? 'A' : 'B';
+    ptc = (hpt[i_p] == LADh) ? 'A' : 'B';
     txt_out_f << std::setw(5) << i_p + 1 << std::left << std::setw(5) << ptc;
     txt_out_f << std::right << std::setw(5) << ptc << std::setw(5) << i_p + 1;
     txt_out_f << cnfs(hr[i_p].x, 8, ' ', 3);
@@ -143,7 +143,7 @@ void chrdat::read_frame_txt(std::ifstream &txt_inp_f) // text input file
   {
     txt_inp_f >> aux_str;
     txt_inp_f >> ptc >> aux_str;
-    hpt[i_p] = (ptc == 'A') ? LND : LAD;
+    hpt[i_p] = (ptc == 'A') ? LADh : LNDe;
     txt_inp_f >> hr[i_p].x;
     txt_inp_f >> hr[i_p].y;
     txt_inp_f >> hr[i_p].z;

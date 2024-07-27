@@ -23,7 +23,6 @@ mpl.rcParams["legend.frameon"] = False
 # Set auxiliary variables
 
 bp_part = 33 * 200
-
 chr_len = {
     "chr2L": 23_011_544,
     "chr2R": 21_146_708,
@@ -72,6 +71,9 @@ df_cg_seq["len"] = df_cg_seq["end"] - df_cg_seq["beg"]
 df_cg_seq["beg_len"] = df_cg_seq[["beg", "len"]].apply(tuple, axis=1)
 cg_seq_ratio = df_cg_seq["len"].sum() / n_part
 print("cg_seq_ratio = {:.4f}".format(cg_seq_ratio))
+
+avg_cg_dom_len = n_part / (2 * df_cg_seq.shape[0])
+print("avg_cg_dom_len = {:.5f}".format(avg_cg_dom_len))
 
 # Save coarse grained sequence
 

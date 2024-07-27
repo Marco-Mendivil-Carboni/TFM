@@ -30,6 +30,7 @@ enum stype // simulation type
 
 // calculate bonded forces
 inline __device__ void calc_bf(const uint N, // number of particles
+    ptype *pt, // particle type array
     uint i_p, // particle index
     vec3f *r, // position array
     vec3f *f) // force array
@@ -63,11 +64,14 @@ inline __device__ void calc_bf(const uint N, // number of particles
   // calculate elastic potential force
   bf += k_e * (+(1.0 - l_0 * il[2]) * vec[2] - (1.0 - l_0 * il[1]) * vec[1]);
 
-  // calculate bending potential force
-  bf += k_b * (+il[1] * il[0] * vec[0] - cos[0] * vec[1] * il[1] * il[1]);
-  bf += k_b * (+il[1] * il[2] * vec[2] - cos[1] * vec[1] * il[1] * il[1]);
-  bf += k_b * (-il[2] * il[1] * vec[1] + cos[1] * vec[2] * il[2] * il[2]);
-  bf += k_b * (-il[2] * il[3] * vec[3] + cos[2] * vec[2] * il[2] * il[2]);
+  // calculate bending potential force only on LADh particles
+  if (pt[i_p] == LADh)
+  {
+    bf += k_b * (+il[1] * il[0] * vec[0] - cos[0] * vec[1] * il[1] * il[1]);
+    bf += k_b * (+il[1] * il[2] * vec[2] - cos[1] * vec[1] * il[1] * il[1]);
+    bf += k_b * (-il[2] * il[1] * vec[1] + cos[1] * vec[2] * il[2] * il[2]);
+    bf += k_b * (-il[2] * il[3] * vec[3] + cos[2] * vec[2] * il[2] * il[2]);
+  }
 
   // add result to force array
   f[i_p] += bf;
@@ -242,8 +246,8 @@ inline __device__ void calc_cell_srf(ptype *pt, // particle type array
     }
   }
 
-  // calculate lbs-particle force only on LAD particles
-  if (pt[i_p] == LAD)
+  // calculate lbs-particle force only on LADh particles
+  if (pt[i_p] == LADh)
   {
     // range over cell's lbs
     for (uint sai = lgbeg; sai < lgend; ++sai) // sorted array index
@@ -362,7 +366,7 @@ __global__ void exec_RK_1(const uint N, // number of particles
   if (i_p >= N) { return; }
 
   // calculate forces
-  calc_bf(N, i_p, r, f);
+  calc_bf(N, pt, i_p, r, f);
   calc_cf<T>(ng, i_p, r, f);
   calc_srf<T>(pt, lr, pgp, lgp, i_p, r, f);
 
@@ -389,7 +393,7 @@ __global__ void exec_RK_2(const uint N, // number of particles
   if (i_p >= N) { return; }
 
   // calculate forces
-  calc_bf(N, i_p, er, ef);
+  calc_bf(N, pt, i_p, er, ef);
   calc_cf<T>(ng, i_p, er, ef);
   calc_srf<T>(pt, lr, pgp, lgp, i_p, er, ef);
 
@@ -624,7 +628,7 @@ void chrsim::set_particle_types()
   float ran; // random number in (0,1]
   float edl; // exponential domain length
   uint cde = 0; // current domain end
-  ptype cpt = LAD; // current particle type
+  ptype cpt = LADh; // current particle type
   for (uint i_p = 0; i_p < N; ++i_p) // particle index
   {
     if (i_p == cde) // change domain type
@@ -635,7 +639,7 @@ void chrsim::set_particle_types()
         edl = -mdl * log(ran);
       } while ((edl / mdl) > 5 || edl < 1.0);
       cde = i_p + edl;
-      cpt = (cpt == LND) ? LAD : LND;
+      cpt = (cpt == LNDe) ? LADh : LNDe;
     }
     hpt[i_p] = cpt;
   }

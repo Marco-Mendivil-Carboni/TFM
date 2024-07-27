@@ -15,20 +15,20 @@ namespace mmc // Marco Mendívil Carboni
 static constexpr float k_B = 0.003356; // Boltzmann constant
 static constexpr float l_0 = 1.000000; // bond natural length
 static constexpr float k_e = 128.0000; // elastic constant
-static constexpr float k_b = 2.000000; // bending constant
+static constexpr float k_b = 6.000000; // bending constant
 static constexpr float e_p = 0.500000; // particle energy
 static constexpr float rco = 1.154701; // repulsive cutoff
 static constexpr float aco = 2.000000; // attractive cutoff
-static constexpr float mdl = 128.0000; // mean domain length
-static constexpr float e_l = 16.00000; // lbs energy
+static constexpr float mdl = 22.13471; // mean domain length
+static constexpr float e_l = 8.000000; // lbs energy
 static constexpr float lco = 0.500000; // lbs cutoff
 
 // Enumerations
 
 enum ptype // particle type
 {
-  LND, // lamina non-associated domain
-  LAD // lamina associated domain
+  LADh, // lamina associated domain heterochromatin-like (A)
+  LNDe, // lamina non-associated domain euchromatin-like (B)
 };
 
 // Structures
