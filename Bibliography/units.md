@@ -15,7 +15,7 @@
 
 + Despite what one may think at first according to Bajpai at al. the exact sequence of particles used in this kind of models does not change significantly the results, as long as the statistical properties of the sequences are similar. Nonetheless, we will base the sequence of our coarse grained model on experimental data. We will use the lamina-associated domains in the Drosophila genome reported by Ho et al. to determine the A particles of our polymer.
 
-> We will also separate the polymer at the end of each one of the 6 chromosomes, whose lengths we have obtained from the [GEO NCBI database](https://www.ncbi.nlm.nih.gov/gdv/browser/geo/?id=GSE16245).
++ We will also separate the polymer at the end of each one of the 6 chromosomes, whose lengths we have obtained from the [GEO NCBI database](https://www.ncbi.nlm.nih.gov/gdv/browser/geo/?id=GSE16245).
 
 + According to Bystricky et al. heterochromatin has a persistance length of $\sim$ 200 nm so in our model A particles will have $k_b=6$.
 
@@ -27,26 +27,30 @@
 
 + Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to BioNumbers the nucleolus has an average diameter of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
 
-+ The exact value of the elastic constant is not really relevant in this context as long as it is high enough to keep the distance between bonded particles from fluctuating too much. According to Falo et al. the statiscal properties of an elastic freely jointed chain only depend on the elastic constant through the fraction $2/(1+\beta k_el_0^2)$ so taking $k_e=128$ should suffice.
++ The exact value of the elastic constant is not really relevant in this context as long as it is high enough to keep the distance between bonded particles from fluctuating too much. According to Falo et al. the statiscal properties of an elastic freely jointed chain only depend on the elastic constant through the fraction $2/(1+\beta k_el_0^2)$ so taking $k_e=128e_u/l_u^2$ should suffice.
 
-+ With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the  unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the  features seen on experiments.
++ In a similar but simpler way to Bajpai et al. we will add potential wells throughout the lamina (at random positions) which we will call lamina binding sites. This sites represent the places of the lamina to which a LAD (an A particle in our model) can bind via the so called lamina binding proteins. We will make our potentials as wide as our particles and $4k_BT$ deep since according to Maji et al. using a very similar model the lamina-chromatin interaction strengths that best reproduced experimental observations were above $2k_BT$.
+
++ With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the  unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the features seen on experiments.
 
 + The modifiable parameters of the model are:
-    + Nucleus radius (and the geometry of the bleb?)
-    + Number of lamina binding sites
+    + Nucleus radius (and the geometry of the bleb?).
+    + Number of lamina binding sites.
 
-> Change lbs potential well cutoff radius to 1. This is small enough for there to be only one particle at a time inside the well. Estimate its depth as 2 or 4 just to make it bigger than Falk's but smaller than Bajpai's. Cite Maji.
-
-| name           | value (PU)             | value (SI)                        |
-|----------------|------------------------|-----------------------------------|
-| $\xi$          | $1m_u/t_u$             | $3\pi\eta d=0.27\text{ pg / us}$  |
-| $k_B$          | $(1/298)e_u/\text{K}$  | $0.014\text{ pN nm / K}$          |
-| $l_0$          | $1l_u$                 | $33\text{ nm}$                    |
-| $k_e$          | $128e_u/l_u^2$         | $0.48\text{ pN / nm}$             |
-| $k_b^A$        | $6e_u$                 | $25\text{ pN nm}$                 |
-| $\sigma$       | $1l_u$                 | $33\text{ nm}$                    |
-| $\varepsilon$  | $0.5e_u$               | $2.05\text{ pN nm}$               |
-| $dt$           | $(1/2048)t_u$          | $35\text{ ns}$                    |
+| name            | value (PU)             | value (SI)                      |
+|-----------------|------------------------|---------------------------------|
+| $\xi$           | $1m_u/t_u$            | $3\pi\eta d=0.27\text{ pg / us}$ |
+| $k_B$           | $(1/298)e_u/\text{K}$ | $0.014\text{ pN nm / K}$         |
+| $l_0$           | $1l_u$                | $33\text{ nm}$                   |
+| $k_e$           | $128e_u/l_u^2$        | $0.48\text{ pN / nm}$            |
+| $k_b^A$         | $6e_u$                | $25\text{ pN nm}$                |
+| $k_b^B$         | $0e_u$                | $0\text{ pN nm}$                 |
+| $\sigma$        | $1l_u$                | $33\text{ nm}$                   |
+| $\epsilon^{AA}$ | $0.5e_u$              | $2.05\text{ pN nm}$              |
+| $\epsilon^{AB}$ | $0e_u$                | $0\text{ pN nm}$                 |
+| $\epsilon^{BB}$ | $0e_u$                | $0\text{ pN nm}$                 |
+| $\epsilon'$     | $4e_u$                | $16.4\text{ pN nm}$              |
+| $dt$            | $(1/2048)t_u$         | $35\text{ ns}$                   |
 
 + We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
 
@@ -57,7 +61,7 @@
 | quantity     | unit                              |
 |--------------|-----------------------------------|
 | length       | $\sigma=33\text{ nm}$             |
-| energy       | $k_BT=4.1\text{ pN nm}$           |
+| energy       | $k_BT=4.11\text{ pN nm}$          |
 | time         | $\xi\sigma^2/k_BT=72\text{ us}$   |
 | temperature  | $1\text{ K}$                      |
 | force        | $e_u/l_u=0.12\text{ pN}$          |

@@ -7,6 +7,8 @@ $$
 \bar{b} _i = \bar{r} _{i+1} - \bar{r} _i \ , \ d _i = \left\|\bar{b} _i\right\| \ , \ \cos(\theta _i) = \frac{\bar{b} _i \cdot \bar{b} _{i-1}}{d _i d _{i-1}} \ , \ d _{ij} = \left\|\bar{r} _i - \bar{r} _j\right\| \ , \ {d'} _{ij} = \left\|\bar{r} _i - {\bar{r}'} _j\right\|
 $$
 
+For brevity, distances will be expressed in dimensionless form in units of $\sigma$.
+
 ## Elastic potential
 
 $$
@@ -41,8 +43,6 @@ $$
 
 ## Wang-Frenkel potential
 
-For brevity, from here onwards distances will be expressed in dimensionless form in units of $\sigma$.
-
 $$
 V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} \varepsilon \left(\frac{1}{d _{ij} ^{2}} - 1\right)\left(\frac{4}{d _{ij} ^{2}} - 1\right) ^{2}
 $$
@@ -68,9 +68,9 @@ $$
 ## Binding potential
 
 $$
-V = \sum _{i=0} ^{N-1} \sum _{j=0} ^{n _l - 1} \varepsilon \left(\frac{4}{3} \frac{{d'} _{ij} ^{2}}{r _c ^{2}} - \frac{1}{3} \frac{{d'} _{ij} ^{8}}{r _c ^{8}} - 1\right)
+V = \sum _{i=0} ^{N-1} \sum _{j=0} ^{N' - 1} \varepsilon' \left(\frac{4}{3} {d'} _{ij} ^{2} - \frac{1}{3} {d'} _{ij} ^{8} - 1\right)
 $$
 
 $$
--\frac{\partial V}{\partial \bar{r} _i} = \sum _{j} \varepsilon \frac{8}{3 r _c ^{2}} \left( \frac{{d'} _{ij} ^{6}}{r _c ^{6}} - 1\right) (\bar{r} _i - {\bar{r}'} _j)
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j} \varepsilon' \frac{8}{3} ({d'} _{ij} ^{6} - 1) (\bar{r} _i - {\bar{r}'} _j)
 $$
