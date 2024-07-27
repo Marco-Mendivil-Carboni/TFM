@@ -176,11 +176,13 @@ inline __device__ void calc_cf<ICG>(
 template <stype T>
 inline __device__ void calc_ppf(
     vec3f vpp, // particle-particle vector
+    bool hhi, // LADh-LADh interaction
     vec3f &srf) // short-range forces
 {
   // calculate Wang-Frenkel force
   float dpp = length(vpp); // particle-particle distance
   if (dpp > aco) { return; }
+  if (!hhi && dpp > rco) { return; }
   float d2 = dpp * dpp; // dpp squared
   srf += e_p * (18.0 * d2 * d2 - 96.0 * d2 + 96.0) / (d2 * d2 * d2 * d2) * vpp;
 }
@@ -189,6 +191,7 @@ inline __device__ void calc_ppf(
 template <>
 inline __device__ void calc_ppf<ICG>( // calculate particle-particle force
     vec3f vpp, // particle-particle vector
+    bool hhi, // LADh-LADh interaction
     vec3f &srf) // short-range forces
 {
   // calculate Soft-Repulsive force
@@ -251,7 +254,9 @@ inline __device__ void calc_cell_srf(
     {
       // calculate particle-particle force
       vec3f vpp = r_i - r[j_p]; // particle-particle vector
-      calc_ppf<T>(vpp, srf);
+      bool hhi = false; // LADh-LADh interaction
+      if (pt[i_p] == LADh && pt[j_p] == LADh) { hhi = true; }
+      calc_ppf<T>(vpp, hhi, srf);
     }
   }
 
@@ -750,7 +755,7 @@ void chrsim::perform_random_walk()
 uint chrsim::particle_overlaps()
 {
   // iterate over all pairs of non-bonded particles
-  int po = 0; // particle overlaps
+  uint po = 0; // particle overlaps
   float dpp; // particle-particle distance
   for (uint i_p = 0; i_p < N; ++i_p) // particle index
   {
