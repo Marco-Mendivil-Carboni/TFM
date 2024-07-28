@@ -12,7 +12,7 @@ namespace mmc // Marco Mendívil Carboni
 // Constants
 
 static constexpr float dt = 1.0 / 2048; // timestep
-static constexpr float mis = 0.898429; // minimum initial separation
+static constexpr float mis = 0.838732; // minimum initial separation
 
 // Aliases
 
@@ -197,7 +197,7 @@ inline __device__ void calc_ppf<ICG>( // calculate particle-particle force
   // calculate Soft-Repulsive force
   float dpp = length(vpp); // particle-particle distance
   if (dpp > rco) { return; }
-  srf += 64.0 * (3.0 * rco - 3.0 * dpp) * vpp;
+  srf += 128.0 * (3.0 * rco - 3.0 * dpp) * vpp;
 }
 
 // calculate lbs-particle force
