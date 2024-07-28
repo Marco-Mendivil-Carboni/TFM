@@ -37,9 +37,8 @@ def check(returnc):
 parfilepath = testdir / "adjustable-parameters.dat"
 
 with open(parfilepath, "w") as parfile:
-    parfile.write("number_of_particles 8192\n")
-    parfile.write("nucleus_radius 20.0\n")
-    parfile.write("number_of_lbs 1024\n")
+    parfile.write("nucleus_radius 36.0\n")
+    parfile.write("number_of_lbs 8192\n")
 
 # Run tests
 

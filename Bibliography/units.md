@@ -49,7 +49,7 @@
 | $\epsilon^{AA}$ | $0.5e_u$              | $2.05\text{ pN nm}$              |
 | $\epsilon^{AB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon^{BB}$ | $0e_u$                | $0\text{ pN nm}$                 |
-| $\epsilon'$     | $4e_u$                | $16.4\text{ pN nm}$              |
+| $\epsilon'$     | $8e_u$                | $32.9\text{ pN nm}$              |
 | $dt$            | $(1/2048)t_u$         | $35\text{ ns}$                   |
 
 + We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.

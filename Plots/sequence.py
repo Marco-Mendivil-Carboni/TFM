@@ -77,7 +77,7 @@ print("avg_cg_dom_len = {:.5f}".format(avg_cg_dom_len))
 
 # Save coarse grained sequence
 
-outputdir = Path("Program")
+outputdir = Path("Program/data")
 
 filename = outputdir / "sequence.txt"
 file = open(filename, "w")

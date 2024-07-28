@@ -635,7 +635,7 @@ void chrsim::set_lbs_positions()
   curandDestroyGenerator(gen);
 }
 
-// set random particle types
+// set particle type sequence
 void chrsim::set_particle_types()
 {
   // initialize host PRNG
@@ -643,24 +643,41 @@ void chrsim::set_particle_types()
   curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
 
-  // set particle types randomly
-  float ran; // random number in (0,1]
-  float edl; // exponential domain length
-  uint cde = 0; // current domain end
-  ptype cpt = LADh; // current particle type
-  for (uint i_p = 0; i_p < N; ++i_p) // particle index
+  if (N == 18239) // use experimental data to set particles types
   {
-    if (i_p == cde) // change domain type
+    std::ifstream txt_inp_f; // text input file
+    std::string pathstr = seqpath; // file path string
+    txt_inp_f.open(pathstr);
+    check_file(txt_inp_f, pathstr);
+    char ptc; // particle type character
+    for (uint i_p = 0; i_p < N; ++i_p) // particle index
     {
-      do
-      {
-        curandGenerateUniform(gen, &ran, 1);
-        edl = -mdl * log(ran);
-      } while ((edl / mdl) > 5 || edl < 1.0);
-      cde = i_p + edl;
-      cpt = (cpt == LNDe) ? LADh : LNDe;
+      txt_inp_f >> ptc;
+      hpt[i_p] = (ptc == 'A') ? LADh : LNDe;
     }
-    hpt[i_p] = cpt;
+    if (txt_inp_f.fail()) { throw mmc::error("failed to read sequence"); }
+    txt_inp_f.close();
+  }
+  else // set particle types randomly
+  {
+    float ran; // random number in (0,1]
+    float edl; // exponential domain length
+    uint cde = 0; // current domain end
+    ptype cpt = LADh; // current particle type
+    for (uint i_p = 0; i_p < N; ++i_p) // particle index
+    {
+      if (i_p == cde) // change domain type
+      {
+        do
+        {
+          curandGenerateUniform(gen, &ran, 1);
+          edl = -mdl * log(ran);
+        } while ((edl / mdl) > 5 || edl < 1.0);
+        cde = i_p + edl;
+        cpt = (cpt == LNDe) ? LADh : LNDe;
+      }
+      hpt[i_p] = cpt;
+    }
   }
 
   // copy host particle type array to device

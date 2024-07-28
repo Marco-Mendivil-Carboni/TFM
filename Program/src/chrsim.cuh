@@ -61,7 +61,7 @@ private:
   // set random lbs positions
   void set_lbs_positions();
 
-  // set random particle types
+  // set particle type sequence
   void set_particle_types();
 
   // perform a confined random walk

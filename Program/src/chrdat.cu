@@ -38,7 +38,7 @@ cngeom::cngeom(parmap &par) // parameters
 
 // chromatin data constructor
 chrdat::chrdat(parmap &par) // parameters
-    : N{par.get_val<uint>("number_of_particles", 0)}, ng(par),
+    : N{par.get_val<uint>("number_of_particles", 18239)}, ng(par),
       T{par.get_val<float>("temperature", 298.0)},
       n_l{par.get_val<uint>("number_of_lbs", 0)}, i_f{0}, t{0.0},
       fpf{par.get_val<uint>("frames_per_file", 128)}
