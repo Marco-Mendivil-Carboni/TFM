@@ -42,11 +42,31 @@ inline __device__ void calc_bf(
   float cos[3]; // bond angle cosines
   vec3f bf = {0.0, 0.0, 0.0}; // bonded forces
 
+  // determine bond limits
+  uint lim_l = 2; // lower bond limit
+  uint lim_u = N; // upper bond limit
+  if (N == N_def) // take into account chromosome limits
+  {
+    uint chr_lim[] = // chromosome limits
+        {0, 3486, 6690, 10409, 14637, 14842, 18239};
+    uint n_c = // number of chromosomes
+        sizeof(chr_lim) / sizeof(uint) - 1;
+    for (uint i_c = 1; i_c < n_c; ++i_c) // chromosome index
+    {
+      if (i_p < chr_lim[i_c]) // particle belongs to chromosome
+      {
+        lim_l = chr_lim[i_c - 1] + 2;
+        lim_u = chr_lim[i_c];
+        break;
+      }
+    }
+  }
+
   // calculate bond vectors, inverse lengths and angle cosines
   for (uint i_b = 0; i_b < 4; ++i_b) // bond index
   {
-    if ((i_p + i_b) >= 2 &&
-        (i_p + i_b) <= N) // calculate variables if bond exists
+    if ((i_p + i_b) >= lim_l &&
+        (i_p + i_b) <= lim_u) // calculate variables if bond exists
     {
       vec[i_b] = r[i_p + i_b - 1] - r[i_p + i_b - 2];
       il[i_b] = rsqrtf(dot(vec[i_b], vec[i_b]));
@@ -643,10 +663,10 @@ void chrsim::set_particle_types()
   curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT);
   curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
 
-  if (N == 18239) // use experimental data to set particles types
+  if (N == N_def) // use experimental data to set particles types
   {
     std::ifstream txt_inp_f; // text input file
-    std::string pathstr = seqpath; // file path string
+    std::string pathstr = seqpath_def; // file path string
     txt_inp_f.open(pathstr);
     check_file(txt_inp_f, pathstr);
     char ptc; // particle type character
@@ -731,8 +751,7 @@ void chrsim::perform_random_walk()
 
     // generate random bond angle and calculate new direction
     curandGenerateUniform(gen, &ran, 1);
-    angle_b = acos(
-        1.0 + log(1.0 - (1.0 - exp(-2.0 * (k_b * iT))) * ran) / (k_b * iT));
+    angle_b = acos(1.0 - 2.0 * ran);
     new_dir = cos(angle_b) * old_dir + sin(angle_b) * per_dir;
 
     // calculate position of next particle

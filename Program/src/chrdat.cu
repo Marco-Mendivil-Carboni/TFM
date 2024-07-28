@@ -38,7 +38,7 @@ cngeom::cngeom(parmap &par) // parameters
 
 // chromatin data constructor
 chrdat::chrdat(parmap &par) // parameters
-    : N{par.get_val<uint>("number_of_particles", 18239)}, ng(par),
+    : N{par.get_val<uint>("number_of_particles", N_def)}, ng(par),
       T{par.get_val<float>("temperature", 298.0)},
       n_l{par.get_val<uint>("number_of_lbs", 0)}, i_f{0}, t{0.0},
       fpf{par.get_val<uint>("frames_per_file", 128)}
@@ -59,7 +59,7 @@ chrdat::chrdat(parmap &par) // parameters
   float noacf = 2.0 / (1.0 + ng.noc); // nucleus opening area correction factor
   float laf =
       noacf * n_l * pow(lco / (ng.R_n - rco), 2.0) / 4.0; // lbs area fraction
-  if (laf > 0.6) { throw error("lbs area fraction above 0.6"); }
+  if (laf > 0.4) { throw error("lbs area fraction above 0.4"); }
 
   // record parameter values
   std::string msg_1 = ""; // 1st message
