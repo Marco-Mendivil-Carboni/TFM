@@ -23,11 +23,13 @@ static constexpr float mdl = 22.13471; // mean domain length
 static constexpr float e_l = 8.000000; // lbs energy
 static constexpr float lco = 0.500000; // lbs cutoff
 
-static constexpr char seqpath_def[] = // default sequence file path
+#define CHR_LIM {0, 3486, 6690, 10409, 14637, 14842, 18239} // chromosome limits
+__constant__ static constexpr uint chrla[] = CHR_LIM; // chromosome limits array
+static constexpr uint hchrla[] = CHR_LIM; // host chromosome limits array
+static constexpr uint n_chr = sizeof(chrla) / 4 - 1; // number of chromosomes
+static constexpr uint N_def = hchrla[n_chr]; // default number of particles
+static constexpr char seqpath_def[] = // default sequence file relative path
     "Program/data/sequence.txt";
-static constexpr uint chr_lim_def[] = // default chromosome limits
-    {0, 3486, 6690, 10409, 14637, 14842, 18239};
-static constexpr uint N_def = 18239; // default number of particles
 
 // Enumerations
 

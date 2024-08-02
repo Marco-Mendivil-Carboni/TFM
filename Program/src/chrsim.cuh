@@ -64,8 +64,11 @@ private:
   // set particle type sequence
   void set_particle_types();
 
-  // perform a confined random walk
-  void perform_random_walk();
+  // perform confined random walk
+  void perform_random_walk(
+      uint i_s, // starting index
+      uint i_e, // ending index
+      vec3f d_c); // chromosome direction
 
   // count particle overlaps
   uint particle_overlaps();

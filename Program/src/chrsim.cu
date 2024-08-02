@@ -47,16 +47,12 @@ inline __device__ void calc_bf(
   uint lim_u = N; // upper bond limit
   if (N == N_def) // take into account chromosome limits
   {
-    uint chr_lim[] = // chromosome limits
-        {0, 3486, 6690, 10409, 14637, 14842, 18239};
-    uint n_c = // number of chromosomes
-        sizeof(chr_lim) / sizeof(uint) - 1;
-    for (uint i_c = 1; i_c < n_c; ++i_c) // chromosome index
+    for (uint i_c = 1; i_c < n_chr; ++i_c) // chromosome index
     {
-      if (i_p < chr_lim[i_c]) // particle belongs to chromosome
+      if (i_p < chrla[i_c]) // particle belongs to chromosome
       {
-        lim_l = chr_lim[i_c - 1] + 2;
-        lim_u = chr_lim[i_c];
+        lim_l = chrla[i_c - 1] + 2;
+        lim_u = chrla[i_c];
         break;
       }
     }
@@ -497,11 +493,24 @@ void chrsim::generate_initial_condition()
   // set random lbs positions
   set_lbs_positions();
 
-  // set random particle types
+  // set particle type sequence
   set_particle_types();
 
-  // perform a confined random walk
-  perform_random_walk();
+  // set random particle positions
+  if (N == N_def) // perform a confined random walk for each chromosome
+  {
+    for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+    {
+      float cac[3] = {0.0, 0.0, 0.0}; // Cartesian axes coordinates
+      cac[(i_c / 2) % 3] = 1.0 - 2.0 * (i_c % 2);
+      vec3f d_c = {cac[0], cac[1], cac[2]}; // chromosome direction
+      perform_random_walk(hchrla[i_c], hchrla[i_c + 1], d_c);
+    }
+  }
+  else // perform a single confined random walk
+  {
+    perform_random_walk(0, N, {0.0, 0.0, 0.0});
+  }
 
   // generate lbs grid arrays
   lg.generate_arrays(tpb, lr);
@@ -707,8 +716,11 @@ void chrsim::set_particle_types()
   curandDestroyGenerator(gen);
 }
 
-// perform a confined random walk
-void chrsim::perform_random_walk()
+// perform confined random walk
+void chrsim::perform_random_walk(
+    uint i_s, // starting index
+    uint i_e, // ending index
+    vec3f d_c) // chromosome direction
 {
   // initialize host PRNG
   curandGenerator_t gen; // host PRNG
@@ -728,17 +740,13 @@ void chrsim::perform_random_walk()
   vec3f per_dir; // perpendicular direction
 
   // place first particle
-  hr[0] = {0.0, 0.0, 0.0};
-  curandGenerateUniform(gen, &ran, 1);
-  theta = acos(1.0 - 2.0 * ran);
-  curandGenerateUniform(gen, &ran, 1);
-  phi = 2.0 * M_PI * ran;
-  ran_dir = {sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)};
-  old_dir = ran_dir;
+  hr[i_s] = d_c;
+  if (length(d_c) < 0.5) { old_dir = {1.0, 0.0, 0.0}; }
+  else { old_dir = d_c; }
 
   // place the rest of particles
   uint att = 0; // number of attempts
-  for (uint i_p = 1; i_p < N; ++i_p) // particle index
+  for (uint i_p = i_s + 1; i_p < i_e; ++i_p) // particle index
   {
     // generate random direction perpendicular to old direction
     curandGenerateUniform(gen, &ran, 1);
@@ -751,7 +759,7 @@ void chrsim::perform_random_walk()
 
     // generate random bond angle and calculate new direction
     curandGenerateUniform(gen, &ran, 1);
-    angle_b = acos(1.0 - 2.0 * ran);
+    angle_b = acos(1.0 + log(1.0 - (1.0 - exp(-4.0 * iT)) * ran) / (k_b * iT));
     new_dir = cos(angle_b) * old_dir + sin(angle_b) * per_dir;
 
     // calculate position of next particle
@@ -775,7 +783,7 @@ void chrsim::perform_random_walk()
     else // go back
     {
       ++att;
-      if (att > 1024) { i_p = 1 + i_p * 3 / 4; }
+      if (att > 1024) { i_p = i_s + 1 + (i_p - i_s) * 3 / 4; }
       else { --i_p; }
     }
   }
