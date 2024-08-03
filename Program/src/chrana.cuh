@@ -13,7 +13,7 @@ namespace mmc // Marco Mendívil Carboni
 
 // Constants
 
-static constexpr uint n_b = 128; // number of bins
+static constexpr uint n_b = 64; // number of bins
 
 // Classes
 
