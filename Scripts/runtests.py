@@ -45,7 +45,6 @@ with open(parfilepath, "w") as parfile:
 print("---")
 
 check(run(["./Program/bin/ccp-perform", str(testdir)]).returncode)
-
 check(run(["./Program/bin/ccp-perform", str(testdir)]).returncode)
 
 check(run(["./Program/bin/ccp-analyze", str(testdir)]).returncode)

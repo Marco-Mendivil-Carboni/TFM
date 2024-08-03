@@ -46,7 +46,6 @@ private:
   vec3f *ef; // extra force array
 
   const float sd; // rn standard deviation
-
   vec3f *rn; // random number array
   void *vps; // void PRNG state array
 
@@ -68,7 +67,7 @@ private:
   void perform_random_walk(
       uint i_s, // starting index
       uint i_e, // ending index
-      vec3f d_c); // chromosome direction
+      vec3f dir); // direction
 
   // count particle overlaps
   uint particle_overlaps();

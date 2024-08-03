@@ -501,10 +501,10 @@ void chrsim::generate_initial_condition()
   {
     for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
     {
-      float cac[3] = {0.0, 0.0, 0.0}; // Cartesian axes coordinates
-      cac[(i_c / 2) % 3] = 1.0 - 2.0 * (i_c % 2);
-      vec3f d_c = {cac[0], cac[1], cac[2]}; // chromosome direction
-      perform_random_walk(hchrla[i_c], hchrla[i_c + 1], d_c);
+      float dca[3] = {0.0, 0.0, 0.0}; // direction coordinates array
+      dca[(i_c / 2) % 3] = tan(3 * M_PI / 8) * (1.0 - 2.0 * (i_c % 2));
+      vec3f dir = {dca[0], dca[1], dca[2]}; // direction
+      perform_random_walk(hchrla[i_c], hchrla[i_c + 1], dir);
     }
   }
   else // perform a single confined random walk
@@ -720,7 +720,7 @@ void chrsim::set_particle_types()
 void chrsim::perform_random_walk(
     uint i_s, // starting index
     uint i_e, // ending index
-    vec3f d_c) // chromosome direction
+    vec3f dir) // direction
 {
   // initialize host PRNG
   curandGenerator_t gen; // host PRNG
@@ -728,6 +728,8 @@ void chrsim::perform_random_walk(
   curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
 
   // declare auxiliary variables
+  float len_d = length(dir); // direction length
+  float mda = M_PI - 2.0 * atan(len_d); // maximum direction angle
   float iT = 1.0 / (k_B * T); // inverse temperature
   float ran; // random number in (0,1]
   float theta; // polar angle
@@ -740,9 +742,10 @@ void chrsim::perform_random_walk(
   vec3f per_dir; // perpendicular direction
 
   // place first particle
-  hr[i_s] = d_c;
-  if (length(d_c) < 0.5) { old_dir = {1.0, 0.0, 0.0}; }
-  else { old_dir = d_c; }
+  if ((ng.R_n - len_d) < mis) { hr[i_s] = {0.0, 0.0, 0.0}; }
+  else { hr[i_s] = dir; }
+  if (len_d == 0.0) { old_dir = {1.0, 0.0, 0.0}; }
+  else { old_dir = dir; }
 
   // place the rest of particles
   uint att = 0; // number of attempts
@@ -759,7 +762,7 @@ void chrsim::perform_random_walk(
 
     // generate random bond angle and calculate new direction
     curandGenerateUniform(gen, &ran, 1);
-    angle_b = acos(1.0 + log(1.0 - (1.0 - exp(-4.0 * iT)) * ran) / (k_b * iT));
+    angle_b = acos(1.0 + log(1.0 - (1.0 - exp(-4.0 * iT)) * ran) / (2.0 * iT));
     new_dir = cos(angle_b) * old_dir + sin(angle_b) * per_dir;
 
     // calculate position of next particle
@@ -774,6 +777,7 @@ void chrsim::perform_random_walk(
     if (!isfinite(hr[i_p].z)) { p_a = false; }
     float d_r = length(hr[i_p]); // radial distance
     if ((ng.R_n - d_r) < mis) { p_a = false; }
+    if (acos(dot(hr[i_p], dir) / (d_r * len_d)) > mda) { p_a = false; }
 
     if (p_a) // continue
     {
