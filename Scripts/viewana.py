@@ -58,12 +58,17 @@ for i_t in range(3):
     )
     df_rcd[i_t].columns = ["r_b", "avg", "sqrt(var)", "sem"]
 
-df_msd = pd.read_csv(StringIO(blocklist[4]), sep="\\s+", comment="#", header=None)
-df_msd.columns = ["s", "avg", "sqrt(var)", "sem"]
+df_msd = list()
+for i_c in range(6):
+    df_msd.append(
+        pd.read_csv(StringIO(blocklist[i_c + 4]), sep="\\s+", comment="#", header=None)
+    )
+    df_msd[i_c].columns = ["s", "avg", "sqrt(var)", "sem"]
 
 # Make analysis plots
 
 fig, ax = plt.subplots(2, 2, height_ratios=[0.25, 1])
+
 fig.canvas.manager.set_window_title(str(simdir) + " analysis")
 
 ax[0, 0].axis("off")
@@ -94,17 +99,21 @@ for i_t in range(3):
         x, y_min, y_max, step="pre", color=colorlist[i_t], linewidth=0.0, alpha=0.50
     )
 
+colorlist = ["#1875ad", "#189da8", "#17a384", "#169e57", "#15992c", "#259415"]
 ax[1, 1].set_xscale("log")
 ax[1, 1].set_yscale("log")
 ax[1, 1].set_xlabel("s")
 ax[1, 1].set_ylabel("msd")
 ax[1, 1].autoscale(tight=True)
-x = df_msd["s"]
-y = df_msd["avg"]
-y_min = df_msd["avg"] - df_msd["sem"]
-y_max = df_msd["avg"] + df_msd["sem"]
-ax[1, 1].plot(x, y, color="#169f62")
-ax[1, 1].fill_between(x, y_min, y_max, color="#169f62", linewidth=0.0, alpha=0.50)
+for i_c in range(6):
+    x = df_msd[i_c]["s"]
+    y = df_msd[i_c]["avg"]
+    y_min = df_msd[i_c]["avg"] - df_msd[i_c]["sem"]
+    y_max = df_msd[i_c]["avg"] + df_msd[i_c]["sem"]
+    ax[1, 1].plot(x, y, color=colorlist[i_c])
+    ax[1, 1].fill_between(
+        x, y_min, y_max, color=colorlist[i_c], linewidth=0.0, alpha=0.25
+    )
 
 # View analysis
 

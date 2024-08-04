@@ -62,10 +62,10 @@ private:
 
   simobs rcd_o[3][n_b]; // radial chromatin density observable
 
-  simobs_b *msd_o; // mean spatial distance observable
-  const uint lma; // length of msd arrays
-  float *ma; // msd array
-  float *hma; // host msd array
+  simobs_b *msd_o[n_chr]; // mean spatial distance observable
+  uint lma[n_chr]; // length of msd arrays
+  float *ma[n_chr]; // msd arrays
+  float *hma[n_chr]; // host msd arrays
 
   // Function
 

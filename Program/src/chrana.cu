@@ -11,8 +11,9 @@ namespace mmc // Marco Mendívil Carboni
 
 // calculate the mean spatial distance
 __global__ void calc_msd(
-    const uint lma, // length of msd arrays
     const uint N, // number of particles
+    uint lma, // length of msd array
+    uint i_c, // chromosome index
     vec3f *r, // position array
     float *ma) // msd array
 {
@@ -21,42 +22,78 @@ __global__ void calc_msd(
   if (i_a >= lma) { return; }
 
   // calculate the mean spatial distance
+  uint chr_len; // chromosome length
+  if (N == N_def) { chr_len = chrla[i_c + 1] - chrla[i_c]; }
+  else { chr_len = N; }
   ma[i_a] = 0.0;
   uint s = i_a + 1; // separation
-  for (uint i_p = 0; i_p < (N - s); ++i_p) // particle index
+  uint i_s = chrla[i_c]; // starting index
+  for (uint i_p = i_s; i_p < i_s + (chr_len - s); ++i_p) // particle index
   {
     ma[i_a] += length(r[i_p + s] - r[i_p]);
   }
-  ma[i_a] /= (N - s);
+  ma[i_a] /= (chr_len - s);
 }
 
 // Host Functions
 
 // chromatin analysis constructor
 chrana::chrana(parmap &par) // parameters
-    : chrdat(par), lma{(N / 16) - 1}
+    : chrdat(par)
 {
   // allocate memory
-  msd_o = new simobs_b[lma];
+  if (N == N_def)
+  {
+    for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+    {
+      lma[i_c] = (hchrla[i_c + 1] - hchrla[i_c]) / 2;
+      msd_o[i_c] = new simobs_b[lma[i_c]];
+    }
+  }
+  else
+  {
+    lma[0] = N / 2;
+    msd_o[0] = new simobs_b[lma[0]];
+    for (uint i_c = 1; i_c < n_chr; ++i_c) // chromosome index
+    {
+      lma[i_c] = 0;
+      msd_o[i_c] = new simobs_b[lma[i_c]];
+    }
+  }
 
   // allocate device memory
-  cuda_check(cudaMalloc(&ma, lma * sizeof(float)));
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    cuda_check(cudaMalloc(&ma[i_c], lma[i_c] * sizeof(float)));
+  }
 
   // allocate host memory
-  cuda_check(cudaMallocHost(&hma, lma * sizeof(float)));
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    cuda_check(cudaMallocHost(&hma[i_c], lma[i_c] * sizeof(float)));
+  }
 }
 
 // chromatin analysis destructor
 chrana::~chrana()
 {
   // deallocate memory
-  delete[] msd_o;
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    delete[] msd_o[i_c];
+  }
 
   // deallocate device memory
-  cuda_check(cudaFree(ma));
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    cuda_check(cudaFree(ma[i_c]));
+  }
 
   // deallocate host memory
-  cuda_check(cudaFreeHost(hma));
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    cuda_check(cudaFreeHost(hma[i_c]));
+  }
 }
 
 // add initial condition to analysis
@@ -100,9 +137,12 @@ void chrana::calc_last_is_stat()
       rcd_o[i_t][i_b].calc_last_is_stat();
     }
   }
-  for (uint i_a = 0; i_a < lma; ++i_a) // array index
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    msd_o[i_a].calc_last_is_stat();
+    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    {
+      msd_o[i_c][i_a].calc_last_is_stat();
+    }
   }
 }
 
@@ -136,13 +176,16 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) // text output file
   }
 
   // save msd last individual simulation statistics
-  txt_out_f << "#    s         avg\n";
-  for (uint i_a = 0; i_a < lma; ++i_a) // array index
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    txt_out_f << cnfs((i_a + 1), 6, ' ');
-    msd_o[i_a].save_last_is_stat(txt_out_f);
+    txt_out_f << "#    s         avg\n";
+    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    {
+      txt_out_f << cnfs((i_a + 1), 6, ' ');
+      msd_o[i_c][i_a].save_last_is_stat(txt_out_f);
+    }
+    txt_out_f << "\n\n";
   }
-  txt_out_f << "\n\n";
 }
 
 // clear individual simulation variables
@@ -160,10 +203,13 @@ void chrana::clear_is_var()
       rcd_o[i_t][i_b].is_ts.clear();
     }
   }
-  for (uint i_a = 0; i_a < lma; ++i_a) // array index
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    msd_o[i_a].is_o_sum = 0.0;
-    msd_o[i_a].is_n_dp = 0;
+    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    {
+      msd_o[i_c][i_a].is_o_sum = 0.0;
+      msd_o[i_c][i_a].is_n_dp = 0;
+    }
   }
 }
 
@@ -181,9 +227,12 @@ void chrana::calc_cs_final_stat()
       rcd_o[i_t][i_b].calc_cs_final_stat();
     }
   }
-  for (uint i_a = 0; i_a < lma; ++i_a) // array index
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    msd_o[i_a].calc_cs_final_stat();
+    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    {
+      msd_o[i_c][i_a].calc_cs_final_stat();
+    }
   }
 }
 
@@ -217,13 +266,16 @@ void chrana::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
   }
 
   // save msd combined simulations final statistics
-  txt_out_f << "#    s         avg   sqrt(var)         sem\n";
-  for (uint i_a = 0; i_a < lma; ++i_a) // array index
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    txt_out_f << cnfs((i_a + 1), 6, ' ');
-    msd_o[i_a].save_cs_final_stat(txt_out_f);
+    txt_out_f << "#    s         avg   sqrt(var)         sem\n";
+    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    {
+      txt_out_f << cnfs((i_a + 1), 6, ' ');
+      msd_o[i_c][i_a].save_cs_final_stat(txt_out_f);
+    }
+    txt_out_f << "\n\n";
   }
-  txt_out_f << "\n\n";
 }
 
 // calculate observables
@@ -334,12 +386,16 @@ void chrana::calc_observables()
 
   // calculate the mean spatial distance
   uint tpb = 128; // threads per block
-  calc_msd<<<(lma + tpb - 1) / tpb, tpb>>>(lma, N, r, ma);
-  cuda_check(cudaMemcpy(hma, ma, lma * sizeof(float), cudaMemcpyDeviceToHost));
-  for (uint i_a = 0; i_a < lma; ++i_a) // array index
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    msd_o[i_a].is_o_sum += hma[i_a];
-    ++msd_o[i_a].is_n_dp;
+    calc_msd<<<(lma[i_c] + tpb - 1) / tpb, tpb>>>(N, lma[i_c], i_c, r, ma[i_c]);
+    cuda_check(cudaMemcpy(
+        hma[i_c], ma[i_c], lma[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
+    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    {
+      msd_o[i_c][i_a].is_o_sum += hma[i_c][i_a];
+      ++msd_o[i_c][i_a].is_n_dp;
+    }
   }
 }
 
