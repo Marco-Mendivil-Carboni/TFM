@@ -150,22 +150,17 @@ void chrana::calc_last_is_stat()
 void chrana::save_last_is_stat(std::ofstream &txt_out_f) // text output file
 {
   // save dcm, rg2, nop and ncf last individual simulation statistics
-  txt_out_f << "#individual simulation analysis\n";
-  txt_out_f << "#        avg   sqrt(var)         sem   f_n_b     i_t ter\n";
-  txt_out_f << "# center of mass distance:\n";
+  txt_out_f << "         avg   sqrt(var)         sem   f_n_b     i_t ter\n";
   dcm_o.save_last_is_stat(txt_out_f);
-  txt_out_f << "# gyration radius squared:\n";
   rg2_o.save_last_is_stat(txt_out_f);
-  txt_out_f << "# nematic order parameter:\n";
   nop_o.save_last_is_stat(txt_out_f);
-  txt_out_f << "# nucleus chromatin fraction:\n";
   ncf_o.save_last_is_stat(txt_out_f);
   txt_out_f << "\n\n";
 
   // save rcd last individual simulation statistics
   for (uint i_t = 0; i_t < 3; ++i_t) // type index
   {
-    txt_out_f << "#        r_b         avg   sqrt(var)         sem\n";
+    txt_out_f << "         r_b         avg   sqrt(var)         sem\n";
     txt_out_f << "    0.000000    0.000000    0.000000    0.000000\n";
     for (uint i_b = 0; i_b < n_b; ++i_b) // bin index
     {
@@ -178,7 +173,7 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) // text output file
   // save msd last individual simulation statistics
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    txt_out_f << "#    s         avg\n";
+    txt_out_f << "     s         avg\n";
     for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
     {
       txt_out_f << cnfs((i_a + 1), 6, ' ');
@@ -240,22 +235,17 @@ void chrana::calc_cs_final_stat()
 void chrana::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
 {
   // save dcm, rg2, nop and ncf combined simulations final statistics
-  txt_out_f << "#combined simulations final analysis\n";
-  txt_out_f << "#        avg   sqrt(var)         sem\n";
-  txt_out_f << "# center of mass distance:\n";
+  txt_out_f << "         avg   sqrt(var)         sem\n";
   dcm_o.save_cs_final_stat(txt_out_f);
-  txt_out_f << "# gyration radius squared:\n";
   rg2_o.save_cs_final_stat(txt_out_f);
-  txt_out_f << "# nematic order parameter:\n";
   nop_o.save_cs_final_stat(txt_out_f);
-  txt_out_f << "# nucleus chromatin fraction:\n";
   ncf_o.save_cs_final_stat(txt_out_f);
   txt_out_f << "\n\n";
 
   // save rcd combined simulations final statistics
   for (uint i_t = 0; i_t < 3; ++i_t) // type index
   {
-    txt_out_f << "#        r_b         avg   sqrt(var)         sem\n";
+    txt_out_f << "         r_b         avg   sqrt(var)         sem\n";
     txt_out_f << "    0.000000    0.000000    0.000000    0.000000\n";
     for (uint i_b = 0; i_b < n_b; ++i_b) // bin index
     {
@@ -268,7 +258,7 @@ void chrana::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
   // save msd combined simulations final statistics
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    txt_out_f << "#    s         avg   sqrt(var)         sem\n";
+    txt_out_f << "     s         avg   sqrt(var)         sem\n";
     for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
     {
       txt_out_f << cnfs((i_a + 1), 6, ' ');
@@ -388,6 +378,7 @@ void chrana::calc_observables()
   uint tpb = 128; // threads per block
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
+    if (lma[i_c] == 0) { continue; }
     calc_msd<<<(lma[i_c] + tpb - 1) / tpb, tpb>>>(N, lma[i_c], i_c, r, ma[i_c]);
     cuda_check(cudaMemcpy(
         hma[i_c], ma[i_c], lma[i_c] * sizeof(float), cudaMemcpyDeviceToHost));

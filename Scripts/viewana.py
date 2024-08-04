@@ -41,29 +41,22 @@ if not simdir.exists():
 # Load data into dataframes
 
 parfilepath = simdir / "adjustable-parameters.dat"
-df_par = pd.read_csv(parfilepath, sep="\\s+", comment="#", header=None)
+df_par = pd.read_csv(parfilepath, sep="\\s+", header=None)
 
 anafilepath = simdir / "analysis-fin.dat"
 with open(anafilepath) as anafile:
     blocklist = anafile.read().split("\n\n\n")
 
-df_s = pd.read_csv(StringIO(blocklist[0]), sep="\\s+", comment="#", header=None)
-df_s.columns = ["avg", "sqrt(var)", "sem"]
+df_s = pd.read_csv(StringIO(blocklist[0]), sep="\\s+")
 df_s.insert(loc=0, column="simobs", value=["dcm", "rg2", "nop", "ncf"])
 
 df_rcd = list()
 for i_t in range(3):
-    df_rcd.append(
-        pd.read_csv(StringIO(blocklist[i_t + 1]), sep="\\s+", comment="#", header=None)
-    )
-    df_rcd[i_t].columns = ["r_b", "avg", "sqrt(var)", "sem"]
+    df_rcd.append(pd.read_csv(StringIO(blocklist[i_t + 1]), sep="\\s+"))
 
 df_msd = list()
 for i_c in range(6):
-    df_msd.append(
-        pd.read_csv(StringIO(blocklist[i_c + 4]), sep="\\s+", comment="#", header=None)
-    )
-    df_msd[i_c].columns = ["s", "avg", "sqrt(var)", "sem"]
+    df_msd.append(pd.read_csv(StringIO(blocklist[i_c + 4]), sep="\\s+"))
 
 # Make analysis plots
 
@@ -106,14 +99,15 @@ ax[1, 1].set_xlabel("s")
 ax[1, 1].set_ylabel("msd")
 ax[1, 1].autoscale(tight=True)
 for i_c in range(6):
-    x = df_msd[i_c]["s"]
-    y = df_msd[i_c]["avg"]
-    y_min = df_msd[i_c]["avg"] - df_msd[i_c]["sem"]
-    y_max = df_msd[i_c]["avg"] + df_msd[i_c]["sem"]
-    ax[1, 1].plot(x, y, color=colorlist[i_c])
-    ax[1, 1].fill_between(
-        x, y_min, y_max, color=colorlist[i_c], linewidth=0.0, alpha=0.25
-    )
+    if not df_msd[i_c].empty:
+        x = df_msd[i_c]["s"]
+        y = df_msd[i_c]["avg"]
+        y_min = df_msd[i_c]["avg"] - df_msd[i_c]["sem"]
+        y_max = df_msd[i_c]["avg"] + df_msd[i_c]["sem"]
+        ax[1, 1].plot(x, y, color=colorlist[i_c])
+        ax[1, 1].fill_between(
+            x, y_min, y_max, color=colorlist[i_c], linewidth=0.0, alpha=0.50
+        )
 
 # View analysis
 
