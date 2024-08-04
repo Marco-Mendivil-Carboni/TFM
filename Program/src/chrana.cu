@@ -37,7 +37,7 @@ chrana::chrana(parmap &par) // parameters
     : chrdat(par), lma{(N / 16) - 1}
 {
   // allocate memory
-  msd_o = new simobs[lma];
+  msd_o = new simobs_b[lma];
 
   // allocate device memory
   cuda_check(cudaMalloc(&ma, lma * sizeof(float)));
@@ -136,17 +136,17 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) // text output file
   }
 
   // save msd last individual simulation statistics
-  txt_out_f << "#    s         avg   sqrt(var)         sem\n";
+  txt_out_f << "#    s         avg\n";
   for (uint i_a = 0; i_a < lma; ++i_a) // array index
   {
     txt_out_f << cnfs((i_a + 1), 6, ' ');
-    msd_o[i_a].save_last_is_stat_s(txt_out_f);
+    msd_o[i_a].save_last_is_stat(txt_out_f);
   }
   txt_out_f << "\n\n";
 }
 
-// clear individual simulation time series
-void chrana::clear_is_ts()
+// clear individual simulation variables
+void chrana::clear_is_var()
 {
   t_o.is_ts.clear();
   dcm_o.is_ts.clear();
@@ -162,7 +162,8 @@ void chrana::clear_is_ts()
   }
   for (uint i_a = 0; i_a < lma; ++i_a) // array index
   {
-    msd_o[i_a].is_ts.clear();
+    msd_o[i_a].is_o_sum = 0.0;
+    msd_o[i_a].is_n_dp = 0;
   }
 }
 
@@ -337,7 +338,8 @@ void chrana::calc_observables()
   cuda_check(cudaMemcpy(hma, ma, lma * sizeof(float), cudaMemcpyDeviceToHost));
   for (uint i_a = 0; i_a < lma; ++i_a) // array index
   {
-    msd_o[i_a].is_ts.push_back(hma[i_a]);
+    msd_o[i_a].is_o_sum += hma[i_a];
+    ++msd_o[i_a].is_n_dp;
   }
 }
 

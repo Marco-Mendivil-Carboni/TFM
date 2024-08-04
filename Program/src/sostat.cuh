@@ -14,9 +14,13 @@ namespace mmc // Marco Mendívil Carboni
 
 // Structures
 
-struct gdstat // generic data statistics
+struct bdstat // basic data statistics
 {
   double avg; // average
+};
+
+struct gdstat : bdstat // generic data statistics
+{
   double var; // variance
   double sem; // standard error of the mean
 };
@@ -39,6 +43,7 @@ struct tdstat : cdstat // time series data statistics
 struct simobs // simulation observable
 {
   std::vector<float> is_ts; // individual simulation time series
+
   std::vector<tdstat> is_sv; // individual simulation statistics vector
 
   idstat cs_fs; // combined simulations final statistics
@@ -51,6 +56,28 @@ struct simobs // simulation observable
 
   // save last individual simulation statistics summary
   void save_last_is_stat_s(std::ofstream &txt_out_f); // text output file
+
+  // calculate combined simulations final statistics
+  void calc_cs_final_stat();
+
+  // save combined simulations final statistics
+  void save_cs_final_stat(std::ofstream &txt_out_f); // text output file
+};
+
+struct simobs_b // basic simulation observable
+{
+  double is_o_sum = 0.0; // individual simulation observable sum
+  uint is_n_dp = 0; // individual simulation number of data points
+
+  std::vector<bdstat> is_sv; // individual simulation statistics vector
+
+  idstat cs_fs; // combined simulations final statistics
+
+  // calculate last individual simulation statistics
+  void calc_last_is_stat();
+
+  // save last individual simulation statistics
+  void save_last_is_stat(std::ofstream &txt_out_f); // text output file
 
   // calculate combined simulations final statistics
   void calc_cs_final_stat();
@@ -79,6 +106,11 @@ void calc_stats(
 // calculate statistics
 void calc_stats(
     const std::vector<tdstat> &v, // vector
+    idstat &s); // statistics
+
+// calculate statistics
+void calc_stats(
+    const std::vector<bdstat> &v, // vector
     idstat &s); // statistics
 
 } // namespace mmc

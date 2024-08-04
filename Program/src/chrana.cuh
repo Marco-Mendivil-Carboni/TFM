@@ -40,8 +40,8 @@ public:
   // save last individual simulation statistics
   void save_last_is_stat(std::ofstream &txt_out_f); // text output file
 
-  // clear individual simulation time series
-  void clear_is_ts();
+  // clear individual simulation variables
+  void clear_is_var();
 
   // calculate combined simulations final statistics
   void calc_cs_final_stat();
@@ -62,7 +62,7 @@ private:
 
   simobs rcd_o[3][n_b]; // radial chromatin density observable
 
-  simobs *msd_o; // mean spatial distance observable
+  simobs_b *msd_o; // mean spatial distance observable
   const uint lma; // length of msd arrays
   float *ma; // msd array
   float *hma; // host msd array

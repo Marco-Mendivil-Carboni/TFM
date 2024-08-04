@@ -44,6 +44,31 @@ void simobs::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
   txt_out_f << cnfs(cs_fs.sem, 12, ' ', 6) << "\n";
 }
 
+// calculate last individual simulation statistics
+void simobs_b::calc_last_is_stat()
+{
+  bdstat bas; // basic auxiliary statistics
+  bas.avg = is_o_sum / is_n_dp;
+  is_sv.push_back(bas);
+}
+
+// save last individual simulation statistics
+void simobs_b::save_last_is_stat(std::ofstream &txt_out_f) // text output file
+{
+  bdstat bas = is_sv.back(); // basic auxiliary statistics
+  txt_out_f << cnfs(bas.avg, 12, ' ', 6) << "\n";
+}
+
+// calculate combined simulations final statistics
+void simobs_b::calc_cs_final_stat() { calc_stats(is_sv, cs_fs); }
+
+// save combined simulations final statistics
+void simobs_b::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
+{
+  txt_out_f << cnfs(cs_fs.avg, 12, ' ', 6) << cnfs(sqrt(cs_fs.var), 12, ' ', 6);
+  txt_out_f << cnfs(cs_fs.sem, 12, ' ', 6) << "\n";
+}
+
 // calculate statistics
 void calc_stats(
     const std::vector<float> &v, // vector
@@ -185,6 +210,29 @@ void calc_stats(
   s.avg = m_1;
   s.var = (m_2 - m_1 * m_1) / (1.0 - w_2 / (w_1 * w_1));
   s.sem = sqrt(s.var * w_2 / (w_1 * w_1));
+}
+
+// calculate statistics
+void calc_stats(
+    const std::vector<bdstat> &v, // vector
+    idstat &s) // statistics
+{
+  // calculate the first two raw moments
+  double m_1 = 0.0; // 1st moment
+  double m_2 = 0.0; // 2nd moment
+  uint n_e = v.size(); // number of elements
+  for (uint i_e = 0; i_e < n_e; ++i_e) // element index
+  {
+    m_1 += v[i_e].avg;
+    m_2 += v[i_e].avg * v[i_e].avg;
+  }
+  m_1 /= n_e;
+  m_2 /= n_e;
+
+  // calculate statistics
+  s.avg = m_1;
+  s.var = (m_2 - m_1 * m_1) / (1.0 - 1.0 / n_e);
+  s.sem = sqrt(s.var / n_e);
 }
 
 } // namespace mmc

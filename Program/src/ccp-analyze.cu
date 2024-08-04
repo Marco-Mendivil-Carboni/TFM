@@ -90,8 +90,8 @@ int main(
       msg = "analysis " + mmc::cnfs(i_s, 3, '0') + " finished";
       mmc::logger::record(msg);
 
-      // clear individual simulation time series
-      ana.clear_is_ts();
+      // clear individual simulation variables
+      ana.clear_is_var();
     }
 
     // calculate combined simulations final statistics
