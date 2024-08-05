@@ -15,6 +15,8 @@ namespace mmc // Marco Mendívil Carboni
 
 static constexpr uint n_b = 64; // number of bins
 
+static constexpr uint px_sz = 4; // pixel size
+
 // Classes
 
 class chrana : public chrdat // chromatin analysis
@@ -52,6 +54,8 @@ public:
 private:
   // Parameters and Variables
 
+  const uint tpb; // threads per block
+
   simobs t_o; // time observable
 
   simobs dcm_o; // center of mass distance observable
@@ -62,10 +66,22 @@ private:
 
   simobs rcd_o[3][n_b]; // radial chromatin density observable
 
-  simobs_b *msd_o[n_chr]; // mean spatial distance observable
-  uint lma[n_chr]; // length of msd arrays
-  float *ma[n_chr]; // msd arrays
-  float *hma[n_chr]; // host msd arrays
+  simobs_b *sd_bo[n_chr]; // spatial distance basic observable
+  float *sd[n_chr]; // spatial distance arrays
+  float *hsd[n_chr]; // host spatial distance arrays
+
+  simobs_b *cp_bo[n_chr]; // contact probability basic observable
+  float *cp[n_chr]; // contact probability arrays
+  float *hcp[n_chr]; // host contact probability arrays
+
+  uint lsdcp[n_chr]; // length of sd and cp arrays
+
+  simobs_b *cm_bo; // contact map basic observable
+  float *cm; // contact map array
+  float *hcm; // host contact map array
+
+  uint cms = N / px_sz; // contact map side
+  uint lcm = cms * (cms + 1) / 2; // length of cm arrays
 
   // Function
 

@@ -9,69 +9,72 @@ namespace mmc // Marco Mendívil Carboni
 
 // Global Functions
 
-// calculate the mean spatial distance
-__global__ void calc_msd(
+// calculate the spatial distance
+__global__ void calc_sd(
     const uint N, // number of particles
-    uint lma, // length of msd array
+    uint lsdcp, // length of sd and cp arrays
     uint i_c, // chromosome index
     vec3f *r, // position array
-    float *ma) // msd array
+    float *sd) // spatial distance array
 {
   // calculate array index
   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
-  if (i_a >= lma) { return; }
+  if (i_a >= lsdcp) { return; }
 
-  // calculate the mean spatial distance
+  // calculate the spatial distance
   uint chr_len; // chromosome length
   if (N == N_def) { chr_len = chrla[i_c + 1] - chrla[i_c]; }
   else { chr_len = N; }
-  ma[i_a] = 0.0;
+  sd[i_a] = 0.0;
   uint s = i_a + 1; // separation
   uint i_s = chrla[i_c]; // starting index
   for (uint i_p = i_s; i_p < i_s + (chr_len - s); ++i_p) // particle index
   {
-    ma[i_a] += length(r[i_p + s] - r[i_p]);
+    sd[i_a] += length(r[i_p + s] - r[i_p]);
   }
-  ma[i_a] /= (chr_len - s);
+  sd[i_a] /= (chr_len - s);
 }
 
 // Host Functions
 
 // chromatin analysis constructor
 chrana::chrana(parmap &par) // parameters
-    : chrdat(par)
+    : chrdat(par), tpb{par.get_val<uint>("threads_per_block", 128)}
 {
   // allocate memory
   if (N == N_def)
   {
     for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
     {
-      lma[i_c] = (hchrla[i_c + 1] - hchrla[i_c]) / 2;
-      msd_o[i_c] = new simobs_b[lma[i_c]];
+      lsdcp[i_c] = (hchrla[i_c + 1] - hchrla[i_c]) / 2;
+      sd_bo[i_c] = new simobs_b[lsdcp[i_c]];
     }
   }
   else
   {
-    lma[0] = N / 2;
-    msd_o[0] = new simobs_b[lma[0]];
+    lsdcp[0] = N / 2;
+    sd_bo[0] = new simobs_b[lsdcp[0]];
     for (uint i_c = 1; i_c < n_chr; ++i_c) // chromosome index
     {
-      lma[i_c] = 0;
-      msd_o[i_c] = new simobs_b[lma[i_c]];
+      lsdcp[i_c] = 0;
+      sd_bo[i_c] = new simobs_b[lsdcp[i_c]];
     }
   }
+  cm_bo = new simobs_b[lcm];
 
   // allocate device memory
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    cuda_check(cudaMalloc(&ma[i_c], lma[i_c] * sizeof(float)));
+    cuda_check(cudaMalloc(&sd[i_c], lsdcp[i_c] * sizeof(float)));
   }
+  cuda_check(cudaMalloc(&cm, lcm * sizeof(float)));
 
   // allocate host memory
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    cuda_check(cudaMallocHost(&hma[i_c], lma[i_c] * sizeof(float)));
+    cuda_check(cudaMallocHost(&hsd[i_c], lsdcp[i_c] * sizeof(float)));
   }
+  cuda_check(cudaMallocHost(&hcm, lcm * sizeof(float)));
 }
 
 // chromatin analysis destructor
@@ -80,20 +83,23 @@ chrana::~chrana()
   // deallocate memory
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    delete[] msd_o[i_c];
+    delete[] sd_bo[i_c];
   }
+  delete[] cm_bo;
 
   // deallocate device memory
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    cuda_check(cudaFree(ma[i_c]));
+    cuda_check(cudaFree(sd[i_c]));
   }
+  cuda_check(cudaFree(cm));
 
   // deallocate host memory
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    cuda_check(cudaFreeHost(hma[i_c]));
+    cuda_check(cudaFreeHost(hsd[i_c]));
   }
+  cuda_check(cudaFreeHost(hcm));
 }
 
 // add initial condition to analysis
@@ -139,9 +145,9 @@ void chrana::calc_last_is_stat()
   }
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
-      msd_o[i_c][i_a].calc_last_is_stat();
+      sd_bo[i_c][i_a].calc_last_is_stat();
     }
   }
 }
@@ -170,14 +176,14 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) // text output file
     txt_out_f << "\n\n";
   }
 
-  // save msd last individual simulation statistics
+  // save sd last individual simulation statistics
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     txt_out_f << "     s         avg\n";
-    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
       txt_out_f << cnfs((i_a + 1), 6, ' ');
-      msd_o[i_c][i_a].save_last_is_stat(txt_out_f);
+      sd_bo[i_c][i_a].save_last_is_stat(txt_out_f);
     }
     txt_out_f << "\n\n";
   }
@@ -200,10 +206,10 @@ void chrana::clear_is_var()
   }
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
-      msd_o[i_c][i_a].is_o_sum = 0.0;
-      msd_o[i_c][i_a].is_n_dp = 0;
+      sd_bo[i_c][i_a].is_o_sum = 0.0;
+      sd_bo[i_c][i_a].is_n_dp = 0;
     }
   }
 }
@@ -224,9 +230,9 @@ void chrana::calc_cs_final_stat()
   }
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
-      msd_o[i_c][i_a].calc_cs_final_stat();
+      sd_bo[i_c][i_a].calc_cs_final_stat();
     }
   }
 }
@@ -255,14 +261,14 @@ void chrana::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
     txt_out_f << "\n\n";
   }
 
-  // save msd combined simulations final statistics
+  // save sd combined simulations final statistics
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     txt_out_f << "     s         avg   sqrt(var)         sem\n";
-    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
       txt_out_f << cnfs((i_a + 1), 6, ' ');
-      msd_o[i_c][i_a].save_cs_final_stat(txt_out_f);
+      sd_bo[i_c][i_a].save_cs_final_stat(txt_out_f);
     }
     txt_out_f << "\n\n";
   }
@@ -374,19 +380,28 @@ void chrana::calc_observables()
     }
   }
 
-  // calculate the mean spatial distance
-  uint tpb = 128; // threads per block
+  // calculate the spatial distance
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    if (lma[i_c] == 0) { continue; }
-    calc_msd<<<(lma[i_c] + tpb - 1) / tpb, tpb>>>(N, lma[i_c], i_c, r, ma[i_c]);
+    if (lsdcp[i_c] == 0) { continue; }
+    calc_sd<<<(lsdcp[i_c] + tpb - 1) / tpb, tpb>>>(
+        N, lsdcp[i_c], i_c, r, sd[i_c]);
     cuda_check(cudaMemcpy(
-        hma[i_c], ma[i_c], lma[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
-    for (uint i_a = 0; i_a < lma[i_c]; ++i_a) // array index
+        hsd[i_c], sd[i_c], lsdcp[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
-      msd_o[i_c][i_a].is_o_sum += hma[i_c][i_a];
-      ++msd_o[i_c][i_a].is_n_dp;
+      sd_bo[i_c][i_a].is_o_sum += hsd[i_c][i_a];
+      ++sd_bo[i_c][i_a].is_n_dp;
     }
+  }
+
+  // calculate the contact map
+  // calc_ctc<<<(lcm + tpb - 1) / tpb, tpb>>>(N, r, cm); -----------------------
+  cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float), cudaMemcpyDeviceToHost));
+  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  {
+    cm_bo[i_a].is_o_sum += hcm[i_a];
+    ++cm_bo[i_a].is_n_dp;
   }
 }
 
