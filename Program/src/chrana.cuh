@@ -80,8 +80,8 @@ private:
   float *cm; // contact map array
   float *hcm; // host contact map array
 
-  uint cms = N / px_sz; // contact map side
-  uint lcm = cms * (cms + 1) / 2; // length of cm arrays
+  const uint cms; // contact map side
+  const uint lcm; // length of cm arrays
 
   // Function
 

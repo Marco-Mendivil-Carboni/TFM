@@ -9,56 +9,43 @@ namespace mmc // Marco Mendívil Carboni
 
 // Global Functions
 
-// calculate the spatial distance
-__global__ void calc_sd(
-    const uint N, // number of particles
-    uint lsdcp, // length of sd and cp arrays
-    uint i_c, // chromosome index
+// calculate the spatial distance and contact probability
+__global__ void calc_sd_cp(
+    uint lsdcp, // length of sd and cp array
+    uint i_s, // starting index
+    uint i_e, // ending index
     vec3f *r, // position array
-    float *sd) // spatial distance array
+    float *sd, // spatial distance array
+    float *cp) // contact probability array
 {
   // calculate array index
   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
   if (i_a >= lsdcp) { return; }
 
-  // calculate the spatial distance
-  uint chr_len; // chromosome length
-  if (N == N_def) { chr_len = chrla[i_c + 1] - chrla[i_c]; }
-  else { chr_len = N; }
+  // calculate the spatial distance and contact probability
   sd[i_a] = 0.0;
   uint s = i_a + 1; // separation
-  uint i_s = chrla[i_c]; // starting index
-  for (uint i_p = i_s; i_p < i_s + (chr_len - s); ++i_p) // particle index
+  for (uint i_p = i_s; i_p < (i_e - s); ++i_p) // particle index
   {
     sd[i_a] += length(r[i_p + s] - r[i_p]);
   }
-  sd[i_a] /= (chr_len - s);
+  sd[i_a] /= (i_e - i_s - s);
 }
 
 // Host Functions
 
 // chromatin analysis constructor
 chrana::chrana(parmap &par) // parameters
-    : chrdat(par), tpb{par.get_val<uint>("threads_per_block", 128)}
+    : chrdat(par), tpb{par.get_val<uint>("threads_per_block", 128)},
+      cms{N / px_sz}, lcm{cms * (cms + 1) / 2}
 {
   // allocate memory
-  if (N == N_def)
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
-    {
-      lsdcp[i_c] = (hchrla[i_c + 1] - hchrla[i_c]) / 2;
-      sd_bo[i_c] = new simobs_b[lsdcp[i_c]];
-    }
-  }
-  else
-  {
-    lsdcp[0] = N / 2;
-    sd_bo[0] = new simobs_b[lsdcp[0]];
-    for (uint i_c = 1; i_c < n_chr; ++i_c) // chromosome index
-    {
-      lsdcp[i_c] = 0;
-      sd_bo[i_c] = new simobs_b[lsdcp[i_c]];
-    }
+    if (N == N_def) { lsdcp[i_c] = (hchrla[i_c + 1] - hchrla[i_c]) / 2; }
+    else if (i_c == 0) { lsdcp[i_c] = N / 2; }
+    else { lsdcp[i_c] = 0; }
+    sd_bo[i_c] = new simobs_b[lsdcp[i_c]];
   }
   cm_bo = new simobs_b[lcm];
 
@@ -381,11 +368,14 @@ void chrana::calc_observables()
   }
 
   // calculate the spatial distance
+  uint i_e; // ending index
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
-    if (lsdcp[i_c] == 0) { continue; }
-    calc_sd<<<(lsdcp[i_c] + tpb - 1) / tpb, tpb>>>(
-        N, lsdcp[i_c], i_c, r, sd[i_c]);
+    if (N == N_def) { i_e = hchrla[i_c + 1]; }
+    else if (i_c == 0) { i_e = N; }
+    else { continue; }
+    calc_sd_cp<<<(lsdcp[i_c] + tpb - 1) / tpb, tpb>>>(
+        lsdcp[i_c], hchrla[i_c], i_e, r, sd[i_c], cp[i_c]);
     cuda_check(cudaMemcpy(
         hsd[i_c], sd[i_c], lsdcp[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
     for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
@@ -397,12 +387,13 @@ void chrana::calc_observables()
 
   // calculate the contact map
   // calc_ctc<<<(lcm + tpb - 1) / tpb, tpb>>>(N, r, cm); -----------------------
-  cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float), cudaMemcpyDeviceToHost));
-  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
-  {
-    cm_bo[i_a].is_o_sum += hcm[i_a];
-    ++cm_bo[i_a].is_n_dp;
-  }
+  // cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float),
+  // cudaMemcpyDeviceToHost));
+  // for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  // {
+  //   cm_bo[i_a].is_o_sum += hcm[i_a];
+  //   ++cm_bo[i_a].is_n_dp;
+  // }
 }
 
 } // namespace mmc
