@@ -24,12 +24,17 @@ __global__ void calc_sd_cp(
 
   // calculate the spatial distance and contact probability
   sd[i_a] = 0.0;
+  cp[i_a] = 0.0;
   uint s = i_a + 1; // separation
+  float dpp; // particle-particle distance
   for (uint i_p = i_s; i_p < (i_e - s); ++i_p) // particle index
   {
-    sd[i_a] += length(r[i_p + s] - r[i_p]);
+    dpp = length(r[i_p + s] - r[i_p]);
+    sd[i_a] += dpp;
+    if (dpp < aco) { cp[i_a] += cf; }
   }
   sd[i_a] /= (i_e - i_s - s);
+  cp[i_a] /= (i_e - i_s - s);
 }
 
 // Host Functions
@@ -46,6 +51,7 @@ chrana::chrana(parmap &par) // parameters
     else if (i_c == 0) { lsdcp[i_c] = N / 2; }
     else { lsdcp[i_c] = 0; }
     sd_bo[i_c] = new simobs_b[lsdcp[i_c]];
+    cp_bo[i_c] = new simobs_b[lsdcp[i_c]];
   }
   cm_bo = new simobs_b[lcm];
 
@@ -53,6 +59,7 @@ chrana::chrana(parmap &par) // parameters
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     cuda_check(cudaMalloc(&sd[i_c], lsdcp[i_c] * sizeof(float)));
+    cuda_check(cudaMalloc(&cp[i_c], lsdcp[i_c] * sizeof(float)));
   }
   cuda_check(cudaMalloc(&cm, lcm * sizeof(float)));
 
@@ -60,6 +67,7 @@ chrana::chrana(parmap &par) // parameters
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     cuda_check(cudaMallocHost(&hsd[i_c], lsdcp[i_c] * sizeof(float)));
+    cuda_check(cudaMallocHost(&hcp[i_c], lsdcp[i_c] * sizeof(float)));
   }
   cuda_check(cudaMallocHost(&hcm, lcm * sizeof(float)));
 }
@@ -71,6 +79,7 @@ chrana::~chrana()
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     delete[] sd_bo[i_c];
+    delete[] cp_bo[i_c];
   }
   delete[] cm_bo;
 
@@ -78,6 +87,7 @@ chrana::~chrana()
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     cuda_check(cudaFree(sd[i_c]));
+    cuda_check(cudaFree(cp[i_c]));
   }
   cuda_check(cudaFree(cm));
 
@@ -85,6 +95,7 @@ chrana::~chrana()
   for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
   {
     cuda_check(cudaFreeHost(hsd[i_c]));
+    cuda_check(cudaFreeHost(hcp[i_c]));
   }
   cuda_check(cudaFreeHost(hcm));
 }
@@ -135,6 +146,7 @@ void chrana::calc_last_is_stat()
     for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
       sd_bo[i_c][i_a].calc_last_is_stat();
+      cp_bo[i_c][i_a].calc_last_is_stat();
     }
   }
 }
@@ -174,6 +186,18 @@ void chrana::save_last_is_stat(std::ofstream &txt_out_f) // text output file
     }
     txt_out_f << "\n\n";
   }
+
+  // save cp last individual simulation statistics
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    txt_out_f << "     s         avg\n";
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
+    {
+      txt_out_f << cnfs((i_a + 1), 6, ' ');
+      cp_bo[i_c][i_a].save_last_is_stat(txt_out_f);
+    }
+    txt_out_f << "\n\n";
+  }
 }
 
 // clear individual simulation variables
@@ -197,6 +221,8 @@ void chrana::clear_is_var()
     {
       sd_bo[i_c][i_a].is_o_sum = 0.0;
       sd_bo[i_c][i_a].is_n_dp = 0;
+      cp_bo[i_c][i_a].is_o_sum = 0.0;
+      cp_bo[i_c][i_a].is_n_dp = 0;
     }
   }
 }
@@ -220,6 +246,7 @@ void chrana::calc_cs_final_stat()
     for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
       sd_bo[i_c][i_a].calc_cs_final_stat();
+      cp_bo[i_c][i_a].calc_cs_final_stat();
     }
   }
 }
@@ -256,6 +283,18 @@ void chrana::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
     {
       txt_out_f << cnfs((i_a + 1), 6, ' ');
       sd_bo[i_c][i_a].save_cs_final_stat(txt_out_f);
+    }
+    txt_out_f << "\n\n";
+  }
+
+  // save cp combined simulations final statistics
+  for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+  {
+    txt_out_f << "     s         avg   sqrt(var)         sem\n";
+    for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
+    {
+      txt_out_f << cnfs((i_a + 1), 6, ' ');
+      cp_bo[i_c][i_a].save_cs_final_stat(txt_out_f);
     }
     txt_out_f << "\n\n";
   }
@@ -378,10 +417,14 @@ void chrana::calc_observables()
         lsdcp[i_c], hchrla[i_c], i_e, r, sd[i_c], cp[i_c]);
     cuda_check(cudaMemcpy(
         hsd[i_c], sd[i_c], lsdcp[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
+    cuda_check(cudaMemcpy(
+        hcp[i_c], cp[i_c], lsdcp[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
     for (uint i_a = 0; i_a < lsdcp[i_c]; ++i_a) // array index
     {
       sd_bo[i_c][i_a].is_o_sum += hsd[i_c][i_a];
       ++sd_bo[i_c][i_a].is_n_dp;
+      cp_bo[i_c][i_a].is_o_sum += hcp[i_c][i_a];
+      ++cp_bo[i_c][i_a].is_n_dp;
     }
   }
 

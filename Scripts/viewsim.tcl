@@ -70,6 +70,7 @@ if {$argc==2} {
     set r_p 5.0
     set n_l 0
     set R_o 0.0
+
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
     set param_fp [open $param_file "r"]
     while {[gets $param_fp line] != -1} {
@@ -102,13 +103,13 @@ if {$argc==2} {
     mol new $gro_file autobonds off
     package require topotools
     set N [molinfo top get numatoms]
-    if {$N==18239} {
-        for {set i 0    } {$i<3485 } {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 3486 } {$i<6689 } {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 6690 } {$i<10408} {incr i} { topo addbond $i [expr $i+1]}
+    if {$N==18240} {
+        for {set i 0    } {$i<3486 } {incr i} { topo addbond $i [expr $i+1]}
+        for {set i 3487 } {$i<6690 } {incr i} { topo addbond $i [expr $i+1]}
+        for {set i 6691 } {$i<10408} {incr i} { topo addbond $i [expr $i+1]}
         for {set i 10409} {$i<14636} {incr i} { topo addbond $i [expr $i+1]}
         for {set i 14637} {$i<14841} {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 14842} {$i<18238} {incr i} { topo addbond $i [expr $i+1]}
+        for {set i 14842} {$i<18239} {incr i} { topo addbond $i [expr $i+1]}
     } else {
         for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
     }

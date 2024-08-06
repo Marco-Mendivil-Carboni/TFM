@@ -54,13 +54,17 @@ df_rcd = list()
 for i_t in range(3):
     df_rcd.append(pd.read_csv(StringIO(blocklist[i_t + 1]), sep="\\s+"))
 
-df_msd = list()
+df_sd = list()
 for i_c in range(6):
-    df_msd.append(pd.read_csv(StringIO(blocklist[i_c + 4]), sep="\\s+"))
+    df_sd.append(pd.read_csv(StringIO(blocklist[i_c + 4]), sep="\\s+"))
+
+df_cp = list()
+for i_c in range(6):
+    df_cp.append(pd.read_csv(StringIO(blocklist[i_c + 10]), sep="\\s+"))
 
 # Make analysis plots
 
-fig, ax = plt.subplots(2, 2, height_ratios=[0.25, 1])
+fig, ax = plt.subplots(2, 3, height_ratios=[0.25, 1])
 
 fig.canvas.manager.set_window_title(str(simdir) + " analysis")
 
@@ -78,7 +82,10 @@ ax[0, 1].table(
     edges="horizontal",
 ).scale(1, 1.5)
 
+ax[0, 2].axis("off")
+
 colorlist = ["#d81e2c", "#a31cc5", "#194bb2"]
+
 ax[1, 0].set_xlabel("r_b")
 ax[1, 0].set_ylabel("rcd")
 ax[1, 0].autoscale(tight=True)
@@ -93,20 +100,39 @@ for i_t in range(3):
     )
 
 colorlist = ["#1875ad", "#189da8", "#17a384", "#169e57", "#15992c", "#259415"]
+
 ax[1, 1].set_xscale("log")
 ax[1, 1].set_yscale("log")
 ax[1, 1].set_xlabel("s")
-ax[1, 1].set_ylabel("msd")
+ax[1, 1].set_ylabel("sd")
 ax[1, 1].autoscale(tight=True)
 for i_c in range(6):
-    if not df_msd[i_c].empty:
-        x = df_msd[i_c]["s"]
-        y = df_msd[i_c]["avg"]
-        y_min = df_msd[i_c]["avg"] - df_msd[i_c]["sem"]
-        y_max = df_msd[i_c]["avg"] + df_msd[i_c]["sem"]
+    if not df_sd[i_c].empty:
+        x = df_sd[i_c]["s"]
+        y = df_sd[i_c]["avg"]
+        y_min = df_sd[i_c]["avg"] - df_sd[i_c]["sem"]
+        y_max = df_sd[i_c]["avg"] + df_sd[i_c]["sem"]
         ax[1, 1].plot(x, y, color=colorlist[i_c])
         ax[1, 1].fill_between(
             x, y_min, y_max, color=colorlist[i_c], linewidth=0.0, alpha=0.50
+        )
+
+ctcfactor = 1000
+
+ax[1, 2].set_xscale("log")
+ax[1, 2].set_yscale("log")
+ax[1, 2].set_xlabel("s")
+ax[1, 2].set_ylabel("cp")
+ax[1, 2].autoscale(tight=True)
+for i_c in range(6):
+    if not df_cp[i_c].empty:
+        df_cp[i_c] = df_cp[i_c].loc[df_cp[i_c]["avg"] != 0]
+        x = df_cp[i_c]["s"]
+        y = df_cp[i_c]["avg"] / ctcfactor
+        e = df_cp[i_c]["sem"] / ctcfactor
+        ax[1, 2].scatter(x, y, color=colorlist[i_c])
+        ax[1, 2].errorbar(
+            x, y, yerr=e, color=colorlist[i_c], linestyle="None", alpha=0.50
         )
 
 # View analysis

@@ -55,10 +55,10 @@ print("chr_len_sum = {:_}".format(chr_len_sum))
 print("chr_lim :", chr_lim)
 
 df_cg_seq = df_seq.copy()
-df_cg_seq["beg"] = df_cg_seq["beg"] // bp_part
-df_cg_seq["end"] = df_cg_seq["end"] // bp_part
-n_part = chr_len_sum // bp_part
-cg_chr_lim = [lim // bp_part for lim in chr_lim]
+df_cg_seq["beg"] = round(df_cg_seq["beg"] / bp_part)
+df_cg_seq["end"] = round(df_cg_seq["end"] / bp_part)
+n_part = round(chr_len_sum / bp_part)
+cg_chr_lim = [round(lim / bp_part) for lim in chr_lim]
 print("n_part = {:_}".format(n_part))
 print("cg_chr_lim :", cg_chr_lim)
 

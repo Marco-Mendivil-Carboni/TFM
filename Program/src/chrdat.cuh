@@ -23,7 +23,7 @@ static constexpr float mdl = 22.13471; // mean domain length
 static constexpr float e_l = 8.000000; // lbs energy
 static constexpr float lco = 0.500000; // lbs cutoff
 
-#define CHR_LIM {0, 3486, 6690, 10409, 14637, 14842, 18239} // chromosome limits
+#define CHR_LIM {0, 3487, 6691, 10409, 14637, 14842, 18240} // chromosome limits
 __constant__ static constexpr uint chrla[] = CHR_LIM; // chromosome limits array
 static constexpr uint hchrla[] = CHR_LIM; // host chromosome limits array
 static constexpr uint n_chr = sizeof(chrla) / 4 - 1; // number of chromosomes
