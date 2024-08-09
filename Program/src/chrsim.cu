@@ -2,8 +2,6 @@
 
 #include "chrsim.cuh" // chromatin simulation
 
-#include <curand_kernel.h> // cuRAND device functions
-
 // Namespace
 
 namespace mmc // Marco Mendívil Carboni
@@ -12,6 +10,7 @@ namespace mmc // Marco Mendívil Carboni
 // Constants
 
 static constexpr float dt = 1.0 / 2048; // timestep
+
 static constexpr float mis = 0.838732; // minimum initial separation
 
 // Aliases
@@ -47,12 +46,12 @@ inline __device__ void calc_bf(
   uint lim_u = N; // upper bond limit
   if (N == N_def) // take into account chromosome limits
   {
-    for (uint i_c = 1; i_c < n_chr; ++i_c) // chromosome index
+    for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
     {
-      if (i_p < chrla[i_c]) // particle belongs to chromosome
+      if (i_p < chrla[i_c + 1]) // particle belongs to chromosome
       {
-        lim_l = chrla[i_c - 1] + 2;
-        lim_u = chrla[i_c];
+        lim_l = chrla[i_c] + 2;
+        lim_u = chrla[i_c + 1];
         break;
       }
     }
@@ -490,27 +489,22 @@ chrsim::~chrsim()
 // generate a random initial condition
 void chrsim::generate_initial_condition()
 {
+  // initialize host PRNG
+  curandGenerator_t gen; // host PRNG
+  curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT);
+  curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
+
   // set random lbs positions
-  set_lbs_positions();
+  set_lbs_positions(gen);
 
   // set particle type sequence
-  set_particle_types();
+  set_particle_types(gen);
 
   // set random particle positions
-  if (N == N_def) // perform a confined random walk for each chromosome
-  {
-    for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
-    {
-      float dca[3] = {0.0, 0.0, 0.0}; // direction coordinates array
-      dca[(i_c / 2) % 3] = tan(3 * M_PI / 8) * (1.0 - 2.0 * (i_c % 2));
-      vec3f dir = {dca[0], dca[1], dca[2]}; // direction
-      perform_random_walk(hchrla[i_c], hchrla[i_c + 1], dir);
-    }
-  }
-  else // perform a single confined random walk
-  {
-    perform_random_walk(0, N, {0.0, 0.0, 0.0});
-  }
+  set_particle_positons(gen);
+
+  // free host PRNG
+  curandDestroyGenerator(gen);
 
   // generate lbs grid arrays
   lg.generate_arrays(tpb, lr);
@@ -619,13 +613,8 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) // binary output file
 }
 
 // set random lbs positions
-void chrsim::set_lbs_positions()
+void chrsim::set_lbs_positions(curandGenerator_t gen) // host PRNG
 {
-  // initialize host PRNG
-  curandGenerator_t gen; // host PRNG
-  curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT);
-  curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
-
   // declare auxiliary variables
   float ran; // random number in (0,1]
   float theta; // polar angle
@@ -659,19 +648,11 @@ void chrsim::set_lbs_positions()
 
   // copy host lbs position array to device
   cuda_check(cudaMemcpy(lr, hlr, n_l * sizeof(vec3f), cudaMemcpyHostToDevice));
-
-  // free host PRNG
-  curandDestroyGenerator(gen);
 }
 
 // set particle type sequence
-void chrsim::set_particle_types()
+void chrsim::set_particle_types(curandGenerator_t gen) // host PRNG
 {
-  // initialize host PRNG
-  curandGenerator_t gen; // host PRNG
-  curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT);
-  curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
-
   if (N == N_def) // use experimental data to set particles types
   {
     std::ifstream txt_inp_f; // text input file
@@ -711,22 +692,52 @@ void chrsim::set_particle_types()
 
   // copy host particle type array to device
   cuda_check(cudaMemcpy(pt, hpt, N * sizeof(ptype), cudaMemcpyHostToDevice));
+}
 
-  // free host PRNG
-  curandDestroyGenerator(gen);
+// set random particle positions
+void chrsim::set_particle_positons(curandGenerator_t gen) // host PRNG
+{
+  if (N == N_def) // perform a confined random walk for each chromosome
+  {
+    // declare auxiliary variables
+    float len_d = tan(3 * M_PI / 8); // direction length
+    vec3f dir[] = // directions
+        {{+len_d, 0.0, 0.0}, {0.0, +len_d, 0.0}, {0.0, 0.0, +len_d},
+         {-len_d, 0.0, 0.0}, {0.0, -len_d, 0.0}, {0.0, 0.0, -len_d}};
+    uint n_dir = sizeof(dir) / sizeof(vec3f); // number of directions
+    float ran; // random number in (0,1]
+    uint i_r; // random index
+    vec3f aux_dir; // auxiliary direction
+
+    // shuffle directions randomly
+    for (uint i_d = n_dir - 1; i_d > 0; --i_d) // direction index
+    {
+      curandGenerateUniform(gen, &ran, 1);
+      i_r = (i_d + 1) * (1.0 - ran);
+      aux_dir = dir[i_d];
+      dir[i_d] = dir[i_r];
+      dir[i_r] = aux_dir;
+    }
+
+    // perform confined random walks for each chromosome with random directions
+    for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
+    {
+      perform_random_walk(gen, hchrla[i_c], hchrla[i_c + 1], dir[i_c % n_dir]);
+    }
+  }
+  else // perform a single confined random walk
+  {
+    perform_random_walk(gen, 0, N, {0.0, 0.0, 0.0});
+  }
 }
 
 // perform confined random walk
 void chrsim::perform_random_walk(
+    curandGenerator_t gen, // host PRNG
     uint i_s, // starting index
     uint i_e, // ending index
     vec3f dir) // direction
 {
-  // initialize host PRNG
-  curandGenerator_t gen; // host PRNG
-  curandCreateGeneratorHost(&gen, CURAND_RNG_PSEUDO_DEFAULT);
-  curandSetPseudoRandomGeneratorSeed(gen, time(nullptr));
-
   // declare auxiliary variables
   float len_d = length(dir); // direction length
   float mda = M_PI - 2.0 * atan(len_d); // maximum direction angle
@@ -794,9 +805,6 @@ void chrsim::perform_random_walk(
 
   // copy host position array to device
   cuda_check(cudaMemcpy(r, hr, N * sizeof(vec3f), cudaMemcpyHostToDevice));
-
-  // free host PRNG
-  curandDestroyGenerator(gen);
 }
 
 // count particle overlaps

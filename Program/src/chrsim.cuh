@@ -6,6 +6,8 @@
 #include "chrdat.cuh" // chromatin data
 #include "sugrid.cuh" // sorted uniform grid
 
+#include <curand_kernel.h> // cuRAND device functions
+
 // Namespace
 
 namespace mmc // Marco Mendívil Carboni
@@ -41,11 +43,11 @@ private:
 
   const uint spf; // steps per frame
   const uint tpb; // threads per block
+  const float sd; // rn standard deviation
 
   vec3f *er; // extra position array
   vec3f *ef; // extra force array
 
-  const float sd; // rn standard deviation
   vec3f *rn; // random number array
   void *vps; // void PRNG state array
 
@@ -58,13 +60,17 @@ private:
   // Functions
 
   // set random lbs positions
-  void set_lbs_positions();
+  void set_lbs_positions(curandGenerator_t gen); // host PRNG
 
   // set particle type sequence
-  void set_particle_types();
+  void set_particle_types(curandGenerator_t gen); // host PRNG
+
+  // set random particle positions
+  void set_particle_positons(curandGenerator_t gen); // host PRNG
 
   // perform confined random walk
   void perform_random_walk(
+      curandGenerator_t gen, // host PRNG
       uint i_s, // starting index
       uint i_e, // ending index
       vec3f dir); // direction
