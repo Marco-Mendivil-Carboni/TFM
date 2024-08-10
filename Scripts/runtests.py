@@ -37,15 +37,17 @@ def check(returnc):
 parfilepath = testdir / "adjustable-parameters.dat"
 
 with open(parfilepath, "w") as parfile:
-    parfile.write("nucleus_radius 40.0\n")
-    parfile.write("number_of_lbs 7290\n")
+    parfile.write("nucleus_radius 40.91\n")
+    parfile.write("number_of_lbs 7284\n")
 
 # Run tests
 
 print("---")
 
 check(run(["./Program/bin/ccp-perform", str(testdir)]).returncode)
+check(run(["./Program/bin/ccp-perform", str(testdir), "0"]).returncode)
 check(run(["./Program/bin/ccp-perform", str(testdir)]).returncode)
+check(run(["./Program/bin/ccp-perform", str(testdir), "1"]).returncode)
 
 check(run(["./Program/bin/ccp-analyze", str(testdir)]).returncode)
 

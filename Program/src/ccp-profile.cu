@@ -34,7 +34,7 @@ int main(
   uint N; // number of particles
   float R_n; // nucleus radius
   uint n_l; // number of lbs
-  const uint fpf = 10; // frames per file
+  const uint fpf = 16; // frames per file
   system_clock::time_point stp; // starting time point
   system_clock::time_point etp; // ending time point
   duration<double> d_e; // execution duration
@@ -75,7 +75,7 @@ int main(
       sim.run_simulation(n_out_f);
       etp = system_clock::now();
       d_e = etp - stp;
-      t_e = 1'000.0 * d_e.count() / (2048 * fpf);
+      t_e = 1'000.0 * d_e.count() / (1024 * fpf);
 
       // write execution time to output file
       out_f << mmc::cnfs(N, 5, '0') << " " << mmc::cnfs(t_e, 5, '0', 3)

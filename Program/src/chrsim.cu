@@ -9,7 +9,7 @@ namespace mmc // Marco Mendívil Carboni
 
 // Constants
 
-static constexpr float dt = 1.0 / 2048; // timestep
+static constexpr float dt = 1.0 / 1024; // timestep
 
 static constexpr float mis = 0.838732; // minimum initial separation
 
@@ -212,7 +212,7 @@ inline __device__ void calc_ppf<ICG>( // calculate particle-particle force
   // calculate Soft-Repulsive force
   float dpp = length(vpp); // particle-particle distance
   if (dpp > rco) { return; }
-  srf += 128.0 * (3.0 * rco - 3.0 * dpp) * vpp;
+  srf += 64.0 * (3.0 * rco - 3.0 * dpp) * vpp;
 }
 
 // calculate lbs-particle force
@@ -439,7 +439,7 @@ __global__ void exec_RK_2(
 
 // chromatin simulation constructor
 chrsim::chrsim(parmap &par) // parameters
-    : chrdat(par), spf{par.get_val<uint>("steps_per_frame", 1 * 2048)},
+    : chrdat(par), spf{par.get_val<uint>("steps_per_frame", 1024)},
       tpb{par.get_val<uint>("threads_per_block", 128)},
       sd{static_cast<float>(sqrt(2.0 * k_B * T * dt))},
       pg(N, aco, 2 * ceil(ng.d_m / aco)), lg(n_l, pg)

@@ -14,7 +14,7 @@ namespace mmc // Marco Mendívil Carboni
 // Constants
 
 static constexpr uint n_b = 64; // number of bins
-static constexpr uint px_sz = 4; // pixel size
+static constexpr uint px_sz = 8; // pixel size
 static constexpr float cf = 1'000.0; // contact factor
 
 // Classes
@@ -74,14 +74,14 @@ private:
   float *cp[n_chr]; // contact probability arrays
   float *hcp[n_chr]; // host contact probability arrays
 
-  uint lsdcp[n_chr]; // length of sd and cp arrays
+  uint lsdcp[n_chr]; // length of sd arrays and cp arrays
 
   simobs_b *cm_bo; // contact map basic observable
   float *cm; // contact map array
   float *hcm; // host contact map array
 
   const uint cms; // contact map side
-  const uint lcm; // length of cm arrays
+  const uint lcm; // length of cm array
 
   // Function
 

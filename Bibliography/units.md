@@ -33,9 +33,11 @@
 
 + With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the  unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the features seen on experiments.
 
-+ The modifiable parameters of the model are:
-    + Nucleus radius (and the geometry of the bleb?).
-    + Number of lamina binding sites.
++ The modifiable parameters of the model will be:
+    + The nucleus radius and bleb geometry ($R_n$, $R_o$, $R_b$).
+    + The number of lamina binding sites ($N'$).
+
++ In normal conditions, as we have already said, the nucleus will have a radius of 1.35 $\text{um}$ so $R_n=40.91l_u$, there will be no bleb so $R_o=R_b=0.0l_u$ and all LAD particles should be able to bind to the lamina so $N'=7284$.
 
 | name            | value (PU)            | value (SI)                       |
 |-----------------|-----------------------|----------------------------------|
@@ -43,14 +45,14 @@
 | $k_B$           | $(1/298)e_u/\text{K}$ | $0.014\text{ pN nm / K}$         |
 | $l_0$           | $1l_u$                | $33\text{ nm}$                   |
 | $k_e$           | $128e_u/l_u^2$        | $0.48\text{ pN / nm}$            |
-| $k_b^A$         | $6e_u$                | $25\text{ pN nm}$                |
+| $k_b^A$         | $6e_u$                | $24.7\text{ pN nm}$              |
 | $k_b^B$         | $0e_u$                | $0\text{ pN nm}$                 |
 | $\sigma$        | $1l_u$                | $33\text{ nm}$                   |
-| $\epsilon^{AA}$ | $0.5e_u$              | $2.05\text{ pN nm}$              |
+| $\epsilon^{AA}$ | $0.5e_u$              | $2.06\text{ pN nm}$              |
 | $\epsilon^{AB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon^{BB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon'$     | $8e_u$                | $32.9\text{ pN nm}$              |
-| $dt$            | $(1/2048)t_u$         | $35\text{ ns}$                   |
+| $dt$            | $(1/1024)t_u$         | $70\text{ ns}$                   |
 
 + We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
 

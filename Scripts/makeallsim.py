@@ -80,7 +80,7 @@ def makesim(simdir):
 
 simrootdir = Path("Simulations")
 
-N = 32768
+N = 18240
 
 for i in range(2):
     cvf = 0.4 - 0.2 * i

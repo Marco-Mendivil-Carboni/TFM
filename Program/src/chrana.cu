@@ -11,7 +11,7 @@ namespace mmc // Marco Mendívil Carboni
 
 // calculate the spatial distance and contact probability
 __global__ void calc_sd_cp(
-    uint lsdcp, // length of sd and cp array
+    uint lsdcp, // length of sd array and cp array
     uint i_s, // starting index
     uint i_e, // ending index
     vec3f *r, // position array
@@ -36,6 +36,29 @@ __global__ void calc_sd_cp(
   sd[i_a] /= (i_e - i_s - s);
   cp[i_a] /= (i_e - i_s - s);
 }
+
+// // calculate the contact map
+// __global__ void calc_cm(
+//     uint lcm, // length of cm array
+//     vec3f *r, // position array
+//     float *cm) // contact map array
+// {
+//   // calculate array index
+//   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
+//   if (i_a >= lcm) { return; }
+
+//   // calculate the contact map
+//   cm[i_a] = 0.0;
+//   uint i_x = 0; // x index
+//   uint i_y = 0; // y index
+//   float dpp; // particle-particle distance
+//   // for (uint i_p = i_s; i_p < (i_e - s); ++i_p) // particle index
+//   {
+//     // dpp = length(r[i_p_x] - r[i_p_y]);
+//     if (dpp < aco) { cm[i_a] += cf; }
+//   }
+//   cm[i_a] /= px_sz * px_sz;
+// }
 
 // Host Functions
 
@@ -429,14 +452,13 @@ void chrana::calc_observables()
   }
 
   // calculate the contact map
-  // calc_ctc<<<(lcm + tpb - 1) / tpb, tpb>>>(N, r, cm); -----------------------
-  // cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float),
-  // cudaMemcpyDeviceToHost));
-  // for (uint i_a = 0; i_a < lcm; ++i_a) // array index
-  // {
-  //   cm_bo[i_a].is_o_sum += hcm[i_a];
-  //   ++cm_bo[i_a].is_n_dp;
-  // }
+  // calc_cm<<<(lcm + tpb - 1) / tpb, tpb>>>(lcm, r, cm);
+  cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float), cudaMemcpyDeviceToHost));
+  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  {
+    cm_bo[i_a].is_o_sum += hcm[i_a];
+    ++cm_bo[i_a].is_n_dp;
+  }
 }
 
 } // namespace mmc
