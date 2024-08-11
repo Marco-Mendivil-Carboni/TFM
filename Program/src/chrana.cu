@@ -393,17 +393,22 @@ void chrana::calc_observables()
     float d_r = length(hr[i_p]); // radial distance
     for (uint i_b = 0; i_b < n_b; ++i_b) // bin index
     {
-      if ((d_r - 0.5) > r_b[i_b]) { vol_t = 0.0; }
-      else if ((d_r + 0.5) < r_b[i_b]) { vol_t = (4.0 / 3.0) * M_PI * 0.125; }
+      if ((d_r - (rco / 2.0)) > r_b[i_b]) { vol_t = 0.0; }
+      else if ((d_r + (rco / 2.0)) < r_b[i_b])
+      {
+        vol_t = (4.0 / 3.0) * M_PI * (rco / 2.0) * (rco / 2.0) * (rco / 2.0);
+      }
       else
       {
         float cos_a = // A side cosine
-            (d_r * d_r + 0.25 - r_b[i_b] * r_b[i_b]) / (2.0 * d_r * 0.5);
+            (d_r * d_r + (rco / 2.0) * (rco / 2.0) - r_b[i_b] * r_b[i_b]) /
+            (2.0 * d_r * (rco / 2.0));
         float cos_b = // B side cosine
-            (r_b[i_b] * r_b[i_b] + d_r * d_r - 0.25) / (2.0 * r_b[i_b] * d_r);
+            (r_b[i_b] * r_b[i_b] + d_r * d_r - (rco / 2.0) * (rco / 2.0)) /
+            (2.0 * r_b[i_b] * d_r);
         float vol_a = // A side volume
-            (M_PI / 3.0) * 0.125 * (2.0 + cos_a) * (1.0 - cos_a) *
-            (1.0 - cos_a);
+            (M_PI / 3.0) * (rco / 2.0) * (rco / 2.0) * (rco / 2.0) *
+            (2.0 + cos_a) * (1.0 - cos_a) * (1.0 - cos_a);
         float vol_b = // B side volume
             (M_PI / 3.0) * r_b[i_b] * r_b[i_b] * r_b[i_b] * (2.0 + cos_b) *
             (1.0 - cos_b) * (1.0 - cos_b);

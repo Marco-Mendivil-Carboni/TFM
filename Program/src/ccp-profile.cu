@@ -54,7 +54,7 @@ int main(
       // set parameters
       std::stringstream par_s; // parameter stream
       N = pow(2.0, 8.0 + i_t);
-      R_n = 0.5 + 0.5 * pow(N / 0.2, 1.0 / 3);
+      R_n = (mmc::rco / 2.0) + (mmc::rco / 2.0) * pow(N / 0.2, 1.0 / 3);
       n_l = 0.2 * 4.0 / pow(mmc::lco / (R_n - mmc::rco), 2.0);
       par_s << "number_of_particles"
             << " " << mmc::cnfs(N, 5, '0') << std::endl;

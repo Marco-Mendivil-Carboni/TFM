@@ -54,11 +54,12 @@ chrdat::chrdat(parmap &par) // parameters
   {
     throw error("frames_per_file out of range");
   }
-  float cvf = N * pow(0.5 / (ng.R_n - 0.5), 3.0); // chromatin volume fraction
+  float cvf = // chromatin volume fraction
+      N * pow((rco / 2.0) / (ng.R_n - (rco / 2.0)), 3.0);
   if (cvf > 0.4) { throw error("chromatin volume fraction above 0.4"); }
   float noacf = 2.0 / (1.0 + ng.noc); // nucleus opening area correction factor
-  float laf =
-      noacf * n_l * pow(lco / (ng.R_n - rco), 2.0) / 4.0; // lbs area fraction
+  float laf = // lbs area fraction
+      noacf * n_l * pow(lco / (ng.R_n - rco), 2.0) / 4.0;
   if (laf > 0.4) { throw error("lbs area fraction above 0.4"); }
 
   // record parameter values

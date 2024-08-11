@@ -1,7 +1,7 @@
 #Variables
 
 NVCC = nvcc
-NVCCFLAGS = -gencode arch=compute_86,code=sm_86 -g
+NVCCFLAGS = -gencode arch=compute_86,code=sm_86
 
 NVCCLINKS = -lcurand
 
