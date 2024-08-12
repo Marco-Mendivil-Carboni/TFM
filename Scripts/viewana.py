@@ -17,7 +17,7 @@ from io import StringIO
 # Set fixed parameters
 
 cm = 1 / 2.54
-mpl.rcParams["figure.figsize"] = [40.00 * cm, 20.00 * cm]
+mpl.rcParams["figure.figsize"] = [40.00 * cm, 18.00 * cm]
 mpl.rcParams["figure.constrained_layout.use"] = True
 
 mpl.rcParams["legend.frameon"] = False
@@ -125,17 +125,19 @@ for i_c in range(6):
         ax2.scatter(x, y, color=colorlist[i_c])
         ax2.errorbar(x, y, yerr=e, color=colorlist[i_c], linestyle="None", alpha=0.50)
 
-ax3.axis("off")
+ax3.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
 ax3.autoscale(tight=True)
 px_side = int(np.sqrt(2 * cm1Ddata.size + 1 / 4))
 cm2Ddata = np.zeros((px_side, px_side))
 cm2Ddata[np.tril_indices(px_side)] = cm1Ddata / ctcfactor
 cm2Ddata = cm2Ddata + np.tril(cm2Ddata, -1).T
-ax3.imshow(
+map = ax3.imshow(
     cm2Ddata,
     norm=mpl.colors.LogNorm(vmin=np.min(cm2Ddata[np.nonzero(cm2Ddata)]), clip=True),
     cmap="OrRd",
 )
+
+fig.colorbar(map, ax=ax3, aspect=64, pad=1 / 64)
 
 # View analysis
 
