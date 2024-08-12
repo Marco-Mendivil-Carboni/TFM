@@ -51,6 +51,9 @@ public:
   // save combined simulations final statistics
   void save_cs_final_stat(std::ofstream &txt_out_f); // text output file
 
+  // save contact map average values to binary file
+  void save_cm_avg_bin(std::ofstream &bin_out_f); // binary output file
+
 private:
   // Parameters and Variables
 
@@ -61,7 +64,6 @@ private:
   simobs dcm_o; // center of mass distance observable
   simobs rg2_o; // gyration radius squared observable
   simobs nop_o; // nematic order parameter observable
-
   simobs ncf_o; // nucleus chromatin fraction observable
 
   simobs rcd_o[3][n_b]; // radial chromatin density observable

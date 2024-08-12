@@ -37,28 +37,35 @@ __global__ void calc_sd_cp(
   cp[i_a] /= (i_e - i_s - s);
 }
 
-// // calculate the contact map
-// __global__ void calc_cm(
-//     uint lcm, // length of cm array
-//     vec3f *r, // position array
-//     float *cm) // contact map array
-// {
-//   // calculate array index
-//   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
-//   if (i_a >= lcm) { return; }
+// calculate the contact map
+__global__ void calc_cm(
+    uint lcm, // length of cm array
+    vec3f *r, // position array
+    float *cm) // contact map array
+{
+  // calculate array index
+  int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
+  if (i_a >= lcm) { return; }
 
-//   // calculate the contact map
-//   cm[i_a] = 0.0;
-//   uint i_x = 0; // x index
-//   uint i_y = 0; // y index
-//   float dpp; // particle-particle distance
-//   // for (uint i_p = i_s; i_p < (i_e - s); ++i_p) // particle index
-//   {
-//     // dpp = length(r[i_p_x] - r[i_p_y]);
-//     if (dpp < aco) { cm[i_a] += cf; }
-//   }
-//   cm[i_a] /= px_sz * px_sz;
-// }
+  // calculate the contact map
+  cm[i_a] = 0.0;
+  uint i_x = sqrtf(2.0 * i_a + 0.25) - 0.5; // x index
+  uint i_y = i_a - i_x * (i_x + 1.0) / 2.0; // y index
+  uint i_s_x = i_x * px_sz; // starting x index
+  uint i_e_x = i_s_x + px_sz; // ending x index
+  uint i_s_y = i_y * px_sz; // starting y index
+  uint i_e_y = i_s_y + px_sz; // ending y index
+  float dpp; // particle-particle distance
+  for (uint i_p_x = i_s_x; i_p_x < i_e_x; ++i_p_x) // x particle index
+  {
+    for (uint i_p_y = i_s_y; i_p_y < i_e_y; ++i_p_y) // y particle index
+    {
+      dpp = length(r[i_p_x] - r[i_p_y]);
+      if (dpp < aco) { cm[i_a] += cf; }
+    }
+  }
+  cm[i_a] /= px_sz * px_sz;
+}
 
 // Host Functions
 
@@ -172,6 +179,10 @@ void chrana::calc_last_is_stat()
       cp_bo[i_c][i_a].calc_last_is_stat();
     }
   }
+  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  {
+    cm_bo[i_a].calc_last_is_stat();
+  }
 }
 
 // save last individual simulation statistics
@@ -248,6 +259,11 @@ void chrana::clear_is_var()
       cp_bo[i_c][i_a].is_n_dp = 0;
     }
   }
+  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  {
+    cm_bo[i_a].is_o_sum = 0.0;
+    cm_bo[i_a].is_n_dp = 0;
+  }
 }
 
 // calculate combined simulations final statistics
@@ -271,6 +287,10 @@ void chrana::calc_cs_final_stat()
       sd_bo[i_c][i_a].calc_cs_final_stat();
       cp_bo[i_c][i_a].calc_cs_final_stat();
     }
+  }
+  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  {
+    cm_bo[i_a].calc_cs_final_stat();
   }
 }
 
@@ -320,6 +340,15 @@ void chrana::save_cs_final_stat(std::ofstream &txt_out_f) // text output file
       cp_bo[i_c][i_a].save_cs_final_stat(txt_out_f);
     }
     txt_out_f << "\n\n";
+  }
+}
+
+// save contact map average values to binary file
+void chrana::save_cm_avg_bin(std::ofstream &bin_out_f) // binary output file
+{
+  for (uint i_a = 0; i_a < lcm; ++i_a) // array index
+  {
+    bin_out_f.write(reinterpret_cast<char *>(&(cm_bo[i_a].cs_fs.avg)), 8);
   }
 }
 
@@ -457,7 +486,7 @@ void chrana::calc_observables()
   }
 
   // calculate the contact map
-  // calc_cm<<<(lcm + tpb - 1) / tpb, tpb>>>(lcm, r, cm);
+  calc_cm<<<(lcm + tpb - 1) / tpb, tpb>>>(lcm, r, cm);
   cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float), cudaMemcpyDeviceToHost));
   for (uint i_a = 0; i_a < lcm; ++i_a) // array index
   {

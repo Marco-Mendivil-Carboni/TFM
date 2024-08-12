@@ -24,7 +24,8 @@ int main(
   // declare auxiliary variables
   const std::string sim_dir = argv[1]; // simulation directory
   std::ifstream inp_f; // input file
-  std::ofstream out_f; // output file
+  std::ofstream txt_out_f; // text output file
+  std::ofstream bin_out_f; // binary output file
   std::string pathstr; // file path string
   std::string pathpat; // file path pathpat
   uint n_s; // number of simulations
@@ -73,6 +74,10 @@ int main(
         mmc::check_file(inp_f, pathstr);
         ana.add_trajectory_file(inp_f);
         inp_f.close();
+
+        // record success message
+        msg = "added " + pathstr + " to analysis";
+        mmc::logger::record(msg);
       }
 
       // calculate last individual simulation statistics
@@ -81,14 +86,10 @@ int main(
       // save last individual simulation statistics
       pathstr = sim_dir + "/analysis-";
       pathstr += mmc::cnfs(i_s, 3, '0') + ".dat";
-      out_f.open(pathstr);
-      mmc::check_file(out_f, pathstr);
-      ana.save_last_is_stat(out_f);
-      out_f.close();
-
-      // record success message
-      msg = "analysis " + mmc::cnfs(i_s, 3, '0') + " finished";
-      mmc::logger::record(msg);
+      txt_out_f.open(pathstr);
+      mmc::check_file(txt_out_f, pathstr);
+      ana.save_last_is_stat(txt_out_f);
+      txt_out_f.close();
 
       // clear individual simulation variables
       ana.clear_is_var();
@@ -99,14 +100,17 @@ int main(
 
     // save combined simulations final statistics
     pathstr = sim_dir + "/analysis-fin.dat";
-    out_f.open(pathstr);
-    mmc::check_file(out_f, pathstr);
-    ana.save_cs_final_stat(out_f);
-    out_f.close();
+    txt_out_f.open(pathstr);
+    mmc::check_file(txt_out_f, pathstr);
+    ana.save_cs_final_stat(txt_out_f);
+    txt_out_f.close();
 
-    // record success message
-    msg = "final analysis finished";
-    mmc::logger::record(msg);
+    // save contact map average values to binary file
+    pathstr = sim_dir + "/contact-map.bin";
+    bin_out_f.open(pathstr, std::ios::binary);
+    mmc::check_file(bin_out_f, pathstr);
+    ana.save_cm_avg_bin(bin_out_f);
+    bin_out_f.close();
   }
   catch (const mmc::error &err) // caught error
   {
