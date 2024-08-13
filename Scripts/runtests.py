@@ -22,7 +22,7 @@ testdir.mkdir()
 testidx = 0  # test index
 
 
-def check(returnc):
+def check(returnc: int) -> None:
     global testidx
     testidx += 1
     if returnc == 0:

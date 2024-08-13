@@ -21,28 +21,51 @@ def setstop(sig, stack):
 
 signal(SIGUSR1, setstop)
 
+# Define simparam class
+
+
+class simparam:
+    N_def = 18240
+    n_l_def = 0
+    R_o_def = 0.0
+    R_b_def = 0.0
+
+    def __init__(
+        self, R_n: float, N=N_def, n_l=n_l_def, R_o=R_o_def, R_b=R_b_def
+    ) -> None:
+        self.R_n = R_n
+        self.N = N
+        self.n_l = n_l
+        self.R_o = R_o
+        self.R_b = R_b
+
+
 # Define simname function
 
 
-def simname(N, R_n, n_l, R_o, R_b):
-    simname = "{:05.0f}".format(N)
-    simname += "-{:05.2f}".format(R_n)
-    simname += "-{:05.0f}".format(n_l)
-    simname += "-{:05.2f}".format(R_o)
-    simname += "-{:05.2f}".format(R_b)
+def simname(sp: simparam) -> str:
+    simname = "{:05.2f}".format(sp.R_n)
+    simname += "-{:05.0f}".format(sp.N)
+    simname += "-{:05.0f}".format(sp.n_l)
+    simname += "-{:05.2f}".format(sp.R_o)
+    simname += "-{:05.2f}".format(sp.R_b)
     return simname
 
 
 # Define writeparam function
 
 
-def writeparam(simdir, N, R_n, n_l, R_o=0.0, R_b=0.0):
+def writeparam(simdir: Path, sp: simparam) -> None:
     with open(simdir / "adjustable-parameters.dat", "w") as parfile:
-        parfile.write("number_of_particles {:05.0f}\n".format(N))
-        parfile.write("nucleus_radius {:05.2f}\n".format(R_n))
-        parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
-        parfile.write("opening_radius {:05.2f}\n".format(R_o))
-        parfile.write("bleb_radius {:05.2f}\n".format(R_b))
+        parfile.write("nucleus_radius {:05.2f}\n".format(sp.R_n))
+        if sp.N != sp.N_def:
+            parfile.write("number_of_particles {:05.0f}\n".format(sp.N))
+        if sp.n_l != sp.n_l_def:
+            parfile.write("number_of_lbs {:05.0f}\n".format(sp.n_l))
+        if sp.R_o != sp.R_o_def:
+            parfile.write("opening_radius {:05.2f}\n".format(sp.R_o))
+        if sp.R_o != sp.R_b_def:
+            parfile.write("bleb_radius {:05.2f}\n".format(sp.R_b))
 
 
 # Define makesim function
@@ -53,11 +76,11 @@ numberofsim = 4
 filespersim = 8
 
 
-def makesim(N, R_n, n_l, R_o, R_b):
-    simdir = simrootdir / simname(N, R_n, n_l, R_o, R_b)
+def makesim(sp: simparam) -> None:
+    simdir = simrootdir / simname(sp)
     simdir.mkdir(exist_ok=True)
 
-    writeparam(simdir, N, R_n, n_l, R_o, R_b)
+    writeparam(simdir, sp)
 
     newsim = False
     pattern = "initial-condition-*"
@@ -82,15 +105,6 @@ def makesim(N, R_n, n_l, R_o, R_b):
 
 # Make simulations
 
-N = 18240
-R_n = 40.91
-n_l = 0
+makesim(simparam(R_n=40.91))
 
-R_o = 0.0
-R_b = 0.0
-
-makesim(N, R_n, n_l, R_o, R_b)
-
-n_l = 7284
-
-makesim(N, R_n, n_l, R_o, R_b)
+makesim(simparam(R_n=40.91, n_l=7284))
