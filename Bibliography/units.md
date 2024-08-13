@@ -23,7 +23,7 @@
 
 + As explained by Camara the compaction and rigidity of heterochromatin makes it self-attractive due to depletion attraction. Meanwhile euchromatin is much softer and does not interact with itself through this mecanism. Camara also mentions that inactive regions (that is heterochromatin like domains) have higher self-affinity. Thus we will consider that LNDe particles are purely repulsive while LADh particles are self-attractive.
 
-+ Thanks to the wonderful work of Falk et al. we can make an educated guess of the interaction strengths between our two types of particles. In their more elaborate model with three types of particles (one for euchromatin and two for heterochromatin) they found that euchromatin interacted very little with itself and the other types of particles so we can safely make it purely repulsive for simplicity. The interaction strength between heterochromatin particles was different for the two types of heterochromatin particles but their average was of the order of $0.5k_BT$ which is be the value we will use.
++ Thanks to the wonderful work of Falk et al. we can make an educated guess of the interaction strengths between our two types of particles. In their more elaborate model with three types of particles (one for euchromatin and two for heterochromatin) they found that euchromatin interacted very little with itself and the other types of particles so we can safely make it purely repulsive for simplicity. The interaction strength between heterochromatin particles was different for the two types of heterochromatin particles but their average was of the order of $1k_BT$ which is the value we will use.
 
 + Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to BioNumbers the nucleolus has an average diameter of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
 
@@ -48,11 +48,11 @@
 | $k_b^A$         | $6e_u$                | $24.7\text{ pN nm}$              |
 | $k_b^B$         | $0e_u$                | $0\text{ pN nm}$                 |
 | $\sigma$        | $1l_u$                | $33\text{ nm}$                   |
-| $\epsilon^{AA}$ | $0.5e_u$              | $2.06\text{ pN nm}$              |
+| $\epsilon^{AA}$ | $1e_u$                | $4.11\text{ pN nm}$              |
 | $\epsilon^{AB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon^{BB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon'$     | $8e_u$                | $32.9\text{ pN nm}$              |
-| $dt$            | $(1/1024)t_u$         | $70\text{ ns}$                   |
+| $dt$            | $(1/2048)t_u$         | $35\text{ ns}$                   |
 
 + We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
 

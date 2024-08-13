@@ -75,7 +75,7 @@ int main(
       sim.run_simulation(n_out_f);
       etp = system_clock::now();
       d_e = etp - stp;
-      t_e = 1'000.0 * d_e.count() / (1024 * fpf);
+      t_e = 1'000.0 * d_e.count() / (fpf / mmc::dt);
 
       // write execution time to output file
       out_f << mmc::cnfs(N, 5, '0') << " " << mmc::cnfs(t_e, 5, '0', 3)

@@ -76,7 +76,9 @@ int main(
         inp_f.close();
 
         // record success message
-        msg = "added " + pathstr + " to analysis";
+        msg = "added trajectory file ";
+        msg += mmc::cnfs(i_s, 3, '0') + "-";
+        msg += mmc::cnfs(i_t_f, 3, '0');
         mmc::logger::record(msg);
       }
 

@@ -13,6 +13,23 @@
 namespace mmc // Marco Mendívil Carboni
 {
 
+// Constants
+
+static constexpr float dt = 1.0 / 2048; // timestep
+static constexpr float mis = 0.838732; // minimum initial separation
+
+// Aliases
+
+using prng = curandStatePhilox4_32_10; // PRNG type
+
+// Enumerations
+
+enum stype // simulation type
+{
+  DST, // default simulation type
+  ICG, // initial condition generation
+};
+
 // Classes
 
 class chrsim : public chrdat // chromatin simulation
@@ -43,13 +60,14 @@ private:
 
   const uint spf; // steps per frame
   const uint tpb; // threads per block
+
   const float sd; // rn standard deviation
 
   vec3f *er; // extra position array
   vec3f *ef; // extra force array
 
   vec3f *rn; // random number array
-  void *vps; // void PRNG state array
+  prng *ps; // PRNG state array
 
   sugrid pg; // particle grid
   sugrid *pgp; // particle grid pointer

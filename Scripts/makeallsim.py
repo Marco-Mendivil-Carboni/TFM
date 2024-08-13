@@ -21,6 +21,14 @@ def setstop(sig, stack):
 
 signal(SIGUSR1, setstop)
 
+# Define check function
+
+
+def check(returnc: int) -> None:
+    if returnc != 0:
+        exit()
+
+
 # Define simparam class
 
 
@@ -73,7 +81,7 @@ def writeparam(simdir: Path, sp: simparam) -> None:
 simrootdir = Path("Simulations")
 
 numberofsim = 4
-filespersim = 8
+filespersim = 4
 
 
 def makesim(sp: simparam) -> None:
@@ -85,7 +93,7 @@ def makesim(sp: simparam) -> None:
     newsim = False
     pattern = "initial-condition-*"
     while len(list(simdir.glob(pattern))) < numberofsim:
-        run(["./Program/bin/ccp-perform", str(simdir)])
+        check(run(["./Program/bin/ccp-perform", str(simdir)]).returncode)
         newsim = True
         if stop:
             exit()
@@ -93,14 +101,16 @@ def makesim(sp: simparam) -> None:
     for simidx in range(numberofsim):
         pattern = "trajectory-{:03}-*".format(simidx)
         while len(list(simdir.glob(pattern))) < filespersim:
-            run(["./Program/bin/ccp-perform", str(simdir), str(simidx)])
+            check(
+                run(["./Program/bin/ccp-perform", str(simdir), str(simidx)]).returncode
+            )
             newsim = True
             if stop:
                 exit()
 
     pattern = "analysis-*"
     if len(list(simdir.glob(pattern))) == 0 or newsim:
-        run(["./Program/bin/ccp-analyze", str(simdir)])
+        check(run(["./Program/bin/ccp-analyze", str(simdir)]).returncode)
 
 
 # Make simulations

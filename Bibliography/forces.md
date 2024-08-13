@@ -58,11 +58,11 @@ $$
 ## Soft-Repulsive potential
 
 $$
-V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 64 \left(d _{ij} + d _m/2\right) \left(d _{ij} - d _m\right) ^{2}
+V = \sum _{i=0} ^{N-1} \sum _{j=i+1} ^{N-1} 128 \left(d _{ij} + d _m/2\right) \left(d _{ij} - d _m\right) ^{2}
 $$
 
 $$
--\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 64 \left(3 d _m - 3 d _{ij}\right) (\bar{r} _i - \bar{r} _j)
+-\frac{\partial V}{\partial \bar{r} _i} = \sum _{j \neq i} 128 \left(3 d _m - 3 d _{ij}\right) (\bar{r} _i - \bar{r} _j)
 $$
 
 ## Binding potential

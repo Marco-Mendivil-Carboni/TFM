@@ -7,24 +7,6 @@
 namespace mmc // Marco Mendívil Carboni
 {
 
-// Constants
-
-static constexpr float dt = 1.0 / 1024; // timestep
-
-static constexpr float mis = 0.838732; // minimum initial separation
-
-// Aliases
-
-using prng = curandStatePhilox4_32_10; // PRNG type
-
-// Enumerations
-
-enum stype // simulation type
-{
-  DST, // default simulation type
-  ICG, // initial condition generation
-};
-
 // Device Functions
 
 // calculate bonded forces
@@ -212,7 +194,7 @@ inline __device__ void calc_ppf<ICG>( // calculate particle-particle force
   // calculate Soft-Repulsive force
   float dpp = length(vpp); // particle-particle distance
   if (dpp > rco) { return; }
-  srf += 64.0 * (3.0 * rco - 3.0 * dpp) * vpp;
+  srf += 128.0 * (3.0 * rco - 3.0 * dpp) * vpp;
 }
 
 // calculate lbs-particle force
@@ -339,7 +321,7 @@ inline __device__ void calc_srf(
 // initialize PRNG state array
 __global__ void init_ps(
     const uint N, // number of particles
-    void *vps, // void PRNG state array
+    prng *ps, // PRNG state array
     uint pseed) // PRNG seed
 {
   // calculate particle index
@@ -347,7 +329,6 @@ __global__ void init_ps(
   if (i_p >= N) { return; }
 
   // initialize PRNG state
-  prng *ps = static_cast<prng *>(vps); // PRNG state array
   curand_init(pseed, i_p, 0, &ps[i_p]);
 }
 
@@ -358,14 +339,13 @@ __global__ void begin_iter(
     vec3f *ef, // extra force array
     float sd, // standard deviation
     vec3f *rn, // random number array
-    void *vps) // void PRNG state array
+    prng *ps) // PRNG state array
 {
   // calculate particle index
   uint i_p = blockIdx.x * blockDim.x + threadIdx.x; // particle index
   if (i_p >= N) { return; }
 
   // calculate random numbers
-  prng *ps = static_cast<prng *>(vps); // PRNG state array
   vec3f az; // absolute z-score
   do
   {
@@ -439,7 +419,7 @@ __global__ void exec_RK_2(
 
 // chromatin simulation constructor
 chrsim::chrsim(parmap &par) // parameters
-    : chrdat(par), spf{par.get_val<uint>("steps_per_frame", 1024)},
+    : chrdat(par), spf{par.get_val<uint>("steps_per_frame", 1.0 / dt)},
       tpb{par.get_val<uint>("threads_per_block", 128)},
       sd{static_cast<float>(sqrt(2.0 * k_B * T * dt))},
       pg(N, aco, 2 * ceil(ng.d_m / aco)), lg(n_l, pg)
@@ -462,7 +442,7 @@ chrsim::chrsim(parmap &par) // parameters
   cuda_check(cudaMalloc(&er, N * sizeof(vec3f)));
   cuda_check(cudaMalloc(&ef, N * sizeof(vec3f)));
   cuda_check(cudaMalloc(&rn, N * sizeof(vec3f)));
-  cuda_check(cudaMalloc(&vps, N * sizeof(prng)));
+  cuda_check(cudaMalloc(&ps, N * sizeof(prng)));
   cuda_check(cudaMalloc(&pgp, sizeof(sugrid)));
   cuda_check(cudaMalloc(&lgp, sizeof(sugrid)));
 
@@ -471,7 +451,7 @@ chrsim::chrsim(parmap &par) // parameters
   cuda_check(cudaMemcpy(lgp, &lg, sizeof(sugrid), cudaMemcpyHostToDevice));
 
   // initialize PRNG
-  init_ps<<<(N + tpb - 1) / tpb, tpb>>>(N, vps, time(nullptr));
+  init_ps<<<(N + tpb - 1) / tpb, tpb>>>(N, ps, time(nullptr));
 }
 
 // chromatin simulation destructor
@@ -481,7 +461,7 @@ chrsim::~chrsim()
   cuda_check(cudaFree(er));
   cuda_check(cudaFree(ef));
   cuda_check(cudaFree(rn));
-  cuda_check(cudaFree(vps));
+  cuda_check(cudaFree(ps));
   cuda_check(cudaFree(pgp));
   cuda_check(cudaFree(lgp));
 }
@@ -521,7 +501,7 @@ void chrsim::generate_initial_condition()
     for (uint fsi = 0; fsi < spf; ++fsi) // frame step index
     {
       // make one Runge-Kutta iteration
-      begin_iter<<<(N + tpb - 1) / tpb, tpb>>>(N, f, ef, 0.0, rn, vps);
+      begin_iter<<<(N + tpb - 1) / tpb, tpb>>>(N, f, ef, 0.0, rn, ps);
       pg.generate_arrays(tpb, r);
       exec_RK_1<ICG>
           <<<(N + tpb - 1) / tpb, tpb>>>(N, ng, pt, r, f, lr, er, rn, pgp, lgp);
@@ -590,7 +570,7 @@ void chrsim::run_simulation(std::ofstream &bin_out_f) // binary output file
     for (uint fsi = 0; fsi < spf; ++fsi) // frame step index
     {
       // make one Runge-Kutta iteration
-      begin_iter<<<(N + tpb - 1) / tpb, tpb>>>(N, f, ef, sd, rn, vps);
+      begin_iter<<<(N + tpb - 1) / tpb, tpb>>>(N, f, ef, sd, rn, ps);
       pg.generate_arrays(tpb, r);
       exec_RK_1<DST>
           <<<(N + tpb - 1) / tpb, tpb>>>(N, ng, pt, r, f, lr, er, rn, pgp, lgp);
