@@ -31,14 +31,14 @@ int main(
   std::string pathstr = argv[1]; // file path string
   std::ofstream out_f; // output file
   std::ofstream n_out_f; // null output file
-  const uint n_r = 8; // number of repetitions
+  const uint n_r = 4; // number of repetitions
   const uint n_t = 8; // number of tests
   const float cvf = 0.125; // chromatin volume fraction
   const float laf = 0.25; // lbs area fraction
   uint N; // number of particles
   float R_n; // nucleus radius
   uint n_l; // number of lbs
-  const uint fpf = 8; // frames per file
+  const uint fpf = 32; // frames per file
   system_clock::time_point stp; // starting time point
   system_clock::time_point etp; // ending time point
   duration<double> d_e; // execution duration

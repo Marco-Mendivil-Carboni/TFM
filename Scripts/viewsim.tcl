@@ -19,8 +19,8 @@ proc draw_ring_quad {res z_a z_b r_a r_b a_a a_b a_c a_d} {
         [expr cos($a_c)*cos($a_b)] [expr sin($a_c)*cos($a_b)] [expr sin($a_b)]]
     set n_3 [list \
         [expr cos($a_d)*cos($a_b)] [expr sin($a_d)*cos($a_b)] [expr sin($a_b)]]
-    draw trinorm $v_0 $v_1 $v_2 $n_0 $n_1 $n_2
-    draw trinorm $v_3 $v_2 $v_1 $n_3 $n_2 $n_1
+    graphics top trinorm $v_0 $v_1 $v_2 $n_0 $n_1 $n_2
+    graphics top trinorm $v_3 $v_2 $v_1 $n_3 $n_2 $n_1
 }
 
 proc draw_ring {res z_a z_b r_a r_b a_a a_b} {
@@ -28,6 +28,18 @@ proc draw_ring {res z_a z_b r_a r_b a_a a_b} {
         set a_c [expr 2.0*$::pi*($j+0.0)/$res]
         set a_d [expr 2.0*$::pi*($j+1.0)/$res]
         draw_ring_quad $res $z_a $z_b $r_a $r_b $a_a $a_b $a_c $a_d
+    }
+}
+
+proc draw_nucleus_without_bleb {res R_n} {
+    for {set i 0} {$i < $res} {incr i} {
+        set a_a [expr $::pi*($i+0.0)/$res-$::pi*0.5]
+        set a_b [expr $::pi*($i+1.0)/$res-$::pi*0.5]
+        set z_a [expr $R_n*sin($a_a)]
+        set z_b [expr $R_n*sin($a_b)]
+        set r_a [expr $R_n*cos($a_a)]
+        set r_b [expr $R_n*cos($a_b)]
+        draw_ring $res $z_a $z_b $r_a $r_b $a_a $a_b
     }
 }
 
@@ -89,15 +101,14 @@ if {$argc==2} {
     }
     close $param_fp
 
-    set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
-    if {$n_l!=0} {
-        mol new $gro_file autobonds off
-        set sel [atomselect top "name C"]
-        $sel set radius $r_p
-        color Name "C" 2
-        mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
-        mol rename top {lamina binding sites}
+    mol new
+    graphics top material Transparent
+    if {$R_o==0.0} {
+        draw_nucleus_without_bleb $res $R_n
+    } else {
+        draw_nucleus_with_bleb $res $R_n $R_o $R_b
     }
+    mol rename top {nucleus}
 
     set gro_file [format "%s/initial-condition-%03d.gro" $sim_dir $sim_idx]
     mol new $gro_file autobonds off
@@ -122,28 +133,27 @@ if {$argc==2} {
     mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
     mol rename top {chromatin}
 
-    draw material Transparent
-    if {$R_o==0.0} {
-        draw sphere {0 0 0} radius $R_n resolution $res
-    } else {
-        draw_nucleus_with_bleb $res $R_n $R_o $R_b
-    }
-
     set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
     set trr_files [lsort [glob $pattern]]
     foreach trr_file $trr_files { mol addfile $trr_file}
+
+    set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
+    if {$n_l!=0} {
+        mol new $gro_file autobonds off
+        set sel [atomselect top "name C"]
+        $sel set radius $r_p
+        color Name "C" 2
+        mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
+        mol rename top {lamina binding sites}
+    }
 
     mol top 0
     display resetview
 
     if {$R_o!=0.0} {
         display resize 640 960
-        translate to 0.0 -0.5 0.0
         rotate x to -90.0
-        scale by 0.8
     }
-
-    mol top 1
 } else {
     puts "You forgot the input."
     exit
