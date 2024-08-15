@@ -38,7 +38,7 @@ int main(
   uint N; // number of particles
   float R_n; // nucleus radius
   uint n_l; // number of lbs
-  const uint fpf = 32; // frames per file
+  const uint fpf = 16; // frames per file
   system_clock::time_point stp; // starting time point
   system_clock::time_point etp; // ending time point
   duration<double> d_e; // execution duration

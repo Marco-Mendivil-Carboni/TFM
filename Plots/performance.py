@@ -51,7 +51,7 @@ ax.set_ylabel("$t_e$ (ms)")
 ax.plot(df_1["N"], df_1["t_e"], marker="o", color="#d81e2c", label="GeForce RTX 3050")
 ax.plot(df_2["N"], df_2["t_e"], marker="o", color="#a31cc5", label="RTX A4000")
 
-ax.set_ylim(0.125, 2.0)
+ax.yaxis.set_minor_formatter(mpl.ticker.NullFormatter())
 
 ax.legend(loc="upper left")
 
