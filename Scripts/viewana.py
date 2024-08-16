@@ -22,9 +22,9 @@ mpl.rcParams["figure.constrained_layout.use"] = True
 
 mpl.rcParams["legend.frameon"] = False
 
-# mpl.rcParams["toolbar"] = "None"
 mpl.rcParams["figure.constrained_layout.h_pad"] = cm / 4
 mpl.rcParams["figure.constrained_layout.w_pad"] = cm / 4
+
 mpl.rcParams["figure.constrained_layout.hspace"] = 0.0
 mpl.rcParams["figure.constrained_layout.wspace"] = 0.0
 
