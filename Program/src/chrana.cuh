@@ -14,7 +14,7 @@ namespace mmc // Marco Mendívil Carboni
 // Constants
 
 static constexpr uint n_b = 64; // number of bins
-static constexpr uint px_sz = 8; // pixel size
+static constexpr uint px_sz = 4; // pixel size
 static constexpr float cf = 1'000.0; // contact factor
 
 // Classes
