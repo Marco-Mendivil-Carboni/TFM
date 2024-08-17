@@ -25,19 +25,19 @@
 
 + Thanks to the wonderful work of Falk et al. we can make an educated guess of the interaction strengths between our two types of particles. In their more elaborate model with three types of particles (one for euchromatin and two for heterochromatin) they found that euchromatin interacted very little with itself and the other types of particles so we can safely make it purely repulsive for simplicity. The interaction strength between heterochromatin particles was different for the two types of heterochromatin particles but their average was of the order of $1k_BT$ which is the value we will use.
 
-+ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to BioNumbers the nucleolus has an average diameter of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
++ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to [BioNumbers](https://bionumbers.hms.harvard.edu/bionumber.aspx?id=113849&ver=3&trm=nucleolus&org=) the nucleolus has an average radius of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ (which is  consistent with this other [entry](https://bionumbers.hms.harvard.edu/bionumber.aspx?&id=101397&ver=2)) so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
 
 + The exact value of the elastic constant is not really relevant in this context as long as it is high enough to keep the distance between bonded particles from fluctuating too much. According to Falo et al. the statiscal properties of an elastic freely jointed chain only depend on the elastic constant through the fraction $2/(1+\beta k_el_0^2)$ so taking $k_e=128e_u/l_u^2$ should suffice.
 
 + In a similar but simpler way to Bajpai et al. we will add potential wells throughout the lamina (at random positions) which we will call lamina binding sites. This sites represent the places of the lamina to which a LAD (a LADh particle in our model) can bind via the so called lamina binding proteins. We will make this wells as wide as our particles and $8k_BT$ deep since according to Maji et al. using a very similar model the lamina-chromatin interaction strengths that best reproduced experimental observations were above $2k_BT$ and Bajpai et al. used a $10k_BT$ deep potential.
 
-+ With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the  unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the features seen on experiments.
++ With all this in mind we have a very idealized but relatively complex model of the chromatin fiber confined inside a spherical nucleus. By modulating the unknown parameters of this model we wish to investigate the different conformations that chromatin can adopt and hopefully reproduce the features seen on experiments.
 
 + The modifiable parameters of the model will be:
     + The nucleus radius and bleb geometry ($R_n$, $R_o$, $R_b$).
     + The number of lamina binding sites ($N'$).
 
-+ In normal conditions, as we have already said, the nucleus will have a radius of 1.35 $\text{um}$ so $R_n=40.91l_u$, there will be no bleb so $R_o=R_b=0.0l_u$ and all LAD particles should be able to bind to the lamina so $N'=7284$.
++ Under normal conditions, as we have already said, the nucleus will have a radius of 2.65 $\text{um}$ so $R_n=80.32l_u$, there will be no bleb so $R_o=R_b=0.0l_u$ and all LAD particles should be able to bind to the lamina so $N'=7284$ at least.
 
 | name            | value (PU)            | value (SI)                       |
 |-----------------|-----------------------|----------------------------------|
