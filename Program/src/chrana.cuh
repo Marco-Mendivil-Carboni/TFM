@@ -14,8 +14,10 @@ namespace mmc // Marco Mendívil Carboni
 // Constants
 
 static constexpr uint n_b = 64; // number of bins
-static constexpr uint px_sz = 4; // pixel size
+static constexpr uint px_sz = 8; // pixel size
 static constexpr float cf = 1'000.0; // contact factor
+
+static constexpr uint n_chr_h = n_chr / 2; // haploid number of chromosomes
 
 // Classes
 
@@ -68,15 +70,15 @@ private:
 
   simobs rcd_o[3][n_b]; // radial chromatin density observable
 
-  simobs_b *sd_bo[n_chr]; // spatial distance basic observable
-  float *sd[n_chr]; // spatial distance arrays
-  float *hsd[n_chr]; // host spatial distance arrays
+  simobs_b *sd_bo[n_chr_h]; // spatial distance basic observable
+  float *sd[n_chr_h]; // spatial distance arrays
+  float *hsd[n_chr_h]; // host spatial distance arrays
 
-  simobs_b *cp_bo[n_chr]; // contact probability basic observable
-  float *cp[n_chr]; // contact probability arrays
-  float *hcp[n_chr]; // host contact probability arrays
+  simobs_b *cp_bo[n_chr_h]; // contact probability basic observable
+  float *cp[n_chr_h]; // contact probability arrays
+  float *hcp[n_chr_h]; // host contact probability arrays
 
-  uint lsdcp[n_chr]; // length of sd arrays and cp arrays
+  uint lsdcp[n_chr_h]; // length of sd arrays and cp arrays
 
   simobs_b *cm_bo; // contact map basic observable
   float *cm; // contact map array

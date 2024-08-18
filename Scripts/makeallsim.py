@@ -33,7 +33,7 @@ def check(returnc: int) -> None:
 
 
 class simparam:
-    N_def = 18240
+    N_def = 30386
     R_n_def = 0.0
     R_o_def = 0.0
     R_b_def = 0.0
@@ -87,8 +87,8 @@ def writeparam(simdir: Path, sp: simparam) -> None:
 
 simrootdir = Path("Simulations")
 
-numberofsim = 8
-filespersim = 16  # change to 32
+numberofsim = 4
+filespersim = 16  # change to 32 --------------------------------------------
 
 
 def makesim(sp: simparam) -> None:
@@ -128,5 +128,7 @@ def makesim(sp: simparam) -> None:
 
 # Make simulations
 
-makesim(simparam(R_n=40.91, n_l=7284))
-makesim(simparam(R_n=40.91))
+# set R_n and n_l such that cvf = 0.2 and laf = 0.4 -------------------------
+
+makesim(simparam(R_n=30.30, n_l=2498))
+makesim(simparam(R_n=30.30))

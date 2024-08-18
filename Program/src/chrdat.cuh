@@ -19,14 +19,18 @@ static constexpr float k_b = 6.000000; // bending constant
 static constexpr float e_p = 1.000000; // particle energy
 static constexpr float rco = 1.154701; // repulsive cutoff
 static constexpr float aco = 2.000000; // attractive cutoff
-static constexpr float mdl = 22.13471; // mean domain length
+static constexpr float mdl = 21.10139; // mean domain length
 static constexpr float e_l = 8.000000; // lbs energy
 static constexpr float lco = 0.500000; // lbs cutoff
 
-#define CHR_LIM {0, 3487, 6691, 10409, 14637, 14842, 18240} // chromosome limits
+// chromosome limits
+#define CHR_LIM                                                                \
+  {0,     2284,  4599,  6687,  9338,  12508, 15193,                            \
+   17477, 19792, 21880, 24531, 27701, 30386}
 __constant__ static constexpr uint chrla[] = CHR_LIM; // chromosome limits array
 static constexpr uint hchrla[] = CHR_LIM; // host chromosome limits array
-static constexpr uint n_chr = sizeof(chrla) / 4 - 1; // number of chromosomes
+static constexpr uint n_chr = // number of chromosomes
+    sizeof(chrla) / sizeof(uint) - 1;
 static constexpr uint N_def = hchrla[n_chr]; // default number of particles
 static constexpr char seqpath_def[] = // default sequence file relative path
     "Program/data/sequence.txt";

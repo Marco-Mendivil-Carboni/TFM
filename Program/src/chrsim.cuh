@@ -16,6 +16,7 @@ namespace mmc // Marco Mendívil Carboni
 // Constants
 
 static constexpr float dt = 1.0 / 2048; // timestep
+
 static constexpr float mis = 0.838732; // minimum initial separation
 
 // Aliases
@@ -91,7 +92,8 @@ private:
       curandGenerator_t gen, // host PRNG
       uint i_s, // starting index
       uint i_e, // ending index
-      vec3f dir); // direction
+      vec3f dir, // direction
+      float mda); // maximum direction angle
 
   // count particle overlaps
   uint particle_overlaps();

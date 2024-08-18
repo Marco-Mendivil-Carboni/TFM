@@ -28,7 +28,7 @@ lenfactor = 1000 / 33
 
 # Load data into a dataframe
 
-simdir = Path("Simulations/40.91-18240-07284-00.00-00.00")
+simdir = Path("Simulations/30386-0.200-0.400-00.00-00.00")
 
 anafilepath = simdir / "analysis-fin.dat"
 with open(anafilepath) as anafile:

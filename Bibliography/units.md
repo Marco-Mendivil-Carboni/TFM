@@ -7,15 +7,17 @@
 
 + We will consider that each one of our particles has 33 nucleosomes and thus a diameter of 33 nm.
 
-+ Although in the euchromatic state nucleosomes are not organized in a well-defined and stable manner they interact strongly in various ways forming the so called TADs (Topologically Associating Domains). Inside this domains the nuclesomes are presumably very close together so assuming that they ocuppy a similar volume as in the heterochromatin state is justified.
++ Although in the euchromatic state nucleosomes are not organized in a well-defined and stable manner they interact strongly in various ways forming the so called TADs (Topologically Associating Domains). Inside this domains the nuclesomes are presumably very close together so assuming that they ocuppy a similar volume as in the heterochromatic state is justified.
 
 + As Bajpai et al. mention, we can more or less associate LADs to heterochromatin and non-LADs to euchromatin so in our model we will use only two types of particles for simplicity:
     + LADh (A): LAD heterochromatin
     + LNDe (B): non-LAD euchromatin
 
-+ Despite what one may think at first according to Bajpai at al. the exact sequence of particles used in this kind of models does not change significantly the results, as long as the statistical properties of the sequences are similar. Nonetheless, we will base the sequence of our coarse grained model on experimental data. We will use the lamina-associated domains in the Drosophila genome reported by Ho et al. to determine the LADh particles of our polymer.
++ Despite what one may think at first according to Bajpai at al. the exact sequence of particles used in this kind of models does not change significantly the results, as long as the statistical properties of the sequences are similar. Nonetheless, we will base the sequence of our coarse grained model on experimental data. We will use the lamina-associated domains in the C. elegans genome reported by Ho et al. to determine the LADh particles of our polymer. There are several good reasons to use this organism's sequence in particular: it is a model organism, its genome is specially short and its chromosomes do not have pericentromeric constitutive heterochromatin, which heavily encourages the use of models like the one of Falk et al. with three types of beads.
 
-+ We will also separate the polymer at the end of each one of the 6 chromosomes, whose lengths we have obtained from the [GEO NCBI database](https://www.ncbi.nlm.nih.gov/gdv/browser/geo/?id=GSE16245).
++ We will also separate the polymer at the end of each one of the 6 chromosomes, whose lengths we have obtained from the [GEO NCBI database](https://www.ncbi.nlm.nih.gov/gdv/browser/genome/?id=GCF_000002985.6).
+
++ Because C. elegans cells (like most eukaryotes) are diploids inside the nucleus there will be two copies of each chromosome, making a total of 12 chromosomes.
 
 + According to Bystricky et al. heterochromatin has a persistance length of $\sim$ 200 nm so in our model LADh particles will have $k_b=6$.
 
@@ -25,7 +27,7 @@
 
 + Thanks to the wonderful work of Falk et al. we can make an educated guess of the interaction strengths between our two types of particles. In their more elaborate model with three types of particles (one for euchromatin and two for heterochromatin) they found that euchromatin interacted very little with itself and the other types of particles so we can safely make it purely repulsive for simplicity. The interaction strength between heterochromatin particles was different for the two types of heterochromatin particles but their average was of the order of $1k_BT$ which is the value we will use.
 
-+ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to [BioNumbers](https://bionumbers.hms.harvard.edu/bionumber.aspx?id=113849&ver=3&trm=nucleolus&org=) the nucleolus has an average radius of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ (which is  consistent with this other [entry](https://bionumbers.hms.harvard.edu/bionumber.aspx?&id=101397&ver=2)) so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
++ Chromatin has other distinguishable regions like centromeres, telomeres and NORs (nucleolus organizer regions) which we will not consider since they consitute smaller fractions of the genome than general euchromatin and heterochromatin. For example, according to [BioNumbers](https://bionumbers.hms.harvard.edu/bionumber.aspx?id=113849&ver=3&trm=nucleolus&org=) the nucleolus has an average radius of 0.9 $\text{um}$ and the nucleus of 2.7 $\text{um}$ so NORs occupy less than 4% of the nucleus volume despite their crucial biological function.
 
 + The exact value of the elastic constant is not really relevant in this context as long as it is high enough to keep the distance between bonded particles from fluctuating too much. According to Falo et al. the statiscal properties of an elastic freely jointed chain only depend on the elastic constant through the fraction $2/(1+\beta k_el_0^2)$ so taking $k_e=128e_u/l_u^2$ should suffice.
 
@@ -37,11 +39,11 @@
     + The nucleus radius and bleb geometry ($R_n$, $R_o$, $R_b$).
     + The number of lamina binding sites ($N'$).
 
-+ Under normal conditions, as we have already said, the nucleus will have a radius of 2.65 $\text{um}$ so $R_n=80.32l_u$, there will be no bleb so $R_o=R_b=0.0l_u$ and all LAD particles should be able to bind to the lamina so $N'=7284$ at least.
++ For our first simulation we will give this parameters some reasonable values under normal conditions. Ikegami et al. state in their article that C. elegans nuclei have a radius of approximately 1 $\text{um}$.
 
 | name            | value (PU)            | value (SI)                       |
 |-----------------|-----------------------|----------------------------------|
-| $\xi$           | $1m_u/t_u$            | $3\pi\eta d=0.27\text{ pg / us}$ |
+| $\xi$           | $1m_u/t_u$            | $3\pi\eta d=0.28\text{ pg / us}$ |
 | $k_B$           | $(1/298)e_u/\text{K}$ | $0.014\text{ pN nm / K}$         |
 | $l_0$           | $1l_u$                | $33\text{ nm}$                   |
 | $k_e$           | $128e_u/l_u^2$        | $0.48\text{ pN / nm}$            |
@@ -52,7 +54,7 @@
 | $\epsilon^{AB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon^{BB}$ | $0e_u$                | $0\text{ pN nm}$                 |
 | $\epsilon'$     | $8e_u$                | $32.9\text{ pN nm}$              |
-| $dt$            | $(1/2048)t_u$         | $35\text{ ns}$                   |
+| $dt$            | $(1/2048)t_u$         | $36\text{ ns}$                   |
 
 + We take the viscosity of water at 25ºC to be $\eta=0.0009\text{ Pa s}$ and the hydrodynamic radius to be $d=\sigma$.
 
@@ -64,7 +66,7 @@
 |-------------|---------------------------------|
 | length      | $\sigma=33\text{ nm}$           |
 | energy      | $k_BT=4.11\text{ pN nm}$        |
-| time        | $\xi\sigma^2/k_BT=72\text{ us}$ |
+| time        | $\xi\sigma^2/k_BT=74\text{ us}$ |
 | force       | $e_u/l_u=0.12\text{ pN}$        |
 | velocity    | $l_u/t_u=0.46\text{ nm / us}$   |
 | temperature | $1\text{ K}$                    |

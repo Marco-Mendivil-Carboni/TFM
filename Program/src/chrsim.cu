@@ -653,7 +653,7 @@ void chrsim::set_particle_types(curandGenerator_t gen) // host PRNG
     float ran; // random number in (0,1]
     float edl; // exponential domain length
     uint cde = 0; // current domain end
-    ptype cpt = LADh; // current particle type
+    ptype cpt = LNDe; // current particle type
     for (uint i_p = 0; i_p < N; ++i_p) // particle index
     {
       if (i_p == cde) // change domain type
@@ -664,7 +664,7 @@ void chrsim::set_particle_types(curandGenerator_t gen) // host PRNG
           edl = -mdl * log(ran);
         } while ((edl / mdl) > 5 || edl < 1.0);
         cde = i_p + edl;
-        cpt = (cpt == LNDe) ? LADh : LNDe;
+        cpt = (cpt == LADh) ? LNDe : LADh;
       }
       hpt[i_p] = cpt;
     }
@@ -680,10 +680,13 @@ void chrsim::set_particle_positons(curandGenerator_t gen) // host PRNG
   if (N == N_def) // perform a confined random walk for each chromosome
   {
     // declare auxiliary variables
-    float len_d = tan(3 * M_PI / 8); // direction length
+    float phi = (1.0 + sqrt(5.0)) / 2.0; // golden ratio
+    float mda = M_PI / 2.0 - atan(phi); // maximum direction angle
     vec3f dir[] = // directions
-        {{+len_d, 0.0, 0.0}, {0.0, +len_d, 0.0}, {0.0, 0.0, +len_d},
-         {-len_d, 0.0, 0.0}, {0.0, -len_d, 0.0}, {0.0, 0.0, -len_d}};
+        {{0.0, +1.0, +phi}, {+1.0, +phi, 0.0}, {+phi, 0.0, +1.0},
+         {0.0, +1.0, -phi}, {+1.0, -phi, 0.0}, {-phi, 0.0, +1.0},
+         {0.0, -1.0, +phi}, {-1.0, +phi, 0.0}, {+phi, 0.0, -1.0},
+         {0.0, -1.0, -phi}, {-1.0, -phi, 0.0}, {-phi, 0.0, -1.0}};
     uint n_dir = sizeof(dir) / sizeof(vec3f); // number of directions
     float ran; // random number in (0,1]
     uint i_r; // random index
@@ -702,12 +705,13 @@ void chrsim::set_particle_positons(curandGenerator_t gen) // host PRNG
     // perform confined random walks for each chromosome with random directions
     for (uint i_c = 0; i_c < n_chr; ++i_c) // chromosome index
     {
-      perform_random_walk(gen, hchrla[i_c], hchrla[i_c + 1], dir[i_c % n_dir]);
+      uint i_d = i_c % n_dir; // direction index
+      perform_random_walk(gen, hchrla[i_c], hchrla[i_c + 1], dir[i_d], mda);
     }
   }
   else // perform a single confined random walk
   {
-    perform_random_walk(gen, 0, N, {0.0, 0.0, 0.0});
+    perform_random_walk(gen, 0, N, {0.0, 0.0, 0.0}, M_PI);
   }
 }
 
@@ -716,27 +720,37 @@ void chrsim::perform_random_walk(
     curandGenerator_t gen, // host PRNG
     uint i_s, // starting index
     uint i_e, // ending index
-    vec3f dir) // direction
+    vec3f dir, // direction
+    float mda) // maximum direction angle
 {
   // declare auxiliary variables
   float len_d = length(dir); // direction length
-  float mda = M_PI - 2.0 * atan(len_d); // maximum direction angle
   float iT = 1.0 / (k_B * T); // inverse temperature
   float ran; // random number in (0,1]
   float theta; // polar angle
   float phi; // azimuthal angle
+  float d_r; // radial distance
   float len_b; // bond length
   float angle_b; // bond angle
-  vec3f old_dir; // old direction
-  vec3f new_dir; // new direction
   vec3f ran_dir; // random direction
+  vec3f old_dir; // old direction
   vec3f per_dir; // perpendicular direction
+  vec3f new_dir; // new direction
+  bool p_a; // position is acceptable
 
   // place first particle
-  if ((ng.R_n - len_d) < mis) { hr[i_s] = {0.0, 0.0, 0.0}; }
-  else { hr[i_s] = dir; }
-  if (len_d == 0.0) { old_dir = {1.0, 0.0, 0.0}; }
-  else { old_dir = dir; }
+  do
+  {
+    curandGenerateUniform(gen, &ran, 1);
+    theta = acos(1.0 - 2.0 * ran);
+    curandGenerateUniform(gen, &ran, 1);
+    phi = 2.0 * M_PI * ran;
+    curandGenerateUniform(gen, &ran, 1);
+    d_r = (ng.R_n - mis) * pow(ran, 1.0 / 3);
+    ran_dir = {sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)};
+    hr[i_s] = d_r * ran_dir;
+    old_dir = ran_dir;
+  } while (acos(dot(hr[i_s], dir) / (d_r * len_d)) > mda);
 
   // place the rest of particles
   uint att = 0; // number of attempts
@@ -762,11 +776,11 @@ void chrsim::perform_random_walk(
     hr[i_p] = len_b * new_dir + hr[i_p - 1];
 
     // check if new position is acceptable
-    bool p_a = true; // position is acceptable
+    p_a = true;
     if (!isfinite(hr[i_p].x)) { p_a = false; }
     if (!isfinite(hr[i_p].y)) { p_a = false; }
     if (!isfinite(hr[i_p].z)) { p_a = false; }
-    float d_r = length(hr[i_p]); // radial distance
+    d_r = length(hr[i_p]);
     if ((ng.R_n - d_r) < mis) { p_a = false; }
     if (acos(dot(hr[i_p], dir) / (d_r * len_d)) > mda) { p_a = false; }
 

@@ -3,22 +3,14 @@
 set ::pi 3.1415926535897931
 
 proc draw_ring_quad {res z_a z_b r_a r_b a_a a_b a_c a_d} {
-    set v_0 [list \
-        [expr $r_a*cos($a_c)] [expr $r_a*sin($a_c)] [expr $z_a]]
-    set v_1 [list \
-        [expr $r_a*cos($a_d)] [expr $r_a*sin($a_d)] [expr $z_a]]
-    set v_2 [list \
-        [expr $r_b*cos($a_c)] [expr $r_b*sin($a_c)] [expr $z_b]]
-    set v_3 [list \
-        [expr $r_b*cos($a_d)] [expr $r_b*sin($a_d)] [expr $z_b]]
-    set n_0 [list \
-        [expr cos($a_c)*cos($a_a)] [expr sin($a_c)*cos($a_a)] [expr sin($a_a)]]
-    set n_1 [list \
-        [expr cos($a_d)*cos($a_a)] [expr sin($a_d)*cos($a_a)] [expr sin($a_a)]]
-    set n_2 [list \
-        [expr cos($a_c)*cos($a_b)] [expr sin($a_c)*cos($a_b)] [expr sin($a_b)]]
-    set n_3 [list \
-        [expr cos($a_d)*cos($a_b)] [expr sin($a_d)*cos($a_b)] [expr sin($a_b)]]
+    set v_0 [list [expr $r_a*cos($a_c)] [expr $r_a*sin($a_c)] [expr $z_a]]
+    set v_1 [list [expr $r_a*cos($a_d)] [expr $r_a*sin($a_d)] [expr $z_a]]
+    set v_2 [list [expr $r_b*cos($a_c)] [expr $r_b*sin($a_c)] [expr $z_b]]
+    set v_3 [list [expr $r_b*cos($a_d)] [expr $r_b*sin($a_d)] [expr $z_b]]
+    set n_0 [list [expr cos($a_c)*cos($a_a)] [expr sin($a_c)*cos($a_a)] [expr sin($a_a)]]
+    set n_1 [list [expr cos($a_d)*cos($a_a)] [expr sin($a_d)*cos($a_a)] [expr sin($a_a)]]
+    set n_2 [list [expr cos($a_c)*cos($a_b)] [expr sin($a_c)*cos($a_b)] [expr sin($a_b)]]
+    set n_3 [list [expr cos($a_d)*cos($a_b)] [expr sin($a_d)*cos($a_b)] [expr sin($a_b)]]
     graphics top trinorm $v_0 $v_1 $v_2 $n_0 $n_1 $n_2
     graphics top trinorm $v_3 $v_2 $v_1 $n_3 $n_2 $n_1
 }
@@ -82,7 +74,6 @@ if {$argc==2} {
     set r_p 5.0
     set n_l 0
     set R_o 0.0
-
     set param_file [format "%s/adjustable-parameters.dat" $sim_dir]
     set param_fp [open $param_file "r"]
     while {[gets $param_fp line] != -1} {
@@ -114,13 +105,14 @@ if {$argc==2} {
     mol new $gro_file autobonds off
     package require topotools
     set N [molinfo top get numatoms]
-    if {$N==18240} {
-        for {set i 0    } {$i<3486 } {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 3487 } {$i<6690 } {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 6691 } {$i<10408} {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 10409} {$i<14636} {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 14637} {$i<14841} {incr i} { topo addbond $i [expr $i+1]}
-        for {set i 14842} {$i<18239} {incr i} { topo addbond $i [expr $i+1]}
+    set chr_lim [list 0 2284 4599 6687 9338 12508 15193 17477 19792 21880 24531 27701 30386]
+    set n_chr [expr [llength $chr_lim]-1]
+    if {$N==[lindex $chr_lim $n_chr]} {
+        for {set i_c 0} {$i_c<$n_chr} {incr i_c} {
+            set i_s [lindex $chr_lim $i_c]
+            set i_e [expr [lindex $chr_lim [expr $i_c+1]]-1]
+            for {set i $i_s} {$i<$i_e} {incr i} { topo addbond $i [expr $i+1]}
+        }
     } else {
         for {set i 0} {$i<[expr $N-1]} {incr i} { topo addbond $i [expr $i+1]}
     }
