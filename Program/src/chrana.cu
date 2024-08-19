@@ -11,13 +11,13 @@ namespace mmc // Marco Mendívil Carboni
 
 // calculate the spatial distance and contact probability
 __global__ void calc_sd_cp(
+    const uint N, // number of particles
     uint lsdcp, // length of sd array and cp array
     uint i_s, // starting index
     uint i_e, // ending index
     vec3f *r, // position array
     float *sd, // spatial distance array
     float *cp) // contact probability array
-// add bool parameter for diploid case --------------------------------
 {
   // calculate array index
   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
@@ -27,23 +27,29 @@ __global__ void calc_sd_cp(
   sd[i_a] = 0.0;
   cp[i_a] = 0.0;
   uint s = i_a + 1; // separation
+  uint n_chr_c = (N == N_def) ? 2 : 1; // number of chromosome copies
   float dpp; // particle-particle distance
-  for (uint i_p = i_s; i_p < (i_e - s); ++i_p) // particle index
+  for (uint i_c = 0; i_c < n_chr_c; ++i_c) // copy index
   {
-    dpp = length(r[i_p + s] - r[i_p]);
-    sd[i_a] += dpp;
-    if (dpp < aco) { cp[i_a] += cf; }
+    for (uint i_p = i_s; i_p < (i_e - s); ++i_p) // particle index
+    {
+      dpp = length(r[i_p + s] - r[i_p]);
+      sd[i_a] += dpp;
+      if (dpp < aco) { cp[i_a] += cf; }
+    }
+    i_s += N / n_chr_c;
+    i_e += N / n_chr_c;
   }
-  sd[i_a] /= (i_e - i_s - s);
-  cp[i_a] /= (i_e - i_s - s);
+  sd[i_a] /= n_chr_c * (i_e - i_s - s);
+  cp[i_a] /= n_chr_c * (i_e - i_s - s);
 }
 
 // calculate the contact map
 __global__ void calc_cm(
-    uint lcm, // length of cm array
+    const uint N, // number of particles
+    const uint lcm, // length of cm array
     vec3f *r, // position array
     float *cm) // contact map array
-// add bool parameter for diploid case --------------------------------
 {
   // calculate array index
   int i_a = blockIdx.x * blockDim.x + threadIdx.x; // array index
@@ -57,16 +63,24 @@ __global__ void calc_cm(
   uint i_e_x = i_s_x + px_sz; // ending x index
   uint i_s_y = i_y * px_sz; // starting y index
   uint i_e_y = i_s_y + px_sz; // ending y index
+  uint n_chr_c = (N == N_def) ? 2 : 1; // number of chromosome copies
   float dpp; // particle-particle distance
-  for (uint i_p_x = i_s_x; i_p_x < i_e_x; ++i_p_x) // x particle index
+  for (uint i_c = 0; i_c < n_chr_c; ++i_c) // copy index
   {
-    for (uint i_p_y = i_s_y; i_p_y < i_e_y; ++i_p_y) // y particle index
+    for (uint i_p_x = i_s_x; i_p_x < i_e_x; ++i_p_x) // x particle index
     {
-      dpp = length(r[i_p_x] - r[i_p_y]);
-      if (dpp < aco) { cm[i_a] += cf; }
+      for (uint i_p_y = i_s_y; i_p_y < i_e_y; ++i_p_y) // y particle index
+      {
+        dpp = length(r[i_p_x] - r[i_p_y]);
+        if (dpp < aco) { cm[i_a] += cf; }
+      }
     }
+    i_s_x += N / n_chr_c;
+    i_e_x += N / n_chr_c;
+    i_s_y += N / n_chr_c;
+    i_e_y += N / n_chr_c;
   }
-  cm[i_a] /= px_sz * px_sz;
+  cm[i_a] /= n_chr_c * px_sz * px_sz;
 }
 
 // Host Functions
@@ -74,7 +88,7 @@ __global__ void calc_cm(
 // chromatin analysis constructor
 chrana::chrana(parmap &par) // parameters
     : chrdat(par), tpb{par.get_val<uint>("threads_per_block", 128)},
-      cms{N / px_sz}, lcm{cms * (cms + 1) / 2}
+      cms{(N == N_def) ? (N / 2) / px_sz : N / px_sz}, lcm{cms * (cms + 1) / 2}
 {
   // allocate memory
   for (uint i_c = 0; i_c < n_chr_h; ++i_c) // chromosome index
@@ -473,7 +487,7 @@ void chrana::calc_observables()
     else if (i_c == 0) { i_e = N; }
     else { continue; }
     calc_sd_cp<<<(lsdcp[i_c] + tpb - 1) / tpb, tpb>>>(
-        lsdcp[i_c], hchrla[i_c], i_e, r, sd[i_c], cp[i_c]);
+        N, lsdcp[i_c], hchrla[i_c], i_e, r, sd[i_c], cp[i_c]);
     cuda_check(cudaMemcpy(
         hsd[i_c], sd[i_c], lsdcp[i_c] * sizeof(float), cudaMemcpyDeviceToHost));
     cuda_check(cudaMemcpy(
@@ -488,7 +502,7 @@ void chrana::calc_observables()
   }
 
   // calculate the contact map
-  calc_cm<<<(lcm + tpb - 1) / tpb, tpb>>>(lcm, r, cm);
+  calc_cm<<<(lcm + tpb - 1) / tpb, tpb>>>(N, lcm, r, cm);
   cuda_check(cudaMemcpy(hcm, cm, lcm * sizeof(float), cudaMemcpyDeviceToHost));
   for (uint i_a = 0; i_a < lcm; ++i_a) // array index
   {

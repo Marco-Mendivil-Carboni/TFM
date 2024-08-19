@@ -8,6 +8,8 @@ from subprocess import DEVNULL
 from pathlib import Path
 from shutil import rmtree
 
+from math import floor
+
 # Create test directory
 
 testdir = Path("Simulations/test")
@@ -36,9 +38,18 @@ def check(returnc: int) -> None:
 
 parfilepath = testdir / "adjustable-parameters.dat"
 
+N = 30386
+rco = 1.154701
+
+cvf = 0.200
+laf = 0.400
+
+R_n = (rco / 2) + (rco / 2) * ((N / cvf) ** (1 / 3))
+n_l = floor(laf * 4 / ((0.5 / (R_n - rco)) ** 2))
+
 with open(parfilepath, "w") as parfile:
-    parfile.write("nucleus_radius 30.30\n")  # change -----------------------
-    parfile.write("number_of_lbs 2498\n")  # change -------------------------
+    parfile.write("nucleus_radius {:09.6f}\n".format(R_n))
+    parfile.write("number_of_lbs {:05.0f}\n".format(n_l))
 
 # Run tests
 
@@ -46,6 +57,7 @@ print("---")
 
 check(run(["./Program/bin/ccp-perform", str(testdir)]).returncode)
 check(run(["./Program/bin/ccp-perform", str(testdir), "0"]).returncode)
+
 check(run(["./Program/bin/ccp-perform", str(testdir)]).returncode)
 check(run(["./Program/bin/ccp-perform", str(testdir), "1"]).returncode)
 

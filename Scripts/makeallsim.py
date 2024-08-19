@@ -9,6 +9,8 @@ from pathlib import Path
 from signal import signal
 from signal import SIGUSR1
 
+from math import floor
+
 # Define setstop function
 
 stop = False
@@ -74,11 +76,11 @@ def writeparam(simdir: Path, sp: simparam) -> None:
         if sp.N != sp.N_def:
             parfile.write("number_of_particles {:05.0f}\n".format(sp.N))
         if sp.R_n != sp.R_n_def:
-            parfile.write("nucleus_radius {:05.2f}\n".format(sp.R_n))
+            parfile.write("nucleus_radius {:09.6f}\n".format(sp.R_n))
         if sp.R_o != sp.R_o_def:
-            parfile.write("opening_radius {:05.2f}\n".format(sp.R_o))
+            parfile.write("opening_radius {:09.6f}\n".format(sp.R_o))
         if sp.R_o != sp.R_b_def:
-            parfile.write("bleb_radius {:05.2f}\n".format(sp.R_b))
+            parfile.write("bleb_radius {:09.6f}\n".format(sp.R_b))
         if sp.n_l != sp.n_l_def:
             parfile.write("number_of_lbs {:05.0f}\n".format(sp.n_l))
 
@@ -88,7 +90,7 @@ def writeparam(simdir: Path, sp: simparam) -> None:
 simrootdir = Path("Simulations")
 
 numberofsim = 4
-filespersim = 16  # change to 32 --------------------------------------------
+filespersim = 16
 
 
 def makesim(sp: simparam) -> None:
@@ -128,7 +130,15 @@ def makesim(sp: simparam) -> None:
 
 # Make simulations
 
-# set R_n and n_l such that cvf = 0.2 and laf = 0.4 -------------------------
+N = 30386
+rco = 1.154701
 
-makesim(simparam(R_n=30.30, n_l=2498))
-makesim(simparam(R_n=30.30))
+cvf = 0.200
+laf = 0.400
+
+R_n = (rco / 2) + (rco / 2) * ((N / cvf) ** (1 / 3))
+n_l = floor(laf * 4 / ((0.5 / (R_n - rco)) ** 2))
+
+makesim(simparam(R_n=R_n, n_l=n_l))
+
+makesim(simparam(R_n=R_n))
