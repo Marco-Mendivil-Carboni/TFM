@@ -91,7 +91,7 @@ for i_t in range(3):
         x, y_min, y_max, step="pre", color=colorlist[i_t], linewidth=0.0, alpha=0.50
     )
 
-colorlist = ["#1875ad", "#189da8", "#17a384", "#169e57", "#15992c", "#259415"]
+colorlist = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
 
 ax1.set_xscale("log")
 ax1.set_yscale("log")
