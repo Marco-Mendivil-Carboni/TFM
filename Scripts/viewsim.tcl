@@ -57,9 +57,12 @@ proc draw_nucleus_with_bleb {res R_n R_o R_b} {
     }
 }
 
-if {$argc==2} {
+if {$argc>=2} {
     set sim_dir [lindex $argv 0]
     set sim_idx [lindex $argv 1]
+    if {$argc>=3} {
+        set t_f_idx [lindex $argv 2]
+    }
 
     color Display Background white
     display resize 960 960
@@ -125,9 +128,14 @@ if {$argc==2} {
     mol modstyle 0 top CPK 4.0 [expr 4.0*$r_p/2.0] $res $res
     mol rename top {chromatin}
 
-    set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
-    set trr_files [lsort [glob $pattern]]
-    foreach trr_file $trr_files { mol addfile $trr_file}
+    if {$argc>=3} {
+        set trr_file [format "%s/trajectory-%03d-%03d.trr" $sim_dir $sim_idx $t_f_idx]
+        mol addfile $trr_file
+    } else {
+        set pattern [format "%s/trajectory-%03d-*.trr" $sim_dir $sim_idx]
+        set trr_files [lsort [glob $pattern]]
+        foreach trr_file $trr_files { mol addfile $trr_file}
+    }
 
     set gro_file [format "%s/lamina-binding-sites-%03d.gro" $sim_dir $sim_idx]
     if {$n_l!=0} {
