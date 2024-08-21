@@ -9,7 +9,7 @@ from pathlib import Path
 from signal import signal
 from signal import SIGUSR1
 
-from math import floor
+from math import cos, asin, floor
 
 # Define setstop function
 
@@ -41,30 +41,31 @@ class simparam:
     R_b_def = 0.0
     n_l_def = 0
 
-    def __init__(
-        self,
-        N=N_def,
-        R_n=R_n_def,
-        n_l=n_l_def,
-        R_o=R_o_def,
-        R_b=R_b_def,
-    ) -> None:
+    def __init__(self, *, N=N_def, cvf, laf, brv=0.0, ora=0.0) -> None:
         self.N = N
-        self.R_n = R_n
-        self.R_o = R_o
-        self.R_b = R_b
-        self.n_l = n_l
+        self.cvf = cvf
+        self.laf = laf
+        self.brv = brv
+        self.ora = ora
+
+        rco = 1.154701
+        self.R_n = (rco / 2) + (rco / 2) * ((N / cvf) ** (1 / 3))
+        self.R_b = self.R_n * brv ** (1 / 3)
+        self.R_o = self.R_b * ora ** (1 / 2)
+
+        noacf = 2.0 / (1.0 + cos(asin(self.R_o / self.R_n)))
+        self.n_l = floor(laf * 4 / ((0.5 / (self.R_n - rco)) ** 2) * noacf)
 
 
 # Define simname function
 
 
 def simname(sp: simparam) -> str:
-    simname = "{:05.2f}".format(sp.R_n)
-    simname += "-{:05.0f}".format(sp.N)
-    simname += "-{:05.0f}".format(sp.n_l)
-    simname += "-{:05.2f}".format(sp.R_o)
-    simname += "-{:05.2f}".format(sp.R_b)
+    simname = "{:05.0f}".format(sp.N)
+    simname += "-{:05.3f}".format(sp.cvf)
+    simname += "-{:05.3f}".format(sp.laf)
+    simname += "-{:05.3f}".format(sp.brv)
+    simname += "-{:05.3f}".format(sp.ora)
     return simname
 
 
@@ -90,7 +91,7 @@ def writeparam(simdir: Path, sp: simparam) -> None:
 simrootdir = Path("Simulations")
 
 numberofsim = 4
-filespersim = 32
+filespersim = 64
 
 
 def makesim(sp: simparam) -> None:
@@ -130,15 +131,6 @@ def makesim(sp: simparam) -> None:
 
 # Make simulations
 
-N = 30386
-rco = 1.154701
+makesim(simparam(cvf=0.200, laf=0.400))
 
-cvf = 0.200
-laf = 0.400
-
-R_n = (rco / 2) + (rco / 2) * ((N / cvf) ** (1 / 3))
-n_l = floor(laf * 4 / ((0.5 / (R_n - rco)) ** 2))
-
-makesim(simparam(R_n=R_n, n_l=n_l))
-
-makesim(simparam(R_n=R_n))
+makesim(simparam(cvf=0.200, laf=0.000))
