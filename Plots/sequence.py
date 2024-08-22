@@ -21,6 +21,7 @@ mpl.rcParams["figure.constrained_layout.use"] = True
 # Set auxiliary variables
 
 bp_part = 33 * 200
+
 chr_len = {
     "chrI": 15_072_434,
     "chrII": 15_279_421,
@@ -63,6 +64,11 @@ n_part = round(chr_len_sum / bp_part)
 cg_chr_lim = [round(lim / bp_part) for lim in chr_lim]
 print("n_part = {:_}".format(n_part))
 print("cg_chr_lim :", cg_chr_lim)
+
+df_het_seq[["beg", "end"]] /= 1e6
+df_LAD_seq[["beg", "end"]] /= 1e6
+chr_len_sum /= 1e6
+chr_lim = [lim / 1e6 for lim in chr_lim]
 
 df_het_seq["len"] = df_het_seq["end"] - df_het_seq["beg"]
 df_het_seq["beg_len"] = df_het_seq[["beg", "len"]].apply(tuple, axis=1)
@@ -113,8 +119,8 @@ axu = axl.twiny()
 
 axl.tick_params(left=False, labelleft=False)
 
-axu.set_xlabel("par de bases")
-axl.set_xlabel("índice de la partícula")
+axu.set_xlabel("$i_g$ (Mb)")
+axl.set_xlabel("$i_p$")
 
 axu.broken_barh(
     df_het_seq["beg_len"],

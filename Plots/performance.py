@@ -20,8 +20,6 @@ cm = 1 / 2.54
 mpl.rcParams["figure.figsize"] = [12.00 * cm, 8.00 * cm]
 mpl.rcParams["figure.constrained_layout.use"] = True
 
-mpl.rcParams["legend.frameon"] = False
-
 # Load data into dataframes
 
 simrootdir = Path("Simulations")

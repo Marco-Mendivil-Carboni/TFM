@@ -20,8 +20,6 @@ cm = 1 / 2.54
 mpl.rcParams["figure.figsize"] = [40.00 * cm, 18.00 * cm]
 mpl.rcParams["figure.constrained_layout.use"] = True
 
-mpl.rcParams["legend.frameon"] = False
-
 mpl.rcParams["figure.constrained_layout.h_pad"] = cm / 4
 mpl.rcParams["figure.constrained_layout.w_pad"] = cm / 4
 
@@ -33,6 +31,7 @@ mpl.rcParams["figure.constrained_layout.wspace"] = 0.0
 colorlist_3 = ["#d81e2c", "#a31cc5", "#194bb2"]
 colorlist_6 = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
 ctcfactor = 1000
+px_sz = 4
 
 # Set simulation directory
 
@@ -52,8 +51,10 @@ with open(anafilepath) as anafile:
     blocklist = anafile.read().split("\n\n\n")
 
 df_s = pd.read_csv(StringIO(blocklist[0]), sep="\\s+")
-df_s.insert(loc=0, column="simobs", value=["dcm", "rg2", "nop", "ncf"])
-print(df_s.to_string(index=False))
+df_s.loc[1] = np.sqrt(df_s.loc[1])
+df_s.insert(loc=0, column="simobs", value=["dcm", "rog", "nop", "ncf"])
+df_s.set_index("simobs", inplace=True)
+print(df_s.to_string())
 
 df_rcd = list()
 for i_t in range(3):
@@ -120,11 +121,18 @@ for i_c in range(6):
         ax2.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
 ax2.autoscale(tight=True)
 
+ax3.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
 px_side = int(np.sqrt(2 * cm1Ddata.size + 1 / 4))
 cm2Ddata = np.zeros((px_side, px_side))
 cm2Ddata[np.tril_indices(px_side)] = cm1Ddata / ctcfactor
 cm2Ddata = cm2Ddata + np.tril(cm2Ddata, -1).T
-map = ax3.imshow(cm2Ddata, norm=mpl.colors.LogNorm(vmax=1.0), cmap="OrRd")
+len_side = px_sz * px_side
+map = ax3.imshow(
+    cm2Ddata,
+    cmap="OrRd",
+    norm=mpl.colors.LogNorm(vmax=1.0),
+    extent=[0, len_side, len_side, 0],
+)
 map.get_cmap().set_bad("white")
 ax3.autoscale(tight=True)
 cbar = fig.colorbar(map, ax=ax3, aspect=64, pad=1 / 64)
