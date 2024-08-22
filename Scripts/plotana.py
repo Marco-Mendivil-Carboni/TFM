@@ -87,43 +87,49 @@ labellist = ["LADh", "LNDe", "total"]
 for i_t in range(3):
     x = df_rcd[i_t]["r_b"] / lenfactor
     y = df_rcd[i_t]["avg"]
-    y_min = df_rcd[i_t]["avg"] - df_rcd[i_t]["sem"]
-    y_max = df_rcd[i_t]["avg"] + df_rcd[i_t]["sem"]
+    e = df_rcd[i_t]["sem"]
     ax.step(x, y, color=colorlist_3[i_t], label=labellist[i_t])
     ax.fill_between(
-        x, y_min, y_max, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
+        x, y - e, y + e, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
     )
 ax.autoscale(tight=True)
 ax.set_ylim(bottom=0.0)
 ax.legend(loc="upper left")
 fig.savefig(plotsdir / "rcd.pdf")
 
-# ax1.set_xscale("log")
-# ax1.set_yscale("log")
-# for i_c in range(6):
-#     if not df_sd[i_c].empty:
-#         x = df_sd[i_c]["s"]
-#         y = df_sd[i_c]["avg"]
-#         y_min = df_sd[i_c]["avg"] - df_sd[i_c]["sem"]
-#         y_max = df_sd[i_c]["avg"] + df_sd[i_c]["sem"]
-#         ax1.plot(x, y, color=colorlist_6[i_c])
-#         ax1.fill_between(
-#             x, y_min, y_max, color=colorlist_6[i_c], linewidth=0.0, alpha=0.50
-#         )
-# ax1.autoscale(tight=True)
-# ax1.set_ylim(bottom=1.0)
+fig, ax = plt.subplots(figsize=(12.00 * cm, 8.00 * cm))
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlabel("$s$ (Mb)")
+ax.set_ylabel("$d(s)$")
+for i_c in range(6):
+    if not df_sd[i_c].empty:
+        x = df_sd[i_c]["s"] / (1e6 / bp_part)
+        y = df_sd[i_c]["avg"] / lenfactor
+        e = df_sd[i_c]["sem"] / lenfactor
+        ax.plot(x, y, color=colorlist_6[i_c])
+        ax.fill_between(
+            x, y - e, y + e, color=colorlist_6[i_c], linewidth=0.0, alpha=0.50
+        )
+ax.autoscale(tight=True)
+ax.set_ylim(bottom=1.0 / lenfactor)
+fig.savefig(plotsdir / "sd.pdf")
 
-# ax2.set_xscale("log")
-# ax2.set_yscale("log")
-# for i_c in range(6):
-#     if not df_cp[i_c].empty:
-#         df_cp[i_c] = df_cp[i_c].loc[df_cp[i_c]["avg"] != 0]
-#         x = df_cp[i_c]["s"]
-#         y = df_cp[i_c]["avg"] / ctcfactor
-#         e = df_cp[i_c]["sem"] / ctcfactor
-#         ax2.scatter(x, y, color=colorlist_6[i_c])
-#         ax2.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
-# ax2.autoscale(tight=True)
+fig, ax = plt.subplots(figsize=(12.00 * cm, 8.00 * cm))
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlabel("$s$ (Mb)")
+ax.set_ylabel("$P(s)$")
+for i_c in range(6):
+    if not df_cp[i_c].empty:
+        df_cp[i_c] = df_cp[i_c].loc[df_cp[i_c]["avg"] != 0]
+        x = df_cp[i_c]["s"] / (1e6 / bp_part)
+        y = df_cp[i_c]["avg"] / ctcfactor
+        e = df_cp[i_c]["sem"] / ctcfactor
+        ax.scatter(x, y, s=8, color=colorlist_6[i_c])
+        ax.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
+ax.autoscale(tight=True)
+fig.savefig(plotsdir / "cp.pdf")
 
 fig, ax = plt.subplots(figsize=(10.00 * cm, 8.00 * cm))
 ax.set_ylabel("$i$ (Mb)")
@@ -134,7 +140,7 @@ px_side = int(np.sqrt(2 * cm1Ddata.size + 1 / 4))
 cm2Ddata = np.zeros((px_side, px_side))
 cm2Ddata[np.tril_indices(px_side)] = cm1Ddata / ctcfactor
 cm2Ddata = cm2Ddata + np.tril(cm2Ddata, -1).T
-len_side = bp_part * px_sz * px_side / 1e6
+len_side = px_sz * px_side / (1e6 / bp_part)
 map = ax.imshow(
     cm2Ddata,
     cmap="OrRd",

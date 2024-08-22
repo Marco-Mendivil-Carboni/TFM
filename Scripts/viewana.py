@@ -85,11 +85,10 @@ fig.canvas.manager.set_window_title(str(simdir) + " analysis")
 for i_t in range(3):
     x = df_rcd[i_t]["r_b"]
     y = df_rcd[i_t]["avg"]
-    y_min = df_rcd[i_t]["avg"] - df_rcd[i_t]["sem"]
-    y_max = df_rcd[i_t]["avg"] + df_rcd[i_t]["sem"]
+    e = df_rcd[i_t]["sem"]
     ax0.step(x, y, color=colorlist_3[i_t])
     ax0.fill_between(
-        x, y_min, y_max, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
+        x, y - e, y + e, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
     )
 ax0.autoscale(tight=True)
 ax0.set_ylim(bottom=0.0)
@@ -100,11 +99,10 @@ for i_c in range(6):
     if not df_sd[i_c].empty:
         x = df_sd[i_c]["s"]
         y = df_sd[i_c]["avg"]
-        y_min = df_sd[i_c]["avg"] - df_sd[i_c]["sem"]
-        y_max = df_sd[i_c]["avg"] + df_sd[i_c]["sem"]
+        e = df_sd[i_c]["sem"]
         ax1.plot(x, y, color=colorlist_6[i_c])
         ax1.fill_between(
-            x, y_min, y_max, color=colorlist_6[i_c], linewidth=0.0, alpha=0.50
+            x, y - e, y + e, color=colorlist_6[i_c], linewidth=0.0, alpha=0.50
         )
 ax1.autoscale(tight=True)
 ax1.set_ylim(bottom=1.0)
@@ -117,7 +115,7 @@ for i_c in range(6):
         x = df_cp[i_c]["s"]
         y = df_cp[i_c]["avg"] / ctcfactor
         e = df_cp[i_c]["sem"] / ctcfactor
-        ax2.scatter(x, y, color=colorlist_6[i_c])
+        ax2.scatter(x, y, s=8, color=colorlist_6[i_c])
         ax2.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
 ax2.autoscale(tight=True)
 

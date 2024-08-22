@@ -15,7 +15,7 @@ mpl.rcParams["text.usetex"] = True
 mpl.rcParams["font.family"] = "serif"
 
 cm = 1 / 2.54
-mpl.rcParams["figure.figsize"] = [12.00 * cm, 8.00 * cm]
+mpl.rcParams["figure.figsize"] = [14.00 * cm, 8.00 * cm]
 mpl.rcParams["figure.constrained_layout.use"] = True
 
 # Set auxiliary variables
