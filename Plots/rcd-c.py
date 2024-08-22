@@ -28,7 +28,7 @@ lenfactor = 1000 / 33
 
 # Load data into a dataframe
 
-simdir = Path("Simulations/40.91-18240-07284-00.00-00.00")
+simdir = Path("Simulations/30386-0.200-0.400-0.000-0.000")
 
 anafilepath = simdir / "analysis-fin.dat"
 with open(anafilepath) as anafile:
@@ -38,7 +38,7 @@ df_rcd = list()
 for i_t in range(3):
     df_rcd.append(pd.read_csv(StringIO(blocklist[i_t + 1]), sep="\\s+"))
 
-# Make rcd-0 plot
+# Make rcd-c plot
 
 plotsdir = Path("Plots")
 
@@ -46,10 +46,8 @@ fig, ax = plt.subplots()
 
 colorlist = ["#d81e2c", "#a31cc5", "#194bb2"]
 labellist = ["LADh", "LNDe", "total"]
-
 ax.set_xlabel("$r$ ($\\mu$m)")
 ax.set_ylabel("$\\rho(r)$")
-ax.autoscale(tight=True)
 for i_t in range(3):
     x = df_rcd[i_t]["r_b"] / lenfactor
     y = df_rcd[i_t]["avg"]
@@ -59,6 +57,8 @@ for i_t in range(3):
     ax.fill_between(
         x, y_min, y_max, step="pre", color=colorlist[i_t], linewidth=0.0, alpha=0.50
     )
+ax.autoscale(tight=True)
+ax.set_ylim(bottom=0.0)
 ax.legend(loc="upper left")
 
-fig.savefig(plotsdir / "rcd-0.pdf")
+fig.savefig(plotsdir / "rcd-c.pdf")

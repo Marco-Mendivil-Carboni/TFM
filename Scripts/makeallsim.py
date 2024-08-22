@@ -90,7 +90,7 @@ def writeparam(simdir: Path, sp: simparam) -> None:
 
 simrootdir = Path("Simulations")
 
-numberofsim = 4
+numberofsim = 8
 filespersim = 64
 
 
