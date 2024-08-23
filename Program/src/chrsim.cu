@@ -767,7 +767,7 @@ void chrsim::perform_random_walk(
 
     // generate random bond angle and calculate new direction
     curandGenerateUniform(gen, &ran, 1);
-    angle_b = acos(1.0 + log(1.0 - (1.0 - exp(-4.0 * iT)) * ran) / (2.0 * iT));
+    angle_b = acos(1.0 + log(1.0 - (1.0 - exp(-1.0 * iT)) * ran) / (0.5 * iT));
     new_dir = cos(angle_b) * old_dir + sin(angle_b) * per_dir;
 
     // calculate position of next particle

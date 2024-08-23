@@ -32,6 +32,11 @@ int main(
   uint n_t_f; // number of trajectory files
   std::string msg; // message
 
+  // create log file in current working directory
+  time_t t_s = time(nullptr); // starting time
+  pathstr = std::to_string(t_s) + ".log";
+  mmc::logger::set_file(pathstr);
+
   // main try block
   try
   {
@@ -120,6 +125,11 @@ int main(
     mmc::logger::record(err.what());
     return EXIT_FAILURE;
   }
+
+  // remove log file
+  mmc::logger::set_file("/dev/null");
+  pathstr = std::to_string(t_s) + ".log";
+  std::remove(pathstr.c_str());
 
   // exit program successfully
   return EXIT_SUCCESS;
