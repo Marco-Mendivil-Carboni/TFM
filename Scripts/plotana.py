@@ -189,7 +189,7 @@ ax.autoscale(tight=True)
 ax.legend(loc="lower left")
 fig.savefig(plotsdir / "cp.pdf")
 
-fig, ax = plt.subplots(figsize=(10.00 * cm, 8.00 * cm))
+fig, ax = plt.subplots(figsize=(14.00 * cm, 12.00 * cm))
 ax.set_ylabel("$i$ (Mb)")
 ax.set_xlabel("$j$ (Mb)")
 ax.xaxis.set_label_position("top")
