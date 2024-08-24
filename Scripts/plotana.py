@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
+from scipy.optimize import curve_fit
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -32,8 +33,30 @@ bp_part = 33 * 200
 
 colorlist_3 = ["#d81e2c", "#a31cc5", "#194bb2"]
 colorlist_6 = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
+labellist_rcd = ["LADh", "LNDe", "total"]
+labellist_sd_cp = ["chrI", "chrII", "chrIII", "chrIV", "chrV", "chrX"]
+fitrangelist_sd = [[1, 4], [16, 256]]
+fitrangelist_cp = [[2, 8], [16, 256]]
+fitlslist_sd = ["dotted", "dashed"]
+fitlslist_cp = ["dotted", "dashed"]
 ctcfactor = 1000
 px_sz = 4
+
+fitpopts_sd = [list() for _ in range(len(fitrangelist_sd))]
+fitpopts_cp = [list() for _ in range(len(fitrangelist_cp))]
+fitxrangelist_sd = [list() for _ in range(len(fitrangelist_sd))]
+fitxrangelist_cp = [list() for _ in range(len(fitrangelist_cp))]
+for i_f in range(len(fitrangelist_sd)):
+    fitxrangelist_sd[i_f] = [lim / (1e6 / bp_part) for lim in fitrangelist_sd[i_f]]
+for i_f in range(len(fitrangelist_cp)):
+    fitxrangelist_cp[i_f] = [lim / (1e6 / bp_part) for lim in fitrangelist_cp[i_f]]
+
+# Define fitting function
+
+
+def scaling_law(x: float, a: float, p: float) -> float:
+    return a * x**p
+
 
 # Set simulation directory
 
@@ -83,12 +106,11 @@ plotsdir.mkdir(parents=True, exist_ok=True)
 fig, ax = plt.subplots(figsize=(14.00 * cm, 8.00 * cm))
 ax.set_xlabel("$r$ ($\\mu$m)")
 ax.set_ylabel("$\\rho(r)$")
-labellist = ["LADh", "LNDe", "total"]
 for i_t in range(3):
     x = df_rcd[i_t]["r_b"] / lenfactor
     y = df_rcd[i_t]["avg"]
     e = df_rcd[i_t]["sem"]
-    ax.step(x, y, color=colorlist_3[i_t], label=labellist[i_t])
+    ax.step(x, y, color=colorlist_3[i_t], label=labellist_rcd[i_t])
     ax.fill_between(
         x, y - e, y + e, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
     )
@@ -101,18 +123,35 @@ fig, ax = plt.subplots(figsize=(12.00 * cm, 8.00 * cm))
 ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_xlabel("$s$ (Mb)")
-ax.set_ylabel("$d(s)$")
+ax.set_ylabel("$d(s)$ ($\\mu$m)")
 for i_c in range(6):
     if not df_sd[i_c].empty:
         x = df_sd[i_c]["s"] / (1e6 / bp_part)
         y = df_sd[i_c]["avg"] / lenfactor
         e = df_sd[i_c]["sem"] / lenfactor
-        ax.plot(x, y, color=colorlist_6[i_c])
-        ax.fill_between(
-            x, y - e, y + e, color=colorlist_6[i_c], linewidth=0.0, alpha=0.50
-        )
+        ax.scatter(x, y, s=8, color=colorlist_6[i_c], label=labellist_sd_cp[i_c])
+        ax.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
+        for i_f in range(len(fitrangelist_sd)):
+            if i_c != 5:
+                inxrange = x.between(*fitxrangelist_sd[i_f])
+                popt, _ = curve_fit(
+                    scaling_law, x.loc[inxrange], y.loc[inxrange], p0=[1.0, 1.0]
+                )
+                fitpopts_sd[i_f].append(popt)
+for i_f in range(len(fitrangelist_sd)):
+    x_f = np.linspace(*fitxrangelist_sd[i_f], 2)
+    popt = np.mean(fitpopts_sd[i_f], axis=0)
+    ax.plot(
+        x_f,
+        scaling_law(x_f, *popt),
+        color="black",
+        alpha=0.5,
+        linestyle=fitlslist_sd[i_f],
+        label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
+    )
 ax.autoscale(tight=True)
 ax.set_ylim(bottom=1.0 / lenfactor)
+ax.legend(loc="lower right")
 fig.savefig(plotsdir / "sd.pdf")
 
 fig, ax = plt.subplots(figsize=(12.00 * cm, 8.00 * cm))
@@ -126,9 +165,28 @@ for i_c in range(6):
         x = df_cp[i_c]["s"] / (1e6 / bp_part)
         y = df_cp[i_c]["avg"] / ctcfactor
         e = df_cp[i_c]["sem"] / ctcfactor
-        ax.scatter(x, y, s=8, color=colorlist_6[i_c])
+        ax.scatter(x, y, s=8, color=colorlist_6[i_c], label=labellist_sd_cp[i_c])
         ax.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
+        for i_f in range(len(fitrangelist_cp)):
+            if i_c != 5:
+                inxrange = x.between(*fitxrangelist_cp[i_f])
+                popt, _ = curve_fit(
+                    scaling_law, x.loc[inxrange], y.loc[inxrange], p0=[1e-4, -1.0]
+                )
+                fitpopts_cp[i_f].append(popt)
+for i_f in range(len(fitrangelist_cp)):
+    x_f = np.linspace(*fitxrangelist_cp[i_f], 2)
+    popt = np.mean(fitpopts_cp[i_f], axis=0)
+    ax.plot(
+        x_f,
+        scaling_law(x_f, *popt),
+        color="black",
+        alpha=0.5,
+        linestyle=fitlslist_cp[i_f],
+        label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
+    )
 ax.autoscale(tight=True)
+ax.legend(loc="lower left")
 fig.savefig(plotsdir / "cp.pdf")
 
 fig, ax = plt.subplots(figsize=(10.00 * cm, 8.00 * cm))

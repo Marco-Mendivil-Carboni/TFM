@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 from scipy.optimize import curve_fit
 
 import matplotlib as mpl
@@ -62,11 +63,12 @@ label = ["GeForce RTX 3050", "RTX A4000"]
 for i in range(2):
     ax.plot(df[i]["N"], df[i]["t_e"], marker="o", color=color[i], label=label[i])
 
+x_f = np.linspace(256, 32768, 128)
 for i in range(2):
     popt, _ = curve_fit(scaling_law, df[i]["N"], df[i]["t_e"], p0=[0.0001, 1.0, 0.1])
     ax.plot(
-        df[i]["N"],
-        scaling_law(df[i]["N"], *popt),
+        x_f,
+        scaling_law(x_f, *popt),
         color=color[i],
         alpha=0.5,
         linestyle="dashed",

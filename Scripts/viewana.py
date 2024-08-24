@@ -100,10 +100,8 @@ for i_c in range(6):
         x = df_sd[i_c]["s"]
         y = df_sd[i_c]["avg"]
         e = df_sd[i_c]["sem"]
-        ax1.plot(x, y, color=colorlist_6[i_c])
-        ax1.fill_between(
-            x, y - e, y + e, color=colorlist_6[i_c], linewidth=0.0, alpha=0.50
-        )
+        ax1.scatter(x, y, s=8, color=colorlist_6[i_c])
+        ax1.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
 ax1.autoscale(tight=True)
 ax1.set_ylim(bottom=1.0)
 
