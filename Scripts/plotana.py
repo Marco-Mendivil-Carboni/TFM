@@ -23,6 +23,7 @@ mpl.rcParams["text.usetex"] = True
 mpl.rcParams["font.family"] = "serif"
 
 cm = 1 / 2.54
+
 mpl.rcParams["figure.constrained_layout.use"] = True
 
 # Set auxiliary variables
@@ -202,10 +203,9 @@ len_side = px_sz * px_side / (1e6 / bp_part)
 map = ax.imshow(
     cm2Ddata,
     cmap="OrRd",
-    norm=mpl.colors.LogNorm(vmax=1.0),
+    norm=mpl.colors.LogNorm(vmax=1.0, clip=True),
     extent=[0, len_side, len_side, 0],
 )
-map.get_cmap().set_bad("white")
 ax.autoscale(tight=True)
 cbar = fig.colorbar(map, ax=ax, aspect=64, pad=1 / 64)
 cbar.ax.set_ylabel("$P(i,j)$")

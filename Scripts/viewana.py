@@ -17,7 +17,7 @@ from io import StringIO
 # Set fixed parameters
 
 cm = 1 / 2.54
-mpl.rcParams["figure.figsize"] = [40.00 * cm, 18.00 * cm]
+mpl.rcParams["figure.figsize"] = [40.00 * cm, 20.00 * cm]
 mpl.rcParams["figure.constrained_layout.use"] = True
 
 mpl.rcParams["figure.constrained_layout.h_pad"] = cm / 4
@@ -80,6 +80,7 @@ ax0 = fig.add_subplot(grid[0, 0:2])
 ax1 = fig.add_subplot(grid[1, 0])
 ax2 = fig.add_subplot(grid[1, 1])
 ax3 = fig.add_subplot(grid[0:2, 2:4])
+
 fig.canvas.manager.set_window_title(str(simdir) + " analysis")
 
 for i_t in range(3):
@@ -130,10 +131,9 @@ len_side = px_sz * px_side
 map = ax3.imshow(
     cm2Ddata,
     cmap="OrRd",
-    norm=mpl.colors.LogNorm(vmax=1.0),
+    norm=mpl.colors.LogNorm(vmax=1.0, clip=True),
     extent=[0, len_side, len_side, 0],
 )
-map.get_cmap().set_bad("white")
 ax3.autoscale(tight=True)
 cbar = fig.colorbar(map, ax=ax3, aspect=64, pad=1 / 64)
 
