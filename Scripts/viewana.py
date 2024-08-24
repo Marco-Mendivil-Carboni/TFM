@@ -28,10 +28,10 @@ mpl.rcParams["figure.constrained_layout.wspace"] = 0.0
 
 # Set auxiliary variables
 
-colorlist_3 = ["#d81e2c", "#a31cc5", "#194bb2"]
-colorlist_6 = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
 ctcfactor = 1000
 px_sz = 4
+colorlist_rcd = ["#d81e2c", "#a31cc5", "#194bb2"]
+colorlist_sd_cp = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
 
 # Set simulation directory
 
@@ -86,9 +86,9 @@ for i_t in range(3):
     x = df_rcd[i_t]["r_b"]
     y = df_rcd[i_t]["avg"]
     e = df_rcd[i_t]["sem"]
-    ax0.step(x, y, color=colorlist_3[i_t])
+    ax0.step(x, y, color=colorlist_rcd[i_t])
     ax0.fill_between(
-        x, y - e, y + e, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
+        x, y - e, y + e, step="pre", color=colorlist_rcd[i_t], linewidth=0.0, alpha=0.50
     )
 ax0.autoscale(tight=True)
 ax0.set_ylim(bottom=0.0)
@@ -100,8 +100,10 @@ for i_c in range(6):
         x = df_sd[i_c]["s"]
         y = df_sd[i_c]["avg"]
         e = df_sd[i_c]["sem"]
-        ax1.scatter(x, y, s=8, color=colorlist_6[i_c])
-        ax1.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
+        ax1.scatter(x, y, s=8, color=colorlist_sd_cp[i_c])
+        ax1.errorbar(
+            x, y, yerr=e, color=colorlist_sd_cp[i_c], linestyle="None", alpha=0.50
+        )
 ax1.autoscale(tight=True)
 ax1.set_ylim(bottom=1.0)
 
@@ -113,8 +115,10 @@ for i_c in range(6):
         x = df_cp[i_c]["s"]
         y = df_cp[i_c]["avg"] / ctcfactor
         e = df_cp[i_c]["sem"] / ctcfactor
-        ax2.scatter(x, y, s=8, color=colorlist_6[i_c])
-        ax2.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
+        ax2.scatter(x, y, s=8, color=colorlist_sd_cp[i_c])
+        ax2.errorbar(
+            x, y, yerr=e, color=colorlist_sd_cp[i_c], linestyle="None", alpha=0.50
+        )
 ax2.autoscale(tight=True)
 
 ax3.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)

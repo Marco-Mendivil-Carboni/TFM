@@ -70,7 +70,7 @@ for i in range(2):
         x_f,
         scaling_law(x_f, *popt),
         color=color[i],
-        alpha=0.5,
+        alpha=0.50,
         linestyle="dashed",
         label="${:.1f}\\cdot 10^{{-5}}\\cdot N^{{{:.1f}}}+{:.1f}$".format(
             popt[0] * 1e5, popt[1], popt[2]

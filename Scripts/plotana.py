@@ -23,25 +23,21 @@ mpl.rcParams["text.usetex"] = True
 mpl.rcParams["font.family"] = "serif"
 
 cm = 1 / 2.54
-
 mpl.rcParams["figure.constrained_layout.use"] = True
 
 # Set auxiliary variables
 
 lenfactor = 1000 / 33
 bp_part = 33 * 200
-
-colorlist_3 = ["#d81e2c", "#a31cc5", "#194bb2"]
-colorlist_6 = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
-labellist_rcd = ["LADh", "LNDe", "total"]
-labellist_sd_cp = ["chrI", "chrII", "chrIII", "chrIV", "chrV", "chrX"]
-fitrangelist_sd = [[1, 4], [16, 256]]
-fitrangelist_cp = [[2, 8], [16, 256]]
-fitlslist_sd = ["dotted", "dashed"]
-fitlslist_cp = ["dotted", "dashed"]
 ctcfactor = 1000
 px_sz = 4
-
+colorlist_rcd = ["#d81e2c", "#a31cc5", "#194bb2"]
+colorlist_sd_cp = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
+labellist_rcd = ["LADh", "LNDe", "total"]
+labellist_sd_cp = ["chrI", "chrII", "chrIII", "chrIV", "chrV", "chrX"]
+fitcolorlist_sd_cp = ["#df591f", "#d81e2c"]
+fitrangelist_sd = [[1, 4], [16, 256]]
+fitrangelist_cp = [[2, 6], [16, 256]]
 fitpopts_sd = [list() for _ in range(len(fitrangelist_sd))]
 fitpopts_cp = [list() for _ in range(len(fitrangelist_cp))]
 fitxrangelist_sd = [list() for _ in range(len(fitrangelist_sd))]
@@ -110,9 +106,9 @@ for i_t in range(3):
     x = df_rcd[i_t]["r_b"] / lenfactor
     y = df_rcd[i_t]["avg"]
     e = df_rcd[i_t]["sem"]
-    ax.step(x, y, color=colorlist_3[i_t], label=labellist_rcd[i_t])
+    ax.step(x, y, color=colorlist_rcd[i_t], label=labellist_rcd[i_t])
     ax.fill_between(
-        x, y - e, y + e, step="pre", color=colorlist_3[i_t], linewidth=0.0, alpha=0.50
+        x, y - e, y + e, step="pre", color=colorlist_rcd[i_t], linewidth=0.0, alpha=0.50
     )
 ax.autoscale(tight=True)
 ax.set_ylim(bottom=0.0)
@@ -129,10 +125,12 @@ for i_c in range(6):
         x = df_sd[i_c]["s"] / (1e6 / bp_part)
         y = df_sd[i_c]["avg"] / lenfactor
         e = df_sd[i_c]["sem"] / lenfactor
-        ax.scatter(x, y, s=8, color=colorlist_6[i_c], label=labellist_sd_cp[i_c])
-        ax.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
-        for i_f in range(len(fitrangelist_sd)):
-            if i_c != 5:
+        ax.scatter(x, y, s=8, color=colorlist_sd_cp[i_c], label=labellist_sd_cp[i_c])
+        ax.errorbar(
+            x, y, yerr=e, color=colorlist_sd_cp[i_c], linestyle="None", alpha=0.50
+        )
+        if i_c != 5:
+            for i_f in range(len(fitrangelist_sd)):
                 inxrange = x.between(*fitxrangelist_sd[i_f])
                 popt, _ = curve_fit(
                     scaling_law, x.loc[inxrange], y.loc[inxrange], p0=[1.0, 1.0]
@@ -144,9 +142,9 @@ for i_f in range(len(fitrangelist_sd)):
     ax.plot(
         x_f,
         scaling_law(x_f, *popt),
-        color="black",
-        alpha=0.5,
-        linestyle=fitlslist_sd[i_f],
+        color=fitcolorlist_sd_cp[i_f],
+        alpha=0.50,
+        linestyle="dashed",
         label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
     )
 ax.autoscale(tight=True)
@@ -165,10 +163,12 @@ for i_c in range(6):
         x = df_cp[i_c]["s"] / (1e6 / bp_part)
         y = df_cp[i_c]["avg"] / ctcfactor
         e = df_cp[i_c]["sem"] / ctcfactor
-        ax.scatter(x, y, s=8, color=colorlist_6[i_c], label=labellist_sd_cp[i_c])
-        ax.errorbar(x, y, yerr=e, color=colorlist_6[i_c], linestyle="None", alpha=0.50)
-        for i_f in range(len(fitrangelist_cp)):
-            if i_c != 5:
+        ax.scatter(x, y, s=8, color=colorlist_sd_cp[i_c], label=labellist_sd_cp[i_c])
+        ax.errorbar(
+            x, y, yerr=e, color=colorlist_sd_cp[i_c], linestyle="None", alpha=0.5
+        )
+        if i_c != 5:
+            for i_f in range(len(fitrangelist_cp)):
                 inxrange = x.between(*fitxrangelist_cp[i_f])
                 popt, _ = curve_fit(
                     scaling_law, x.loc[inxrange], y.loc[inxrange], p0=[1e-4, -1.0]
@@ -180,9 +180,9 @@ for i_f in range(len(fitrangelist_cp)):
     ax.plot(
         x_f,
         scaling_law(x_f, *popt),
-        color="black",
-        alpha=0.5,
-        linestyle=fitlslist_cp[i_f],
+        color=fitcolorlist_sd_cp[i_f],
+        alpha=0.50,
+        linestyle="dashed",
         label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
     )
 ax.autoscale(tight=True)
