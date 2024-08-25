@@ -36,7 +36,7 @@ colorlist_rcd = ["#d81e2c", "#a31cc5", "#194bb2"]
 colorlist_sd_cp = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
 labellist_rcd = ["LADh", "LNDe", "total"]
 labellist_sd_cp = ["chrI", "chrII", "chrIII", "chrIV", "chrV", "chrX"]
-fitcolorlist_sd_cp = ["#df591f", "#d81e2c"]
+fitlslist_sd_cp = ["dotted", "dashed"]
 fitrangelist_sd = [[1, 4], [16, 256]]
 fitrangelist_cp = [[2, 6], [16, 256]]
 fitpopts_sd = [list() for _ in range(len(fitrangelist_sd))]
@@ -143,9 +143,9 @@ for i_f in range(len(fitrangelist_sd)):
     ax.plot(
         x_f,
         scaling_law(x_f, *popt),
-        color=fitcolorlist_sd_cp[i_f],
+        color="black",
         alpha=0.50,
-        linestyle="dashed",
+        linestyle=fitlslist_sd_cp[i_f],
         label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
     )
 ax.autoscale(tight=True)
@@ -181,9 +181,9 @@ for i_f in range(len(fitrangelist_cp)):
     ax.plot(
         x_f,
         scaling_law(x_f, *popt),
-        color=fitcolorlist_sd_cp[i_f],
+        color="black",
         alpha=0.50,
-        linestyle="dashed",
+        linestyle=fitlslist_sd_cp[i_f],
         label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
     )
 ax.autoscale(tight=True)
