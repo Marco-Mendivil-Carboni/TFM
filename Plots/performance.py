@@ -61,7 +61,7 @@ color = ["#d81e2c", "#a31cc5"]
 label = ["GeForce RTX 3050", "RTX A4000"]
 
 for i in range(2):
-    ax.plot(df[i]["N"], df[i]["t_e"], marker="o", color=color[i], label=label[i])
+    ax.scatter(df[i]["N"], df[i]["t_e"], color=color[i], label=label[i])
 
 x_f = np.linspace(256, 32768, 128)
 for i in range(2):
@@ -70,7 +70,7 @@ for i in range(2):
         x_f,
         scaling_law(x_f, *popt),
         color=color[i],
-        alpha=0.50,
+        alpha=0.75,
         linestyle="dashed",
         label="${:.1f}\\cdot 10^{{-5}}\\cdot N^{{{:.1f}}}+{:.1f}$".format(
             popt[0] * 1e5, popt[1], popt[2]

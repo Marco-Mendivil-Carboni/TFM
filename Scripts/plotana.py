@@ -36,9 +36,9 @@ colorlist_rcd = ["#d81e2c", "#a31cc5", "#194bb2"]
 colorlist_sd_cp = ["#221ab9", "#194bb2", "#1880ac", "#17a69b", "#169f62", "#15992c"]
 labellist_rcd = ["LADh", "LNDe", "total"]
 labellist_sd_cp = ["chrI", "chrII", "chrIII", "chrIV", "chrV", "chrX"]
-fitlslist_sd_cp = ["dotted", "dashed"]
-fitrangelist_sd = [[1, 4], [16, 256]]
-fitrangelist_cp = [[2, 6], [16, 256]]
+fitlslist_sd_cp = ["dashed", "dashdot", "dotted"]
+fitrangelist_sd = [[1, 4], [6, 24], [32, 256]]
+fitrangelist_cp = [[2, 6], [12, 512]]
 fitpopts_sd = [list() for _ in range(len(fitrangelist_sd))]
 fitpopts_cp = [list() for _ in range(len(fitrangelist_cp))]
 fitxrangelist_sd = [list() for _ in range(len(fitrangelist_sd))]
@@ -134,7 +134,11 @@ for i_c in range(6):
             for i_f in range(len(fitrangelist_sd)):
                 inxrange = x.between(*fitxrangelist_sd[i_f])
                 popt, _ = curve_fit(
-                    scaling_law, x.loc[inxrange], y.loc[inxrange], p0=[1.0, 1.0]
+                    scaling_law,
+                    x.loc[inxrange],
+                    y.loc[inxrange],
+                    p0=[1.0, 1.0],
+                    sigma=e.loc[inxrange],
                 )
                 fitpopts_sd[i_f].append(popt)
 for i_f in range(len(fitrangelist_sd)):
@@ -144,7 +148,7 @@ for i_f in range(len(fitrangelist_sd)):
         x_f,
         scaling_law(x_f, *popt),
         color="black",
-        alpha=0.50,
+        alpha=0.75,
         linestyle=fitlslist_sd_cp[i_f],
         label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
     )
@@ -172,7 +176,11 @@ for i_c in range(6):
             for i_f in range(len(fitrangelist_cp)):
                 inxrange = x.between(*fitxrangelist_cp[i_f])
                 popt, _ = curve_fit(
-                    scaling_law, x.loc[inxrange], y.loc[inxrange], p0=[1e-4, -1.0]
+                    scaling_law,
+                    x.loc[inxrange],
+                    y.loc[inxrange],
+                    p0=[1e-4, -1.0],
+                    sigma=e.loc[inxrange],
                 )
                 fitpopts_cp[i_f].append(popt)
 for i_f in range(len(fitrangelist_cp)):
@@ -182,12 +190,12 @@ for i_f in range(len(fitrangelist_cp)):
         x_f,
         scaling_law(x_f, *popt),
         color="black",
-        alpha=0.50,
+        alpha=0.75,
         linestyle=fitlslist_sd_cp[i_f],
         label="$\\propto s^{{{:.1f}}}$".format(popt[1]),
     )
 ax.autoscale(tight=True)
-ax.legend(loc="lower left")
+ax.legend(loc="upper right")
 fig.savefig(plotsdir / "cp.pdf")
 
 fig, ax = plt.subplots(figsize=(14.00 * cm, 12.00 * cm))
