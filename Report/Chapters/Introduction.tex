@@ -25,19 +25,15 @@ De nuevo, este observable sigue una ley de escala y su exponente está muy relac
 
 Sin embargo, considerar que los enlaces son completamente rígidos es muy idealizado e introduce ligaduras en el modelo que complican su simulación. Por ello es mucho más conveniente y común considerar que los enlaces son extensibles uniendo los monómeros mediante un potencial suave, normalmente un potencial armónico\footnote{Por esta razón los modelos de este tipo se conocen también como \textit{bead-spring models}.},
 \begin{equation}
-    \label{eq:Harmonic}
+    \label{eq:Harmonic_Potential}
     V_e=\sum_{i=1}^{N-1}\frac{1}{2}k_e(l_i-l_0)^2
 \end{equation}
-donde $l_i=||\bar{b}_i||$.
+donde $l_i=||\bar{b}_i||$ y $k_e$ es la constante elástica. Además, las configuraciones de este modelo FJC extensible \cite{Fiasconaro2019} (en ausencia de fuerzas externas) son equivalentes a las de un modelo FJC con enlace rígidos de longitud efectiva $\langle l \rangle=l_0(1+2/1+\beta k_e l_0^2)$ por lo que, especialmente si $k_e$ es muy elevada, supone una modificación muy pequeña.
 
-CONTINUAR AQUÍ.
-
-Esta modificación del modelo FJC no altera los exponentes de las leyes de escala anteriores y si la constante elástica $k_e$ es elevada tampoco\cite{Fiasconaro2019}\dots
-
-El modelo de Kratky-Porod o \textit{worm-like chain} discreto (WLC) es una evolución del anterior útil para describir polímeros semi-flexibles donde existe una correlación entre las direcciones de enlaces consecutivos. Con este fin introduce un potencial que depende de los ángulos entre los enlaces $\theta_i$ y tiende a orientarlos en la misma dirección,
+El siguiente es el modelo de Kratky-Porod o \textit{worm-like chain} discreto (WLC), una evolución del anterior con la que podemos describir el comportamiento de polímeros semi-flexibles donde existe una correlación entre las direcciones de enlaces consecutivos. Con este fin introduce un potencial que depende de los ángulos entre los enlaces $\theta_i$ y tiende a orientarlos en la misma dirección,
 \begin{equation}
-    \label{eq:WLC_Potential}
-    V_b=\sum_{i=1}^{N-2} k_b (1-\cos(\theta_i))
+    \label{eq:Bending_Potential}
+    V_b=\sum_{i=1}^{N-2} k_b (1-\cos(\theta_i)).
 \end{equation}
 
 MENCIONAR QUE WLC TMB ESCALA COM S**0.5 AUNQUE CON OTR CONSTANTE.
