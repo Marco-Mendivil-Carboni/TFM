@@ -11,21 +11,28 @@ El principal objetivo del trabajo es la implementación en un programa de simula
 
 Como veremos en detalle en el siguiente capítulo la cromatina a nivel biofísico es, ante todo, un polímero y por ello es indispensable hacer una breve introducción a la física de estas macromoléculas antes de adentrarnos en su modelización. Tal y como indica su nombre, los polímeros (del griego: $\pi o \lambda \upsilon \varsigma$ [polys] ``mucho'' y $\mu \varepsilon \rho o \varsigma$ [meros] ``parte'') son macromoléculas compuestas por muchas unidades repetidas llamadas monómeros, unidas entre sí mediante enlaces covalentes. A pesar de su sencillez, su elevado número de grados de libertad y las ligaduras entre los mismos hace que el espacio de configuraciones de un polímero sea muy extenso y complejo. En esta sección vamos a presentar algunos de los modelos de polímeros más sencillos que aparecen en la literatura y las propiedades más importantes de las configuraciones que adoptan, para posteriormente compararlas con las que obtendremos con nuestro modelo de la cromatina.
 
-Obligatoriamente tenemos que empezar por los llamados modelos ideales, que son aquellos en los que no se tienen en cuenta las interacciones entre monómeros muy separados a lo largo de la cadena (¡aunque estén cerca en el espacio!) y el primero de ellos es el \textit{freely-jointed chain} (FJC). En este modelo no hay interacción alguna entre los monómeros de la cadena, que están unidos por enlaces $\bar{b}_i=\bar{r}_{i+1}-\bar{r}_i$ de longitud fija $l_0$. Este es el modelo más sencillo que existe (no es más que una caminata aleatoria), pero es el punto de partida del resto de modelos y ayuda a entender los fenómenos básicos de la física de polímeros. Es además de los pocos para los que se pueden encontrar soluciones analíticas, gracias al hecho de que su función de partición es factorizable. Aunque visualmente se puedan analizar de forma cualitativa, para caracterizar este modelo y los siguientes cuantitativamente deberemos introducir algunos observables y el primero de ellos será la distancia de extremo a extremo $d_{ee}$ que en el modelo FJC depende del número de monómeros $N$ como \cite{Theodorakopoulos2019},
+Obligatoriamente tenemos que empezar por los llamados modelos ideales, que son aquellos en los que no se tienen en cuenta las interacciones entre monómeros muy separados a lo largo de la cadena (¡aunque estén cerca en el espacio!) y el primero de ellos es el \textit{freely-jointed chain} (FJC). En este modelo no hay interacción alguna entre los monómeros de la cadena, que están unidos por enlaces $\bar{b}_i=\bar{r}_{i+1}-\bar{r}_i$ de longitud fija $l_0$. Este es el modelo más sencillo que existe (no es más que una caminata aleatoria), pero es el punto de partida del resto de modelos y ayuda a entender los fenómenos básicos de la física de polímeros. Es además de los pocos para los que se pueden encontrar soluciones analíticas, gracias al hecho de que su función de partición es factorizable. Aunque visualmente se puedan analizar de forma cualitativa, para caracterizar los distintos modelos cuantitativamente deberemos introducir algunos observables y el primero de ellos será $d(s)$, la distancia (espacial) promedio entre dos monómeros separados una distancia $s$ a lo largo de la cadena, que en el modelo FJC es \cite{Theodorakopoulos2019},
 \begin{equation}
-    \label{eq:FJC_dee}
-    \langle d_{ee}^2 \rangle=(N-1)l_0^2.
+    \label{eq:FJC_sd}
+    d(s)\propto s^{1/2}.
 \end{equation}
-Como además este modelo es autosimilar (fractal) se cumplirá esta misma relación entre cualesquiera dos monómeros y en general se tendrá que la distancia promedio entre dos monómeros separados a lo largo de la cadena una distancia $s$ es aproximadamente proporcional a $\sqrt{s}$.
+Esta ley potencial (o ley de escala) es uno de los resultados más fundamentales de la física de polímeros y nos muestra que las configuraciones de este modelo son autosimilares e invariantes de escala \footnote{Es decir, son fractales, y su dimensión ``fractal'' es 2.}. Otro observable que nos ayudará a describir las configuraciones de estos modelos será $P(s)$, la probabilidad de que dos monómeros separados una distancia $s$ a lo largo de la cadena estén en contacto. Consideraremos que dos monómeros están en contacto si se encuentran a una distancia menor que un determinado radio de corte $r_c$ que especificaremos más adelante. Aunque evidentemente este observable depende de la elección que se haga de $r_c$ su dependencia con $s$ no lo hace y en el modelo FJC se tiene (de forma aproximada) que \cite{Kloczkowski1999},
+\begin{equation}
+    \label{eq:FJC_cp}
+    P(s)\propto s^{-3/2}.
+\end{equation}
+De nuevo, este observable sigue una ley de escala y su exponente está muy relacionado con el anterior, como se ve con el siguiente argumento heurístico: si en promedio la cadena se aleja de un punto una distancia $d$ $\propto s^{1/2}$ el volumen $V$ visitado por la misma será $\propto d^3$ y la probabilidad de volver al punto de partido será $\propto 1/V$.
 
-Al hacer simulaciones de este y modelo y  (tanto por razones técnicas como para añadir realismo) es considerar que los enlaces son extensibles, es decir, que los monómeros están unidos por un potencial armónico\footnote{Es decir, que están unidos por muelles. Por esta razón los modelos de este tipo se conocen como \textit{bead-spring models}.},
+Sin embargo, considerar que los enlaces son completamente rígidos es muy idealizado e introduce ligaduras en el modelo que complican su simulación. Por ello es mucho más conveniente y común considerar que los enlaces son extensibles uniendo los monómeros mediante un potencial suave, normalmente un potencial armónico\footnote{Por esta razón los modelos de este tipo se conocen también como \textit{bead-spring models}.},
 \begin{equation}
     \label{eq:Harmonic}
     V_e=\sum_{i=1}^{N-1}\frac{1}{2}k_e(l_i-l_0)^2
 \end{equation}
 donde $l_i=||\bar{b}_i||$.
 
-pues para simular modelos con ligaduras como estas (que fijan la longitud de los enlaces) habría que usar algoritmos de integración específicos que las tuvieran en cuenta. En este trabajo hemos preferido no incluir ligaduras de este tipo, además de para no restringir nuestro programa a una clase concreta de modelos, porque los polímeros reales sí que son extensibles. Por ello consideraremos
+CONTINUAR AQUÍ.
+
+Esta modificación del modelo FJC no altera los exponentes de las leyes de escala anteriores y si la constante elástica $k_e$ es elevada tampoco\cite{Fiasconaro2019}\dots
 
 El modelo de Kratky-Porod o \textit{worm-like chain} discreto (WLC) es una evolución del anterior útil para describir polímeros semi-flexibles donde existe una correlación entre las direcciones de enlaces consecutivos. Con este fin introduce un potencial que depende de los ángulos entre los enlaces $\theta_i$ y tiende a orientarlos en la misma dirección,
 \begin{equation}
@@ -38,3 +45,5 @@ MENCIONAR QUE WLC TMB ESCALA COM S**0.5 AUNQUE CON OTR CONSTANTE.
 MENCIONAR QUE ENLACES EXTENSIBLES NO AFECTA AL ESCALADO, ESTE DEPENDE DE LA CLASE DE UNIVERSALIDAD Y ES EL MISMO PARA TODOS LOS MODELOS IDEALES.
 
 HABLAR DE PROBABILIDAD DE CONTACTO: EN IDEALES -1.5, EN VOL EXCL -2.2.
+
+EN VOL EXCL MENCIONAR QUE RADIO DE CORTE ES 2 SIGMA.
