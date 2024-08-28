@@ -13,6 +13,45 @@ Queda claro por tanto que la cromatina es, en una primera aproximación, un conj
 
 CAMBIAR: Por ello no podremos considerar simples homopolímeros sino que deberemos consider un modelo de copolímeros en los que distintos monómeros tengan distintas propiedades locales. Se han ideado muchos modelos distintos que reflejan distintos aspectos de la cromatina, en este trabajo pretendemos combinar los más importantes con el objetivo de reproducir las características más llamativas de la organización espacial de la cromatina.
 
++ Según Robinson et al. hay 11 nucleosomas por cada 11 nm de fibra de heterocromatina, que tiene 33 nm de ancho.
+
++ Consideraremos que cada una de nuestras partículas tiene 33 nucleosomas y, por tanto, un diámetro de 33 nm.
+
++ Aunque en el estado eucromático los nucleosomas no están organizados de forma bien definida y estable, interactúan fuertemente de varias maneras formando los llamados TADs (Topologically Associating Domains). Dentro de estos dominios los nucleosomas están presumiblemente muy juntos por lo que suponer que ocupan un volumen similar al del estado heterocromático está justificado.
+
++ Como Bajpai et al. mencionan, podemos más o menos asociar las LADs a la heterocromatina y las no LADs a la eucromatina por lo que en nuestro modelo usaremos sólo dos tipos de partículas por simplicidad:
++ LADh (A): LAD heterocromatina
++ LNDe (B): eucromatina no LAD
+
++ A pesar de lo que se pueda pensar en un principio según Bajpai at al. la secuencia exacta de partículas utilizadas en este tipo de modelos no cambia significativamente los resultados, siempre y cuando las propiedades estadísticas de las secuencias sean similares. No obstante, basaremos la secuencia de nuestro modelo de grano grueso en datos experimentales. Utilizaremos los dominios asociados a láminas en el genoma de C. elegans de los que informan Ho et al. para determinar las partículas LADh de nuestro polímero. Hay varias buenas razones para usar la secuencia de este organismo en particular: es un organismo modelo, su genoma es especialmente corto y sus cromosomas no tienen heterocromatina constitutiva pericentromérica, lo que favorece mucho el uso de modelos como el de Falk et al. con tres tipos de cuentas.
+
++ También separaremos el polímero al final de cada uno de los 6 cromosomas, cuyas longitudes hemos obtenido de la base de datos GEO NCBI ¿CITAR?.
+
++ Dado que las células de C. elegans (como la mayoría de los eucariotas) son diploides dentro del núcleo habrá dos copias de cada cromosoma, lo que hace un total de 12 cromosomas.
+
++ Según Bystricky et al. la heterocromatina tiene una longitud de persistencia de $\sim$ 200 nm lo que en nuestro modelo se traduce en $k_b=6$. Sin embargo, como la heterocromatina sólo representa $\sim$ el 8\% de toda la secuencia y pertenece en la mayoría de los casos a algunos de los dominios LAD (que representan casi la mitad de la secuencia) promediaremos la longitud de persistencia dentro de los dominios LAD y haremos que la partícula LADh tenga $k_b=1$.
+
++ Mientras que la euchromatina prácticamente no tiene longitud de persistencia a esta escala por lo que las partículas LNDe tendrán $k_b=0$.
+
++ Como explica Camara la compactación y rigidez de la heterocromatina la hace autoatractiva debido a la atracción por agotamiento. Mientras que la eucromatina es mucho más blanda y no interactúa consigo misma a través de este mecanismo. Cámara también menciona que las regiones inactivas (es decir, los dominios similares a la heterocromatina) tienen una mayor autoafinidad. Así, consideraremos que las partículas LNDe son puramente repulsivas mientras que las partículas LADh son auto-atractivas.
+
++ Gracias al maravilloso trabajo de Falk et al. podemos hacer una estimación de las fuerzas de interacción entre nuestros dos tipos de partículas. En su modelo más elaborado con tres tipos de partículas (una para la eucromatina y dos para la heterocromatina), descubrieron que la eucromatina interactuaba muy poco consigo misma y con los otros tipos de partículas, por lo que podemos considerarla puramente repulsiva por simplicidad. La fuerza de interacción entre las partículas de heterocromatina era diferente para los dos tipos de partículas de heterocromatina, pero su media era del orden de $0.5k_BT$, que es el valor que utilizaremos.
+
++ La cromatina tiene otras regiones distinguibles como los centrómeros, los telómeros y las NORs (nucleolus organizer regions) que no consideraremos ya que constituyen fracciones más pequeñas del genoma que la eucromatina y la heterocromatina generales. Por ejemplo, según BioNumbers el nucleolo tiene un radio medio de 0.9 $\text{um}$ y el núcleo de 2.7 $\text{um}$ por lo que las NOR ocupan menos del 4\% del volumen del núcleo a pesar de su función biológica crucial.
+
++ El valor exacto de la constante elástica no es realmente relevante en este contexto siempre que sea lo suficientemente alto como para evitar que la distancia entre las partículas enlazadas fluctúe demasiado. Según Falo et al. las propiedades estadísticas de una cadena elástica libremente unida sólo dependen de la constante elástica a través de la fracción $2/(1+\beta k_el_0^2)$ por lo que tomar $k_e=128e_u/l_u^2$ debería ser suficiente.
+
++ De forma similar pero más simple a Bajpai et al. añadiremos pozos potenciales a lo largo de la lámina (en posiciones aleatorias) que llamaremos sitios de unión de la lámina. Estos sitios representan los lugares de la lámina a los que un LAD (una partícula LADh en nuestro modelo) puede unirse a través de las llamadas proteínas de unión a la lámina. Haremos estos pozos tan anchos como nuestras partículas y con una profundidad de $8k_BT$ ya que según Maji et al. utilizando un modelo muy similar las fuerzas de interacción lámina-cromatina que mejor reproducían las observaciones experimentales eran superiores a $2k_BT$ y Bajpai et al. utilizaron un potencial profundo de $10k_BT$.
+
++ Con todo esto en mente tenemos un modelo muy idealizado pero relativamente complejo de la fibra de cromatina confinada dentro de un núcleo esférico. Modulando los parámetros desconocidos de este modelo queremos investigar las diferentes conformaciones que puede adoptar la cromatina y esperamos reproducir las características observadas en los experimentos.
+
++ Los parámetros modificables del modelo serán:
++ El radio del núcleo y la geometría del bleb ($R_n$, $R_o$, $R_b$).
++ El número de sitios de unión de la lámina ($N'$).
+
++ Para nuestra primera simulación daremos a estos parámetros unos valores razonables en condiciones normales. Ikegami et al. afirman en su artículo que los núcleos de C. elegans tienen un radio de aproximadamente 1 $\text{um}$.
+
+Traducción realizada con la versión gratuita del traductor DeepL.com
 \cite{Ho2014}\dots
 
 \begin{figure}
