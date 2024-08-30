@@ -52,13 +52,13 @@ Los modelos que sí que pertenecen a otra clase y tienen leyes de escala con exp
     \label{eq:Wang-Frenkel}
     V=\sum_{i=0}^{N-1}\sum_{j=i+1}^{N-1}\varepsilon\left(\left(\frac{\sigma}{d_{ij}}\right)^{2}-1\right)\left(\left(\frac{2\sigma}{d_{ij}}\right)^{2}-1\right)^{2}
 \end{equation}
-para $d_{ij}\leq\left(2/\sqrt{3}\right)\sigma$ y $0$ de otro modo. Hemos preferido emplear este potencial en lugar de, por ejemplo, el tradicional potencial de Lennard-Jones porque el primero es más estable numéricamente y los resultados que vamos a ver son independientes de la forma exacta del potencial siempre y cuando este impida que se superpongan los monómeros. Desafortunadamente ninguno de los modelos que incluye esta interacción es resoluble analíticamente, pero se ha logrado calcular los exponentes de sus leyes de escala con bastante precisión mediante el grupo de renormalización. En estos modelos tendremos que \cite{desCloizeaux1980}
+para $d_{ij}\leq\left(2/\sqrt{3}\right)\sigma$ y $-\varepsilon$ de otro modo, donde los parámetros $\varepsilon$ y $\sigma$ regulan la intensidad de la interacción y el tamaño de las partículas respectivamente. Hemos preferido emplear este potencial en lugar de, por ejemplo, el tradicional potencial de Lennard-Jones porque el primero es más estable numéricamente y los resultados que vamos a ver son independientes de la forma exacta del potencial siempre y cuando este impida que se superpongan los monómeros. Desafortunadamente ninguno de los modelos que incluye esta interacción es resoluble analíticamente, pero se ha logrado calcular los exponentes de sus leyes de escala con bastante precisión mediante el grupo de renormalización. En estos modelos tendremos que \cite{desCloizeaux1980}
 \begin{equation}
-    \label{eq:excl_vol_sd_cp}
+    \label{eq:excluded_volume_sd_cp}
     d(s)\propto s^{\nu}  \quad \text{y} \quad P(s)\propto s^{-\nu(3+\theta)}
 \end{equation}
-donde $\nu\simeq0.588$ y $\theta\simeq0.71$ luego $\nu(3+\theta)\simeq2.2$. Si además extendemos\dots
-
-HABLAR TMB DE LA PARTE ATRACTIVA Y DE LAS CONFIGURACIONES DE GLÓBULO COLAPSADO.
-
-EN VOL EXCL MENCIONAR QUE RADIO DE CORTE ES 2 SIGMA.
+donde $\nu\simeq0.588$ y $\theta\simeq0.71$ luego $\nu(3+\theta)\simeq2.2$. Vemos que los exponentes en este caso son mayores, lo que nos indica que las configuraciones que adoptan los polímeros en estos modelos son más extendidas, tal y como era de esperar. Pero como mencionábamos antes también pueden existir interacciones atractivas entre los monómeros, que de hecho serán muy importantes en la cromatina. Podemos añadir muy fácilmente interacciones de este tipo aumentando el radio de corte del potencial de Wang-Frenkel de modo que tenga la forma de la ecuación \ref{eq:Wang-Frenkel} para $d_{ij}\leq2\sigma$ y sea $0$ de otro modo, lo que justifica porque de aquí en adelante tomaremos $r_c=2\sigma$ para la determinación de los contactos entre monómeros. En este caso obtendremos (si $\varepsilon$ es suficientemente grande en comparación con $k_BT$) configuraciones que se llaman de ``glóbulo colapsado'' en las que el polímero ocupa el mínimo espacio posible y por lo tanto
+\begin{equation}
+    \label{eq:collapsed_globule_sd_cp}
+    d(s)\propto s^{1/3}  \quad \text{y} \quad P(s)\propto s^{-1}.
+\end{equation}
