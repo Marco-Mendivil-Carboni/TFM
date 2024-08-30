@@ -28,13 +28,13 @@ Si bien es cierto que podríamos seguir empleando las ecuaciones del movimiento 
 
 Para resolver ecuaciones diferenciales estocásticas como \eqref{eq:Langevin} no se pueden utilizar los mismos métodos que para las ecuaciones diferenciales ordinarias, pero afortunadamente solo hay que modificarlos ligeramente para incluir correctamente los términos que son procesos estocásticos. Un algoritmo basado en el método de Runge-Kutta de segundo orden (también llamado método de Heun) \cite{Toral2014} aplicado a la ecuación de Langevin toma la siguiente forma,
 \begin{equation}
-\label{eq:RK_method}
-\begin{aligned}
-    (\bar{r}_i)'_{n} &= (\bar{r}_i)_n+(\bar{v}_i)_ndt\\
-    (\bar{v}_i)'_{n} &= (\bar{v}_i)_n+\frac{1}{m_i}(\bar{f}_i)_ndt+\frac{1}{m_i}(\bar{u}_i)_n\sqrt{dt}\\
-    (\bar{r}_i)_{n+1} &= (\bar{r}_i)_n+\frac{1}{2}\left((\bar{v}_i)'_n+(\bar{v}_i)_n\right)dt\\
-    (\bar{v}_i)_{n+1} &= (\bar{v}_i)_n+\frac{1}{2}\frac{1}{m_i}\left((\bar{f}_i)'_n+(\bar{f}_i)_n\right)dt+\frac{1}{m_i}(\bar{u}_i)_n\sqrt{dt}
-\end{aligned}
+    \label{eq:RK_method}
+    \begin{aligned}
+        (\bar{r}_i)'_{n}  & = (\bar{r}_i)_n+(\bar{v}_i)_ndt                                                                                         \\
+        (\bar{v}_i)'_{n}  & = (\bar{v}_i)_n+\frac{1}{m_i}(\bar{f}_i)_ndt+\frac{1}{m_i}(\bar{u}_i)_n\sqrt{dt}                                        \\
+        (\bar{r}_i)_{n+1} & = (\bar{r}_i)_n+\frac{1}{2}\left((\bar{v}_i)'_n+(\bar{v}_i)_n\right)dt                                                  \\
+        (\bar{v}_i)_{n+1} & = (\bar{v}_i)_n+\frac{1}{2}\frac{1}{m_i}\left((\bar{f}_i)'_n+(\bar{f}_i)_n\right)dt+\frac{1}{m_i}(\bar{u}_i)_n\sqrt{dt}
+    \end{aligned}
 \end{equation}
 donde
 \begin{equation}
@@ -43,11 +43,11 @@ donde
 \end{equation}
 y cada componente de $(\bar{u}_i)_n$ es un número (pseudo)aleatorio con distribución normal, media nula y varianza $2\xi_ik_BT$. El mismo método aplicado a la ecuación \eqref{eq:Brownian} de la dinámica Browniana se reduce a
 \begin{equation}
-\label{eq:RK_method_Brownian}
-\begin{aligned}
-    (\bar{r}_i)'_{n} &= (\bar{r}_i)_n+\frac{1}{\xi_i}(\bar{f}_i)_ndt+\frac{1}{\xi_i}(\bar{u}_i)_n\sqrt{dt}\\
-    (\bar{r}_i)_{n+1} &= (\bar{r}_i)_n+\frac{1}{2}\frac{1}{\xi_i}\left((\bar{f}_i)'_n+(\bar{f}_i)_n\right)dt+\frac{1}{\xi_i}(\bar{u}_i)_n\sqrt{dt}
-\end{aligned}
+    \label{eq:RK_method_Brownian}
+    \begin{aligned}
+        (\bar{r}_i)'_{n}  & = (\bar{r}_i)_n+\frac{1}{\xi_i}(\bar{f}_i)_ndt+\frac{1}{\xi_i}(\bar{u}_i)_n\sqrt{dt}                                        \\
+        (\bar{r}_i)_{n+1} & = (\bar{r}_i)_n+\frac{1}{2}\frac{1}{\xi_i}\left((\bar{f}_i)'_n+(\bar{f}_i)_n\right)dt+\frac{1}{\xi_i}(\bar{u}_i)_n\sqrt{dt}
+    \end{aligned}
 \end{equation}
 donde ahora
 \begin{equation}
@@ -74,8 +74,8 @@ AÑADIR: Debido a la magnitud del sistema, que hasta hace poco había impedido e
 \cite{Green2010}
 
 \begin{figure}
-  \centering
-  \includegraphics{../Plots/performance.pdf}
-  \caption{Rendimiento.}
-  \label{fig:performance}
+    \centering
+    \includegraphics{../Plots/performance.pdf}
+    \caption{Rendimiento.}
+    \label{fig:performance}
 \end{figure}
