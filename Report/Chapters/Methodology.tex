@@ -69,6 +69,42 @@ AÑADIR: Debido a la magnitud del sistema, que hasta hace poco había impedido e
 
 \section{Cálculo del volumen excluido}
 
+En esta muestra utilizamos una malla uniforme [11], que es la subdivisión espacial más simple posible. (Las
+técnicas descritas podrían extenderse a estructuras más sofisticadas, como las rejillas jerárquicas,
+pero no lo discutiremos aquí).
+Una malla uniforme subdivide el espacio de simulación en una malla de celdas de tamaño uniforme. Para simplificar
+Para simplificar, utilizamos una rejilla en la que el tamaño de la celda es el mismo que el tamaño de la partícula (el doble de su radio). Esto significa que
+cada partícula sólo puede cubrir un número limitado de celdas de la cuadrícula (8 en 3 dimensiones). Además, si suponemos que no hay
+entre partículas, existe un límite superior fijo para el número de partículas por celda de cuadrícula (4 en 3 dimensiones).
+(4 en 3 dimensiones).
+Utilizamos una rejilla denominada «suelta», en la que cada partícula se asigna a una sola celda de la rejilla en función de su punto central.
+punto central. Dado que cada partícula puede solaparse con varias celdas de la cuadrícula, al procesar las colisiones hay que examinar también el tamaño de la partícula.
+al procesar las colisiones debemos examinar también las partículas de las celdas vecinas (3 x 3 x 3 = 27 en total) para ver si se tocan.
+en total para ver si están en contacto con la partícula en cuestión. Este método nos permite agrupar las partículas
+en las celdas de la rejilla simplemente ordenándolas por su índice de rejilla.
+El método alternativo, en el que las partículas se almacenan en cada celda que tocan, requiere menos trabajo
+al procesar las colisiones, pero más trabajo al construir la rejilla, y es generalmente más caro
+en la GPU.
+La estructura de datos de la malla se genera desde cero en cada paso temporal. Es posible realizar actualizaciones
+Es posible realizar actualizaciones incrementales de la estructura de la malla en la GPU, pero este enfoque es simple y el rendimiento es constante independientemente del movimiento de las partículas.
+constante independientemente del movimiento de las partículas.
+Examinamos dos métodos diferentes para generar la estructura de rejilla.
+
+El algoritmo consta de varios núcleos. El primer kernel «calcHash» calcula un valor hash para
+cada partícula basado en su id de celda. En este ejemplo utilizamos simplemente el identificador de celda lineal como hash, pero
+puede ser beneficioso utilizar otras funciones como la curva de orden Z [8] para mejorar la coherencia de los accesos a la memoria.
+los accesos a la memoria. El núcleo almacena los resultados en la matriz «particleHash» de la memoria global como
+un par uint2 (hash de celda, id de partícula).
+A continuación, ordenamos las partículas en función de sus valores hash. La ordenación se realiza utilizando la ordenación rápida radix
+proporcionado por la biblioteca CUDPP, que utiliza el algoritmo descrito en [12]. Esto crea una lista de
+ids de partículas en orden de celda.
+Para que esta lista ordenada sea útil, necesitamos ser capaces de encontrar el inicio de cualquier celda en la lista ordenada.
+lista ordenada. Esto se consigue ejecutando otro kernel «findCellStart», que utiliza un hilo por partícula y compara el índice de celda de cada partícula.
+partícula y compara el índice de celda de la partícula actual con el índice de celda de la partícula anterior en la lista ordenada.
+en la lista ordenada. Si el índice es diferente, esto indica el inicio de una nueva celda, y la dirección de inicio es
+en otra matriz mediante una escritura dispersa. El código actual también encuentra el índice del final de
+cada celda de forma similar.
+
 \dots
 
 \cite{Green2010}
