@@ -22,37 +22,35 @@ También se pueden distinguir dos tipos de heterocromatina: la constitutiva y la
     \label{fig:chromatin-structure}
 \end{figure}
 
-La última clasificación que haremos de la cromatina (aunque por supuesto se han hecho muchas más)\dots
+Pero la cromatina se puede clasificar de muchas otras formas. Se pueden identificar regiones de la cromatina que juegan roles específicos en la regulación de la estructura del genoma y la expresión génica y dos de las más importantes son los TADs (Dominios de Asociación Topológica) y los LADs (Dominios Asociados a la Lámina).
 
-La organización de la cromatina no es aleatoria; existen regiones específicas que juegan roles críticos en la regulación de la estructura del genoma y la expresión génica. Dos de estas regiones de interés son los **LADs** (Dominios Asociados a la Lámina) y los **TADs** (Dominios de Asociación Topológica).
+Los TADs son regiones del genoma que se asocian preferentemente consigo mismas, formando dominios estructurales dentro de la cromatina que se mantienen relativamente independientes de otras regiones. Dentro de un TAD, los genes y sus elementos reguladores, como los potenciadores, interactúan más frecuentemente entre sí, lo que facilita la regulación de la expresión génica.
 
-Los LADs son regiones de la cromatina que interactúan con la lámina nuclear, una red de proteínas ubicada en la periferia interna del núcleo. Estas regiones suelen estar asociadas con heterocromatina y se caracterizan por ser transcripcionalmente inactivas. Los LADs juegan un papel en la organización del genoma dentro del núcleo, ayudando a mantener ciertos genes silenciados al ubicarlos cerca de la periferia nuclear.
+Los LADs son regiones de la cromatina que interactúan (con mayor frecuencia) con la lámina nuclear, una red de proteínas ubicada en la periferia interna del núcleo. Estas regiones suelen estar asociadas con la heterocromatina y por lo tanto se caracterizan por ser transcripcionalmente inactivas. Los LADs juegan un papel importante en la organización del genoma dentro del núcleo, ayudando a mantener ciertos genes silenciados al ubicarlos cerca de la periferia nuclear y, como veremos más adelante, contribuyendo a la segregación espacial del genoma, es decir, a mantener las regiones inactivas alejadas de las activas.
 
-Los TADs son regiones del genoma que se asocian preferentemente consigo mismas, formando dominios estructurales dentro de la cromatina que se mantienen relativamente independientes de otras regiones. Dentro de un TAD, los genes y sus elementos reguladores, como los potenciadores, interactúan más frecuentemente entre sí, lo que facilita la regulación específica de la expresión génica. Los límites de los TADs son generalmente definidos por sitios de unión de proteínas CTCF y complejos cohesinas, que actúan como barreras para evitar interacciones inapropiadas entre genes y reguladores de diferentes TADs.
-
-La organización de la cromatina en eucromatina y heterocromatina, así como la presencia de estructuras como los LADs y TADs, es fundamental para la regulación de la expresión génica y la estabilidad del genoma. La compactación de la cromatina en heterocromatina permite el silenciamiento de genes que no deben ser expresados en ciertos contextos celulares, mientras que la eucromatina permite la activación y acceso a los genes necesarios para las funciones celulares específicas.
-
-Los LADs contribuyen a la segregación espacial del genoma, ayudando a mantener las regiones inactivas alejadas de las activas, mientras que los TADs facilitan interacciones reguladoras dentro de dominios específicos, lo que asegura una expresión génica correcta y controlada.
-
-La cromatina es una estructura compleja y dinámica que juega un papel esencial en la regulación de la expresión génica y la organización del genoma. Las histonas y sus modificaciones postraduccionales permiten la regulación de la compactación de la cromatina, mientras que la división en eucromatina y heterocromatina determina qué regiones del genoma están activas o inactivas. Las regiones específicas como los LADs y TADs reflejan un nivel adicional de organización, asegurando la correcta expresión y funcionamiento del material genético en cada célula.
+AÑADIR ALGO MÁS?
 
 \section{Modelo polimérico}
 
-Queda claro por tanto que la cromatina es, en una primera aproximación, un conjunto de polímeros (uno por cromosoma) de gran tamaño confinados dentro de un núcleo aproximadamente esférico. Por ello, esta será la base de nuestro modelo polimérico de la cromatina. Pero en la sección anterior hemos visto que la cromatina no es uniforme, sino que diversas modificaciones químicas a lo largo de la cadena forman dominios mediante mecanismos que todavía no están completamente esclarecidos.
+Queda claro por tanto que la cromatina es, en una primera aproximación, un conjunto de polímeros (uno por cromosoma) de gran tamaño confinados dentro de un núcleo aproximadamente esférico. Por ello, esta será la base de nuestro modelo polimérico de la cromatina. Pero en la sección anterior hemos visto que la cromatina no es uniforme, sino que la propia secuencia del ADN y diversas modificaciones químicas de las histonas generan dominios con distintas propiedades. Por ello no podremos modelar los cromosomas como simples homopolímeros sino que deberemos consider un modelo de copolímeros en los que habrá distintos tipos de monómeros con propiedades locales diferentes.
 
-CAMBIAR: Por ello no podremos considerar simples homopolímeros sino que deberemos consider un modelo de copolímeros en los que distintos monómeros tengan distintas propiedades locales. Se han ideado muchos modelos distintos que reflejan distintos aspectos de la cromatina, en este trabajo pretendemos combinar los más importantes con el objetivo de reproducir las características más llamativas de la organización espacial de la cromatina.
+Por supuesto se han ideado ya muchos modelos distintos que reflejan distintos aspectos de la cromatina. Nosotros vamos a intentar combinar varios de estos modelos buscando un equilibrio entre el realismo del modelo y su simplicidad (que nos ayudará a interpretar los resultados de las simulaciones) con el objetivo de reproducir las características más llamativas de la organización espacial de la cromatina.
 
-Consideraremos que cada una de nuestras partículas tiene 33 nucleosomas y, por tanto, un diámetro de 33 nm.
+Para empezar consideraremos que cada una de nuestras partículas tiene 33 nucleosomas y, por tanto, un diámetro de 33 nm. Aunque en el estado eucromático los nucleosomas no están organizados de forma bien definida y estable, hemos visto que interactúan de varias maneras formando los TADs, dentro de los cuales los nucleosomas están relativamente cerca, por lo que suponer que ocupan un volumen similar al del estado heterocromático está justificado.
 
-Aunque en el estado eucromático los nucleosomas no están organizados de forma bien definida y estable, interactúan fuertemente de varias maneras formando los llamados TADs (Topologically Associating Domains). Dentro de estos dominios los nucleosomas están presumiblemente muy juntos por lo que suponer que ocupan un volumen similar al del estado heterocromático está justificado.
-
-Como \cite{Bajpai2021} mencionan, podemos más o menos asociar las LADs a la heterocromatina y las no LADs a la eucromatina por lo que en nuestro modelo usaremos sólo dos tipos de partículas por simplicidad:
-
-LADh (A): LAD heterocromatina
-
-LNDe (B): eucromatina no LAD
+Como podemos más o menos asociar las LADs a la heterocromatina y las no LADs a la eucromatina \cite{Bajpai2021} en nuestro modelo usaremos sólo dos tipos de partículas por simplicidad:
+\begin{enumerate}
+    \item LADh (A): LAD heterocromatina
+    \item LNDe (B): eucromatina no LAD
+\end{enumerate}
 
 A pesar de lo que se pueda pensar en un principio según \cite{Bajpai2021} la secuencia exacta de partículas utilizadas en este tipo de modelos no cambia significativamente los resultados, siempre y cuando las propiedades estadísticas de las secuencias sean similares. No obstante, basaremos la secuencia de nuestro modelo de grano grueso en datos experimentales. Utilizaremos los dominios asociados a láminas en el genoma de C. elegans de los que informan \cite{Ho2014} para determinar las partículas LADh de nuestro polímero. Hay varias buenas razones para usar la secuencia de este organismo en particular: es un organismo modelo, su genoma es especialmente corto y sus cromosomas no tienen heterocromatina constitutiva pericentromérica, lo que favorece mucho el uso de modelos como el de \cite{Falk2019} con tres tipos de cuentas.
+
+También separaremos el polímero al final de cada uno de los 6 cromosomas, cuyas longitudes hemos obtenido de la base de datos GEO NCBI ¿CITAR?.
+
+Dado que las células de C. elegans (como la mayoría de los eucariotas) son diploides dentro del núcleo habrá dos copias de cada cromosoma, lo que hace un total de 12 cromosomas.
+
+Según \cite{Bystricky2004} la heterocromatina tiene una longitud de persistencia de $\sim$ 200 nm lo que en nuestro modelo se traduce en $k_b=6$. Sin embargo, como la heterocromatina sólo representa $\sim$ el 8\% de toda la secuencia y pertenece en la mayoría de los casos a algunos de los dominios LAD (que representan casi la mitad de la secuencia) promediaremos la longitud de persistencia dentro de los dominios LAD y haremos que la partícula LADh tenga $k_b=1$.
 
 \begin{figure}
     \centering
@@ -60,12 +58,6 @@ A pesar de lo que se pueda pensar en un principio según \cite{Bajpai2021} la se
     \caption{\dots}
     \label{fig:sequence}
 \end{figure}
-
-También separaremos el polímero al final de cada uno de los 6 cromosomas, cuyas longitudes hemos obtenido de la base de datos GEO NCBI ¿CITAR?.
-
-Dado que las células de C. elegans (como la mayoría de los eucariotas) son diploides dentro del núcleo habrá dos copias de cada cromosoma, lo que hace un total de 12 cromosomas.
-
-Según \cite{Bystricky2004} la heterocromatina tiene una longitud de persistencia de $\sim$ 200 nm lo que en nuestro modelo se traduce en $k_b=6$. Sin embargo, como la heterocromatina sólo representa $\sim$ el 8\% de toda la secuencia y pertenece en la mayoría de los casos a algunos de los dominios LAD (que representan casi la mitad de la secuencia) promediaremos la longitud de persistencia dentro de los dominios LAD y haremos que la partícula LADh tenga $k_b=1$.
 
 Mientras que la euchromatina prácticamente no tiene longitud de persistencia a esta escala por lo que las partículas LNDe tendrán $k_b=0$.
 
