@@ -51,6 +51,10 @@ Aunque hay muchas herramientas para el desarrollo de \textit{software} GPGPU el 
 
 \section{Cálculo del volumen excluido}
 
+Como anticipamos en el capítulo \ref{cap:introduction} la interacción de volumen excluido será la más costosa computacionalmente y por ello creemos conveniente mostrar el algoritmo que se ha empleado para el cálculo de las fuerzas debidas a la misma. Por simplicidad puede ser tentador implementar esta interacción de forma \textit{naive} calculando las distancias entre todas las parejas de partículas, pero este método es $\mathcal{O}(N^2)$ y hay algoritmos, como el que vamos a ver, cualitativamente mejores.
+
+Este algoritmo \cite{Green2010} \dots
+
 En esta muestra utilizamos una malla uniforme [11], que es la subdivisión espacial más simple posible. (Las
 técnicas descritas podrían extenderse a estructuras más sofisticadas, como las rejillas jerárquicas,
 pero no lo discutiremos aquí).
@@ -71,7 +75,6 @@ La estructura de datos de la malla se genera desde cero en cada paso temporal. E
 Es posible realizar actualizaciones incrementales de la estructura de la malla en la GPU, pero este enfoque es simple y el rendimiento es constante independientemente del movimiento de las partículas.
 constante independientemente del movimiento de las partículas.
 Examinamos dos métodos diferentes para generar la estructura de rejilla.
-
 El algoritmo consta de varios núcleos. El primer kernel «calcHash» calcula un valor hash para
 cada partícula basado en su id de celda. En este ejemplo utilizamos simplemente el identificador de celda lineal como hash, pero
 puede ser beneficioso utilizar otras funciones como la curva de orden Z [8] para mejorar la coherencia de los accesos a la memoria.
@@ -87,13 +90,25 @@ en la lista ordenada. Si el índice es diferente, esto indica el inicio de una n
 en otra matriz mediante una escritura dispersa. El código actual también encuentra el índice del final de
 cada celda de forma similar.
 
-\dots
-
-\cite{Green2010}
-
 \begin{figure}
     \centering
     \includegraphics{../Plots/performance.pdf}
     \caption{Rendimiento.}
     \label{fig:performance}
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[scale=2]
+        \draw[color1,fill=color1,fill opacity=0.25] (1.2,3.2) circle (0.5); \node[above right,color1] at (1.2,3.2) {1};
+        \draw[color1,fill=color1,fill opacity=0.25] (2.8,0.8) circle (0.5); \node[above right,color1] at (2.8,0.8) {1};
+        \draw[color1,fill=color1,fill opacity=0.25] (2.5,2.1) circle (0.5); \node[above right,color1] at (2.5,2.1) {1};
+        \draw[color1,fill=color1,fill opacity=0.25] (3.1,1.1) circle (0.5); \node[above right,color1] at (3.1,1.1) {1};
+        \foreach \i in {0,...,4} {\draw[black] (\i,0) -- (\i,4);}
+        \foreach \j in {0,...,4} {\draw[black] (0,\j) -- (4,\j);}
+        \foreach \i in {0,...,3} {\foreach \j [evaluate=\num using int(\i+4*\j)] in {0,...,3} {\node[above right] at (\i,\j) {\num};}}
+    \end{tikzpicture}
+    \caption{\dots}
+    \label{fig:grid-diagram}
 \end{figure}
