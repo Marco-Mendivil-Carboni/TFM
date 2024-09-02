@@ -51,8 +51,8 @@ Para empezar consideraremos que cada una de nuestras partículas contiene 33 nuc
 
 Como podemos asociar los LADs con la heterocromatina y los dominios no asociados a la lámina con la eucromatina \cite{Bajpai2021} en nuestro modelo, por simplicidad, combinaremos ambas clasificaciones y usaremos sólo dos tipos de partículas:
 \begin{enumerate}
-    \item LADh: Dominios Asociados a la Lámina heterocromáticos
-    \item LNDe: Dominios No asociados a la Lámina eucromáticos
+    \item LADh (A): Dominios Asociados a la Lámina heterocromáticos
+    \item LNDe (B): Dominios No asociados a la Lámina eucromáticos
 \end{enumerate}
 
 A pesar de lo que se pueda pensar en un principio la secuencia exacta de partículas utilizadas en este tipo de modelos no cambia significativamente los resultados \cite{Bajpai2021}, siempre y cuando las propiedades estadísticas de las secuencias sean similares. No obstante, basaremos la secuencia de nuestro modelo en datos experimentales. Utilizaremos los LADs del genoma del C. elegans \cite{Ho2014,C.elegans1998} para determinar las partículas LADh de nuestro modelo. Hay múltiples buenas razones para usar la secuencia de este organismo en particular: es un organismo modelo, su genoma es especialmente corto y sus cromosomas no tienen heterocromatina constitutiva pericentromérica, la cual incentiva el uso de modelos más complejos con tres tipos de partículas \cite{Falk2019}. En la figura \ref{fig:sequence} se aprecia que efectivamente en este genoma hay una correlación entre las regiones heterocromáticas (que se deducen de la presencia de la modificación H3K9me3) y los LADs, que se concentran en los extremos de cada cromosoma (la cual es una característica peculiar de este organismo pero no alterará los resultados como veremos más adelante). También se ve como las partículas de nuestro modelo son suficientemente pequeñas como para reproducir con gran precisión cada uno de los LADs, que suelen tener tamaños mucho mayores de 6 kb. Por otro lado, dado que las células del nematodo C. elegans (como la mayoría de células eucariotas) son diploides, dentro del núcleo colocaremos dos copias de cada uno de estos cromosomas, lo que hace un total de 12 cromosomas.
@@ -63,10 +63,30 @@ También se observa que las regiones inactivas (es decir, los dominios similares
 
 El valor exacto de la constante elástica no es realmente relevante en este contexto siempre que sea lo suficientemente alto como para evitar que la distancia entre las partículas enlazadas fluctúe demasiado y a la vista de los resultados que presentamos en el capítulo \ref{cap:introduction} tomar $k_e=128e_u/l_u^2$ debería ser suficiente.
 
-Para modelar la atracción de los LADs a la lamina, de forma similar pero más simple a \cite{Bajpai2021}, añadiremos pozos de potencial (que llamaremos sitios de unión a la lámina) en posiciones aleatorias de la misma. Estos sitios representan los lugares de la lámina a los que un LAD (una partícula LADh en nuestro modelo) puede unirse a través de las llamadas proteínas de unión a la lámina. Haremos estos pozos tan anchos como nuestras partículas y con una profundidad de $8k_BT$ ya que según \cite{Maji2020} utilizando un modelo muy similar las fuerzas de interacción lámina-cromatina que mejor reproducían las observaciones experimentales eran superiores a $2k_BT$ y \cite{Bajpai2021} utilizaba un potencial de $10k_BT$ de profundidad.
+Para modelar la atracción de los LADs a la lamina, de forma similar pero más simple a \cite{Bajpai2021}, añadiremos pozos de potencial\footnote{Con una forma prácticamente armónica en el centro pero que se conecta de forma suave con el exterior del pozo: $V=\sum_{i=0}^{N-1}\sum_{j=0}^{N'-1}\varepsilon'\left(\frac{4}{3}\frac{{d'}_{ij}^{2}}{r_c^{2}}-\frac{1}{3}\frac{{d'}_{ij}^{8}}{r_c^{8}}-1\right)$.} (que llamaremos sitios de unión a la lámina) en posiciones aleatorias de la misma. Estos sitios representan los lugares de la lámina a los que un LAD (una partícula LADh en nuestro modelo) puede unirse a través de las llamadas proteínas de unión a la lámina. Haremos estos pozos tan anchos como nuestras partículas y con una profundidad de $8k_BT$ ya que según \cite{Maji2020} utilizando un modelo muy similar las fuerzas de interacción lámina-cromatina que mejor reproducían las observaciones experimentales eran superiores a $2k_BT$ y \cite{Bajpai2021} utilizaba un potencial de $10k_BT$ de profundidad.
 
-Con todo esto en mente tenemos un modelo muy idealizado pero relativamente complejo de la fibra de cromatina confinada dentro del núcleo. Modulando los parámetros desconocidos de este modelo queremos investigar las diferentes conformaciones que puede adoptar la cromatina y esperamos reproducir las características observadas en los experimentos. En concreto los únicos parámetros modificables del modelo serán:
+Con todo esto en mente tenemos un modelo muy idealizado pero relativamente complejo de la fibra de cromatina confinada dentro del núcleo, cuyos parámetros hemos resumido en la tabla \ref{tab:parameters}. Modulando los parámetros desconocidos de este modelo queremos investigar las diferentes conformaciones que puede adoptar la cromatina y esperamos reproducir las características observadas en los experimentos. En concreto los únicos parámetros modificables del modelo serán:
 \begin{enumerate}
     \item El radio del núcleo ($R_n$).
     \item El número de sitios de unión a la lámina ($N'$).
 \end{enumerate}
+
+\begin{table}
+    \centering
+    \begin{tabular}{c c c}
+        \toprule
+        parámetro       & valor (SI)                  & valor (UR)          \\
+        \midrule
+        $\xi$           & $3\pi\eta d=0.28$ pg/$\mu$s & $1$ $m_u$/$t_u$     \\
+        $k_B$           & $0.014$ pN$\cdot$nm/K       & $(1/298)$ $e_u$/K   \\
+        $l_0$           & $33$ nm                     & $1$ $l_u$           \\
+        $k_e$           & $0.48$ pN / nm              & $128$ $e_u$/$l_u^2$ \\
+        $k_b^A$         & $4.11$ pN$\cdot$nm          & $1$ $e_u$           \\
+        $\sigma$        & $33$ nm                     & $1$ $l_u$           \\
+        $\epsilon^{AA}$ & $2.06$ pN$\cdot$nm          & $0.5$ $e_u$         \\
+        $\epsilon'$     & $32.9$ pN$\cdot$nm          & $8$ $e_u$           \\
+        \bottomrule
+    \end{tabular}
+    \caption{Parámetros de nuestro modelo de la cromatina en unidades del sistema internacional (SI) y en unidades reducidas (UR), las unidades del programa.}
+    \label{tab:parameters}
+\end{table}
