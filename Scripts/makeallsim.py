@@ -134,3 +134,7 @@ def makesim(sp: simparam) -> None:
 makesim(simparam(cvf=0.200, laf=0.400))
 
 makesim(simparam(cvf=0.200, laf=0.000))
+
+makesim(simparam(cvf=0.100, laf=0.400))
+
+makesim(simparam(cvf=0.300, laf=0.400))
