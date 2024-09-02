@@ -9,6 +9,34 @@ Por ello este trabajo tiene como objetivo principal el desarrollo de un modelo d
 
 \section{La física de polímeros}
 
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[scale=1.5]
+        \draw[black,semithick] (+0.0,+0.0) -- (+0.9,+0.1);
+        \draw[black,semithick] (+0.9,+0.1) -- (+1.2,+0.9);
+        \draw[black,semithick] (+1.2,+0.9) -- (+1.9,+1.2);
+        \draw[black,semithick] (+1.9,+1.2) -- (+2.6,+1.2);
+        \draw[black,semithick] (+2.6,+1.2) -- (+3.2,+0.6);
+        \draw[black,semithick] (+3.2,+0.6) -- (+3.4,+0.0);
+        \draw[black,semithick] (+3.4,+0.0) -- (+2.8,-0.4);
+        \draw[black,semithick] (+2.8,-0.4) -- (+1.9,-0.5);
+        \draw[black,semithick] (+1.9,-0.5) -- (+1.6,+0.3);
+        \draw[black,semithick] (+1.6,+0.3) -- (+0.9,+0.7);
+        \draw[black,semithick] (+0.9,+0.7) -- (+0.3,+1.4);
+        \draw[black,semithick] (+0.3,+1.4) -- (-0.1,+0.8);
+        \draw[black,semithick] (-0.1,+0.8) -- (-0.9,+0.6);
+        \draw[-latex,color1,semithick] (+3.8,+1.6) -- (+2.6,+1.2) node[midway,above]{$\bar{r}_i$};
+        \draw[-latex,color1,semithick] (+3.8,+1.6) -- (+4.4,+1.0) node[midway,left]{$\bar{b}_i$};
+        \draw[latex-latex,color1,semithick,dashed] (+2.6,+1.2) -- (+3.2,+0.6) node[midway,left]{$l_i$};
+        \draw[color1,semithick,dashed] (+2.6,+1.2) -- (+3.3,+1.2);
+        \draw[color1,semithick] (+3.1,+1.2) arc (0:-45:0.5) node[midway,right]{$\theta_i$};
+        \draw[latex-latex,color1,semithick,dashed] (+2.6,+1.2) -- (+0.3,+1.4) node[midway,above]{$d_{ij}$};
+        \draw[black,semithick,fill] (+3.8,+1.6) circle (1pt) node[anchor=south]{$O$};
+    \end{tikzpicture}
+    \caption{Diagrama esquemático de un polímero y la notación presentada en esta sección.}
+    \label{fig:polymer-diagram}
+\end{figure}
+
 Como veremos en detalle en el siguiente capítulo la cromatina a nivel biofísico es, ante todo, un polímero y por ello es indispensable hacer una breve introducción a la física de estas macromoléculas antes de adentrarnos en su modelización. Tal y como indica su nombre, los polímeros (del griego: $\pi o \lambda \upsilon \varsigma$ [polys] ``mucho'' y $\mu \varepsilon \rho o \varsigma$ [meros] ``parte'') son macromoléculas compuestas por muchas unidades repetidas llamadas monómeros, unidas entre sí mediante enlaces covalentes. Lo primero que nos muestra la teoría de polímeros es que la mayoría de sus propiedades físicas son independientes de lo que sean realmente estos monómeros, por lo que aquí consideraremos que un polímero es sencillamente una colección de $N$ ``partículas'' con posiciones $\{\bar{r}_i\}$, unidas sucesivamente, en un medio a temperatura $T$. A pesar de su sencillez, su elevado número de grados de libertad y las ligaduras entre los mismos hace que el espacio de configuraciones de un polímero sea muy extenso y complejo. En esta sección vamos a presentar algunos de los modelos de polímeros más sencillos, pero fundamentales, que aparecen en la literatura y sus propiedades más importantes, centrándonos especialmente en aquellos observables que utilizaremos después para describir la distribución de la cromatina.
 
 Obligatoriamente tenemos que empezar por los llamados modelos ideales, que son aquellos en los que no se tienen en cuenta las interacciones entre monómeros muy separados a lo largo de la cadena (¡aunque estén cerca en el espacio!) y el primero de ellos es el \textit{freely-jointed chain} (FJC). En este modelo no hay interacción alguna entre los monómeros de la cadena, que están unidos por enlaces $\bar{b}_i=\bar{r}_{i+1}-\bar{r}_i$ de longitud fija $l_0$. Este es el modelo más sencillo que existe (no es más que una caminata aleatoria), pero es el punto de partida del resto de modelos y ayuda a entender los fenómenos básicos de la física de polímeros. Es además de los pocos para los que se pueden encontrar soluciones analíticas, gracias al hecho de que su función de partición es factorizable. Aunque visualmente se puedan analizar de forma cualitativa, para caracterizar los distintos modelos cuantitativamente deberemos introducir algunos observables y el primero de ellos será $d(s)$, la distancia (espacial) promedio entre dos monómeros separados una distancia $s$ a lo largo de la cadena, que en el modelo FJC es \cite{Theodorakopoulos2019}
@@ -62,31 +90,3 @@ donde $\nu\simeq0.588$ y $\theta\simeq0.71$ luego $\nu(3+\theta)\simeq2.2$. Vemo
     \label{eq:collapsed_globule_sd_cp}
     d(s)\propto s^{1/3}  \quad \text{y} \quad P(s)\propto s^{-1}.
 \end{equation}
-
-\begin{figure}
-    \centering
-    \begin{tikzpicture}[scale=1.5]
-        \draw[black,semithick] (+0.0,+0.0) -- (+0.9,+0.1);
-        \draw[black,semithick] (+0.9,+0.1) -- (+1.2,+0.9);
-        \draw[black,semithick] (+1.2,+0.9) -- (+1.9,+1.2);
-        \draw[black,semithick] (+1.9,+1.2) -- (+2.6,+1.2);
-        \draw[black,semithick] (+2.6,+1.2) -- (+3.2,+0.6);
-        \draw[black,semithick] (+3.2,+0.6) -- (+3.4,+0.0);
-        \draw[black,semithick] (+3.4,+0.0) -- (+2.8,-0.4);
-        \draw[black,semithick] (+2.8,-0.4) -- (+1.9,-0.5);
-        \draw[black,semithick] (+1.9,-0.5) -- (+1.6,+0.3);
-        \draw[black,semithick] (+1.6,+0.3) -- (+0.9,+0.7);
-        \draw[black,semithick] (+0.9,+0.7) -- (+0.3,+1.4);
-        \draw[black,semithick] (+0.3,+1.4) -- (-0.1,+0.8);
-        \draw[black,semithick] (-0.1,+0.8) -- (-0.9,+0.6);
-        \draw[-latex,color1,semithick] (+3.8,+1.6) -- (+2.6,+1.2) node[midway,above]{$\bar{r}_i$};
-        \draw[-latex,color1,semithick] (+3.8,+1.6) -- (+4.4,+1.0) node[midway,left]{$\bar{b}_i$};
-        \draw[latex-latex,color1,semithick,dashed] (+2.6,+1.2) -- (+3.2,+0.6) node[midway,left]{$l_i$};
-        \draw[color1,semithick,dashed] (+2.6,+1.2) -- (+3.3,+1.2);
-        \draw[color1,semithick] (+3.1,+1.2) arc (0:-45:0.5) node[midway,right]{$\theta_i$};
-        \draw[latex-latex,color1,semithick,dashed] (+2.6,+1.2) -- (+0.3,+1.4) node[midway,above]{$d_{ij}$};
-        \draw[black,semithick,fill] (+3.8,+1.6) circle (1pt) node[anchor=south]{$O$};
-    \end{tikzpicture}
-    \caption{Diagrama esquemático de un polímero y la notación presentada en esta sección.}
-    \label{fig:polymer-diagram}
-\end{figure}
