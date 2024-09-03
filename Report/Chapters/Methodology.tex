@@ -51,52 +51,7 @@ Aunque hay muchas herramientas para el desarrollo de \textit{software} GPGPU el 
 
 \section{Cálculo del volumen excluido}
 
-Como anticipamos en el capítulo \ref{cap:introduction} la interacción de volumen excluido será la más costosa computacionalmente y por ello creemos conveniente mostrar el algoritmo que se ha empleado para el cálculo de las fuerzas debidas a la misma. Por simplicidad puede ser tentador implementar esta interacción de forma \textit{naive} calculando las distancias entre todas las parejas de partículas, pero este método es $\mathcal{O}(N^2)$ y hay algoritmos, como el que vamos a ver, cualitativamente mejores.
-
-Este algoritmo \cite{Green2010} \dots
-
-En esta muestra utilizamos una malla uniforme [11], que es la subdivisión espacial más simple posible. (Las
-técnicas descritas podrían extenderse a estructuras más sofisticadas, como las rejillas jerárquicas,
-pero no lo discutiremos aquí).
-Una malla uniforme subdivide el espacio de simulación en una malla de celdas de tamaño uniforme. Para simplificar
-Para simplificar, utilizamos una rejilla en la que el tamaño de la celda es el mismo que el tamaño de la partícula (el doble de su radio). Esto significa que
-cada partícula sólo puede cubrir un número limitado de celdas de la cuadrícula (8 en 3 dimensiones). Además, si suponemos que no hay
-entre partículas, existe un límite superior fijo para el número de partículas por celda de cuadrícula (4 en 3 dimensiones).
-(4 en 3 dimensiones).
-Utilizamos una rejilla denominada «suelta», en la que cada partícula se asigna a una sola celda de la rejilla en función de su punto central.
-punto central. Dado que cada partícula puede solaparse con varias celdas de la cuadrícula, al procesar las colisiones hay que examinar también el tamaño de la partícula.
-al procesar las colisiones debemos examinar también las partículas de las celdas vecinas (3 x 3 x 3 = 27 en total) para ver si se tocan.
-en total para ver si están en contacto con la partícula en cuestión. Este método nos permite agrupar las partículas
-en las celdas de la rejilla simplemente ordenándolas por su índice de rejilla.
-El método alternativo, en el que las partículas se almacenan en cada celda que tocan, requiere menos trabajo
-al procesar las colisiones, pero más trabajo al construir la rejilla, y es generalmente más caro
-en la GPU.
-La estructura de datos de la malla se genera desde cero en cada paso temporal. Es posible realizar actualizaciones
-Es posible realizar actualizaciones incrementales de la estructura de la malla en la GPU, pero este enfoque es simple y el rendimiento es constante independientemente del movimiento de las partículas.
-constante independientemente del movimiento de las partículas.
-Examinamos dos métodos diferentes para generar la estructura de rejilla.
-El algoritmo consta de varios núcleos. El primer kernel «calcHash» calcula un valor hash para
-cada partícula basado en su id de celda. En este ejemplo utilizamos simplemente el identificador de celda lineal como hash, pero
-puede ser beneficioso utilizar otras funciones como la curva de orden Z [8] para mejorar la coherencia de los accesos a la memoria.
-los accesos a la memoria. El núcleo almacena los resultados en la matriz «particleHash» de la memoria global como
-un par uint2 (hash de celda, id de partícula).
-A continuación, ordenamos las partículas en función de sus valores hash. La ordenación se realiza utilizando la ordenación rápida radix
-proporcionado por la biblioteca CUDPP, que utiliza el algoritmo descrito en [12]. Esto crea una lista de
-ids de partículas en orden de celda.
-Para que esta lista ordenada sea útil, necesitamos ser capaces de encontrar el inicio de cualquier celda en la lista ordenada.
-lista ordenada. Esto se consigue ejecutando otro kernel «findCellStart», que utiliza un hilo por partícula y compara el índice de celda de cada partícula.
-partícula y compara el índice de celda de la partícula actual con el índice de celda de la partícula anterior en la lista ordenada.
-en la lista ordenada. Si el índice es diferente, esto indica el inicio de una nueva celda, y la dirección de inicio es
-en otra matriz mediante una escritura dispersa. El código actual también encuentra el índice del final de
-cada celda de forma similar.
-
-\begin{figure}
-    \centering
-    \includegraphics{../Plots/performance.pdf}
-    \caption{Rendimiento.}
-    \label{fig:performance}
-\end{figure}
-
+Como anticipamos en el capítulo \ref{cap:introduction} la interacción de volumen excluido será la más costosa computacionalmente y por ello creemos conveniente mostrar el algoritmo que se ha empleado para el cálculo de las fuerzas debidas a la misma. Por simplicidad puede ser tentador implementar esta interacción de forma \textit{naive} calculando las distancias entre todas las parejas de partículas, pero este método es $\mathcal{O}(N^2)$ y hay algoritmos, como el que vamos a ver, cualitativamente mejores. En concreto el que describiremos a continuación se ha adaptado de \cite{Green2010}, donde se dan indicaciones muy útiles para su implementación en CUDA.
 
 \begin{figure}
     \centering
@@ -111,6 +66,21 @@ cada celda de forma similar.
         \foreach \j in {0,...,4} {\draw[black] (0,\j) -- (4,\j);}
         \foreach \i in {0,...,3} {\foreach \j [evaluate=\num using int(\i+4*\j)] in {0,...,3} {\node[above right] at (\i,\j) {\num};}}
     \end{tikzpicture}
-    \caption{\dots}
+    \caption{Diagrama esquemático de una malla uniforme en dos dimsensiones  con 16 celdas y 6 partículas.}
     \label{fig:grid-diagram}
+\end{figure}
+
+La idea clave detrás del algoritmo que vamos a utilizar es que la interacción de volumen excluido es local (tiene un radio de corte). Esto quiere decir que solo hace falta calcular la distancia de cada partícula con sus vecinas y se puede acelerar mucho la búsqueda de estas partículas vecinas subdividiendo el espacio de simulación. En concreto utilizaremos una malla uniforme, que es la subdivisión espacial más sencilla que existe. Una malla uniforme subdivide el espacio de simulación (la esfera del núcleo en nuestro caso) en celdas (cúbicas) del mismo tamaño. Esta malla se puede utilizar de dos formas, o bien se asigna a cada partícula una única celda en función de la posición de su centro sin tener en cuenta sus dimensiones, o se encuentran todas las celdas que pueden interaccionar con la partícula y se almacenan los índices de todas estas celdas. El primer método es considerablemente más sencillo y probablemente tenga un rendimiento muy similar por lo que será el que utilizaremos.
+
+Para simplificarlo todavía más utilizaremos una malla en la que el tamaño de las celdas es $2\sigma$, el radio de corte del potencial de Wang-Frenkel atractivo, de forma que cada una de las partículas solo podrá interaccionar con las partículas de su propia celda y las celdas vecinas (colindantes). En tres dimensiones, como en nuestro caso, habrá 27 celdas vecinas y por lo tanto para calcular las fuerzas sobre una partícula solo deberemos calcular la distancia con las partículas que se encuentran en estas celdas, en lugar de todas las partículas de la simulación.
+
+Sin embargo para poder hacer esto debemos tener una lista de las partículas que hay en cada celda. Aunque el proceso necesario para obtener esta lista no es demasiado complicado para ilustrarlo mejor consideremos el caso sencillo en dos dimensiones que se representa en \ref{fig:grid-diagram}. Empezaremos por crear una lista A de tuplas que contengan los índices de cada partícula y los índices de la celda en la que se encuentran (que son muy sencillos de calcular), en este caso: A = [(0,5),(1,10),(2,10),(3,8),(4,10),(5,8)]. A continuación ordenaremos esta lista en función del índice de la celda (en lugar del índice de la partícula) obteniendo en este caso: A = [(0,5),(3,8),(5,8),(1,10),(2,10),(4,10)]. Finalmente recorreremos esta lista y almacenaremos en otra lista B el principio y final de cada celda en la lista A ordenada, luego en este caso: B = [(0,0),(0,0),(0,0),(0,0),(0,0),(0,1),(1,1),(1,1),(1,3),(3,3),(3,6),(6,6),(6,6),(6,6),(6,6),(6,6)]. De forma que para calcular, por ejemplo, las interacciones de la partícula 5, que se encuentra en la celda 8, deberemos calcular su distancia con las partículas de las celdas 4, 5, 8, 9, 12 y 13. Gracias al último paso sabemos que solo tenemos que calcular la distancia a las partículas en las posiones 0, 1 y 2 de la lista A ordenada, es decir, las partículas 0, 3 y 5 (que descartamos al ser ella misma).
+
+Todo este proceso se repetirá con cada paso de tiempo y su parte más costosa computacionalmente será la ordenación de la lista A que sin embargo es $\mathcal{O}(N)$ y por lo tanto es mucho más veloz que la implementación \textit{naive} para los valores de $N$ elevados que vamos a utilizar. En la figura \ref{fig:performance} se ve como efectivamente el tiempo de ejecución del programa completo es proporcional a $N$ (más una constante debido a otros factores que impiden tiempos menores con valores de $N$ bajos).
+
+\begin{figure}
+    \centering
+    \includegraphics{../Plots/performance.pdf}
+    \caption{Tiempo de ejecución de un paso de tiempo de la simulación en función del número de partículas en dos GPUs distintas.}
+    \label{fig:performance}
 \end{figure}
