@@ -1,11 +1,15 @@
 \chapter{Resultados: organización espacial}
 \label{cap:results}
 
-EXPLICAR CARACTERÍSTICAS GENERALES DE LAS SIMULACIONES (COMO DE LARGAS HAN SIDO) Y COMO SE HAN ANALIZADO LOS DATOS.
+Para estudiar el modelo de cromatina que hemos presentado en el capítulo \ref{cap:chromatin} realizaremos simulaciones en diversas condiciones variando los parámetros $R_n$ y $N'$ pero antes de mostrar los resultados de las mismas debemos explicar las condiciones iniciales que hemos utilizado y presentar los observables que nos ayudarán a caracterizar la configuración de la cromatina.
+
+La condición inicial no altera los resultados de una simulación de dinámica molecular si se alcanza el equilibrio pero pronto veremos que el núcleo celular no se encuentra en el equilibrio por lo que será muy importante que las condiciones iniciales tengan sentido en el contexto de nuestro problema. En concreto consisitirán en doce caminatas aleatorias autoexcluyentes (una por cada cromosoma) dentro de doce subdivisiones iguales de la esfera del núcleo. De esta forma pretendemos introducir en nuestras simulaciones la separación de la cromatina en territorios cromáticos que se observa experimentalmente y que es consecuencia simplemente de que el estado de la cromatina durante la interfase proviene de la decondensación de los cromosomas en el estado mitótico, que están claramente separados. Esto también hará que debamos repetir cada simulación varias veces para poder promediar sobre las distintas condiciones iniciales, de la misma forma que los datos experimentales suelen obtenerse como el promedio sobre distintas células. Sin embargo veremos que la mayoría de observables no cambian excesivamente con la condición inicial por lo que repetir $8$ veces cada simulación será suficiente. Por otro lado prolongaremos cada simulación hasta que represente $1.2$ s de tiempo real, lo que equivaldrá a más de $3\cdot10^7$ iteraciones del método de Runge-Kutta.
+
+Además de los observables ya presentados en el capítulo \ref{cap:introduction}, $d(s)$ y $P(s)$, calcularemos $\rho(r)$, la densidad de cromatina en función de la distancia al centro del núcleo, y el mapa de contactos como los que se obtienen experimentalmente mediante la técnica Hi-C. Para calcular $\rho(r)$ subdividiremos el núcleo en $64$ bines (coronas esféricas) del mismo volumen y hallaremos la fracción de ese volumen que está ocupada por partículas de cromatina. Para calcular el mapa de contactos detectaremos los contactos entre partículas de la misma forma que para calcular $P(s)$ pero almacenaremos por separado los contactos de cada pareja de partículas en lugar de promediar sobre todas las parejas de partículas con la misma separación a lo largo de la cadena.
 
 \section{Configuración convencional}
 
-Para nuestra primera simulación daremos a estos parámetros unos valores razonables en condiciones normales. \cite{Ikegami2010} afirman en su artículo que los núcleos de C. elegans tienen un radio de aproximadamente $1$ $\mu$m, lo cual significa cvf=0.2 aprox.
+Para nuestra primera simulación daremos a los parámetros libres valores razonables en condiciones normales. Los núcleos de C. elegans tienen un radio de aproximadamente $1$ $\mu$m \cite{Ikegami2010}, lo que significa que la densidad de cromatina promedio dentro del núcleo es $\sim 0.2$. Resulta díficil estimar la cantidad de sitios de unión a la lámina que hay \dots
 
 \begin{figure}
     \centering
