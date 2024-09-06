@@ -66,7 +66,7 @@ El mapa de contactos también nos muestra de forma cristalina la separación de 
 
 \section{Configuración invertida}
 
-La siguiente simulación que hemos decidido hacer es para analizar la función de la lámina (o más bien de las interacciones con la misma) y para reproducir otro tipo de configuración que también se observa en algunas células, MIRAR CUALES Y CITAR. Para ello eliminamos los sitios de unión a la lámina dejando el radio igual.
+Con la siguiente simulación reproduciremos otro tipo de configuración que también se observa en algunas células \cite{Camara2023} y analizaremos la función de la lámina (o mejor dicho de las interacciones con la misma) en la organización de la cromatina pues vamos a eliminar los sitios de unión a la lámina sin variar el radio del núcleo.
 
 \begin{figure}
     \centering
@@ -75,7 +75,9 @@ La siguiente simulación que hemos decidido hacer es para analizar la función d
     \label{fig:vmd_QS_image_i}
 \end{figure}
 
-Vemos que de esta forma a pesar de lo que decían Cook y marenduzzo CITAR cuando se introducen los valores reales de longitud de persistencia en proporciones y densidades realistas las fuerzas entrópicas que favorecen que la heterochromatina se coloque en el exterior no vencen a la atracción que tiene consigo misma y se condensa alejandose de la lámina y ocupando una posición más bien central. Por ello llamaremos a esta configuración invertida.
+Vemos en la figura \ref{fig:vmd_QS_image_i} que de esta forma se obtienen configuraciones que denominaremos invertidas pues las partículas LNDe y LADh se intercambian posiciones. Esta peculiar configuración se observa en las células de los bastones de los animales nocturnos pues la aglomeración de la heterochromatina en un único dominio con una posición central alejada de la lámina reduce la dispersión de la luz que lo atraviesa, mejorando la visión nocturna de estos animales.
+
+A pesar de lo que otros autores habían propuesto \cite{Finan2010} cuando se introducen los valores reales de longitud de persistencia en proporciones y densidades realistas las fuerzas entrópicas que favorecen que la heterochromatina se coloque en el exterior no vencen a la atracción que tiene consigo misma y se condensa alejándose de la lámina y ocupando una posición más bien central.
 
 \begin{figure}
     \centering
@@ -84,7 +86,7 @@ Vemos que de esta forma a pesar de lo que decían Cook y marenduzzo CITAR cuando
     \label{fig:rcd_i}
 \end{figure}
 
-Este resultado se observa también la rcd donde sin embargo también vemos que las barras de error son mucho mayores, es decir, las configuraciones varían mucho más según las condiciones iniciales y fluctuan mucho más en el tiempo. Esto quiere decir que la lámina ayuda a estabilizar la conformación de la cromatina y esta es probablemente una de las razones que ha llevado a la gran mayoría de células a adoptar la configuración convencional. Además en el histograma se ve que, aunque la heterochromatina está claramente separada de la lámina, a la cual se acerca preferentemente la eucromatina como este glóbulo colapsado de LADs no siempre ocupa el centro exacto del núcleo en el centro del histograma la tendencia se invierte. Pero esto no es real y simplemente quiere decir que habría que alargar las simulaciones más para darle tiempo a este glóbulo de LADs de difundirse.
+Este resultado se observa también en la rcd donde sin embargo también vemos que las barras de error son mucho mayores, es decir, las configuraciones varían mucho más según las condiciones iniciales y fluctuan mucho más en el tiempo. Esto quiere decir que la lámina ayuda a estabilizar la conformación de la cromatina y esta es probablemente una de las razones que ha llevado a la gran mayoría de células a adoptar la configuración convencional. Además en el histograma se ve que, aunque la heterochromatina está claramente separada de la lámina, a la cual se acerca preferentemente la eucromatina como este glóbulo colapsado de LADs no siempre ocupa el centro exacto del núcleo en el centro del histograma la tendencia se invierte. Pero esto no es real y simplemente quiere decir que habría que alargar las simulaciones más para darle tiempo a este glóbulo de LADs de difundirse.
 
 En sd en está ocasión obtenemos exactamente lo mismo pero el cromosoma X está un poco más separado probablemente por la sencilla razón de que, como ahora veremos, todos los cromosomas tiene algo más de movilidad. cp también es igual. Por ello no mostramos ninguno de los dos.
 
