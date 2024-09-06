@@ -9,7 +9,7 @@ Además de los observables ya presentados en el capítulo \ref{cap:introduction}
 
 \section{Configuración convencional}
 
-Para nuestra primera simulación daremos a los parámetros libres valores razonables en condiciones normales. Los núcleos de C. elegans tienen un radio de aproximadamente $1$ $\mu$m \cite{Ikegami2010}, lo que significa que la densidad de cromatina promedio dentro del núcleo es $\sim 0.2$. Resulta díficil estimar la cantidad de sitios de unión a la lámina que debería haber ya que está es una descripción muy mesoscópica de la lámina pero como lo habitual es que los LADs puedan adherirse a cualquier parte de la lámina haremos que estos ocupen una fracción elevada de la superficie del núcleo, en concreto $0.4$ (por lo que $N'=5848$) ya que valores superiores son díficiles de alcanzar colocando estos sitios de forma aleatoria y es más que suficiente para que estén repartidos de forma homogénea por toda la superficie.
+Para nuestra primera simulación daremos a los parámetros libres valores razonables en condiciones normales. Los núcleos de C. elegans tienen un radio de aproximadamente $1$ $\mu$m \cite{Ikegami2010}, lo que significa que la densidad de cromatina promedio dentro del núcleo es $\sim 0.2$. Resulta díficil estimar la cantidad de sitios de unión a la lámina que debería haber ya que está es una descripción muy mesoscópica de la lámina pero como lo habitual es que los LADs puedan adherirse a cualquier parte de la lámina haremos que estos ocupen una fracción elevada de la superficie del núcleo. En concreto haremos que esta fracción sea $0.4$ (por lo que $N'=5848$) ya que valores superiores son díficiles de alcanzar colocando estos sitios de forma aleatoria y es más que suficiente para que estén repartidos de forma homogénea por toda la superficie.
 
 \begin{figure}
     \centering
@@ -18,57 +18,49 @@ Para nuestra primera simulación daremos a los parámetros libres valores razona
     \label{fig:vmd_QS_image_c}
 \end{figure}
 
-De esta forma obtenemos configuraciones como la que se puede ver en la figura \ref{fig:vmd_QS_image_c}, que se ha obtenido mediante el programa de visualización de simulaciones moleculares VMD \cite{Humphrey96}. En esta imagen mostramos solo una porción de la cromatina para poder ver la distribución de la misma en el interior del núcleo y, en lugar de representar cada una de las partículas de forma individual, hemos utilizado una forma de representación ``suavizada'' que nos ofrece VMD. En este modo de representación se genera una superficie que rodea a las partículas que se encuentran muy cercanas para facilitar la interpretación visual rápida de las imágenes de este tipo. Además hemos asignado un color distinto a cada tipo de partícula: el rojo a las LADh, el azul a las LNDe y el gris a los sitios de unión a la lámina.
+De esta forma obtenemos configuraciones como la que se puede ver en la figura \ref{fig:vmd_QS_image_c} \footnote{En particular esta imagen representa la última configuración alcanzada en la primera simulación.}, que se ha obtenido mediante el programa de visualización de simulaciones moleculares VMD \cite{Humphrey96}. En esta imagen mostramos solo una porción de la cromatina para poder ver la distribución de la misma en el interior del núcleo y, en lugar de representar cada una de las partículas de forma individual, hemos utilizado una forma de representación ``suavizada'' que nos ofrece VMD. En este modo de representación se genera una superficie que rodea a las partículas que se encuentran muy cercanas para facilitar la interpretación visual rápida de las imágenes de este tipo. Además hemos asignado un color distinto a cada tipo de partícula: el rojo a las LADh, el azul a las LNDe y el gris a los sitios de unión a la lámina.
 
-La imagen corresponde al último frame de la primera condición inicial.
-
-Vemos claramente que en esta ocasión las partículas LADh se colocan en el exterior como se ve experimentalmente en la grandísima mayoría de células.
+Vemos claramente que en esta ocasión las partículas LADh se colocan en el exterior del núcleo, cercanas a la lámina, y las LNDe ocupan el resto del núcleo de forma bastante homogénea. Esta es la configuración que se observa experimentalmente en la grandísima mayoría de células \cite{Camara2023} por lo que la llamaremos la configuración convencional.
 
 \begin{figure}
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/rcd.pdf}
-    \caption{\dots}
+    \caption{Densidad de la cromatina en función de la distancia al centro del núcleo en la configuración convencional.}
     \label{fig:rcd_c}
 \end{figure}
 
-Hay separación de fases como se ve en rcd.
+En la figura \ref{fig:rcd_c} se representa la densidad de la cromatina (tanto la de ambos tipos de partícula por separado como la total) y podemos ver esta separación de fases también de forma muy clara. Podemos apreciar también que, como resultado de las interacciones atractivas de las partículas LADh consigo mismas y con la lámina, la densidad de cromatina (en concreto de partículas LADh) cerca de la lámina es mucho mayor que en el resto del núcleo. Esta es una propiedad que también se observa experimentalmente y que ayuda a reprimir la transcripción de estas partes del genoma pues dificulta la difusión de los factores de transcripción dentro de estas regiones.
 
 \begin{figure}
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/sd.pdf}
-    \caption{\dots}
+    \caption{Distancia (espacial) promedio entre dos monómeros en función de su separación a lo largo de la cadena en la configuración convencional.}
     \label{fig:sd_c}
 \end{figure}
-
-MENCIONAR QUE LA DISTANCIA PROMEDIO ENTRE PUNTOS ALEATORIOS EN UNA ESFERA DE RADIO R ES 36/35 R. NO LLEGA PORQUE EXISTEN TERRITORIOS CROMÁTICOS.
-
-Primero sd escala con 0.7 que es un promedio entre 1 y 0.6, luego en un rango muy pequeño escala con 0.6 y luego con 0.3.
-
-Es decir, el rango en que la descripción de polímero ideal es válida es muy pequeña y en la mayoría de escalas se comporta como un polímero colapsado y, finalmente confinado.
 
 \begin{figure}
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/cp.pdf}
-    \caption{\dots}
+    \caption{Probabilidad de que dos monómeros estén en contacto en función de su separación a lo largo de la cadena en la configuración convencional.}
     \label{fig:cp_c}
 \end{figure}
 
-cp nos cuenta un poco lo mismo, vemos que decae con -2.4, muy cercano al 2.2 predicho por la teoría y luego con -0.9 muy cercano al -1 de un polímero colapsado.
+A continuación en las figuras \ref{fig:sd_c} y \ref{fig:cp_c} podemos ver respectivamente $d(s)$ y $P(s)$, los observables que vamos a emplear para comparar las configuraciones de nuestro modelo de la cromatina con las de los modelos que introdujimos en el capítulo \ref{cap:introduction}. Para analizarlos hemos obtenido el exponente con el que escalan estos observables en diversos rangos de $s$ ajustando las curvas de cada cromosoma a leyes de potencias y promediando los parámetros de estos ajustes sobre todos los cromosomas excepto el X. Este cromosoma, el cromosoma sexual, tiene una proporción de partículas LADh muy inferior a los autosomas, el resto de cromosomas, y por lo tanto no se comporta exactamente de la misma forma (aunque sus exponentes son muy similares).
 
-En estas dos figuras los ajustes los hemos realizado sobre las curvas de todos los cromosomas excepto del X, que al tener una proporción de LADh mucho menor, ver figura secuencia, sigue una tendencia claramente separada.
+En la figura \ref{fig:sd_c} podemos ver que para los valores de $s$ más bajos el exponente de $d(s)$ es $\sim0.7$, algo superior al que se espera de un modelo FJC con volumen excluido ($\sim0.588$), como consecuencia de la longitud de persistencia de las partículas LADh que a estas escalas tan pequeñas es muy relevante. Cuando la longitud de la cadena supera esta longitud de persistencia encontramos una región de valores $s$ en la que el exponente es $\sim0.5$ como en los modelos ideales, pero esta región es muy pequeña por lo que podemos decir que este tipo de modelos no sirven para describir la cromatina excepto en una escala muy concreta. En cambio para un rango bastante grande de valores de $s$ vemo que el exponente es $\sim0.3$ lo que significa que el modelo de ``glóbulo colapsado'' sí que es una descripción más adecuada de la organización de la cromatina. Finalmente, para valores de $s$ cercanos a la longitud total de los cromosomas vemos que $d(s)$ prácticamente se detiene debido a que la cromatina, además, está confinada. Sin embargo, es un resultado conocido de geometría que la distancia promedio entre puntos aleatorios dentro de una esfera de radio $R$ es $(36/35)R$, pero $d(s)$ se detiene aproximadamente en los $0.6$ $\mu$m que es bastante inferior al radio del núcleo. Esto, de nuevo, es una demostración más de los territorios cromáticos, que limitan el volumen disponible a cada cromosoma a una doceava parte del volumen del núcleo, que equivale a una esfera de $\sim0.5$ $\mu$m de radio.
 
-En el cromosoma X los contactos son menos frecuentes y las distancias mayores como es de esperar pero los exponentes son prácticamente los mismos.
+En la figura \ref{fig:cp_c} en cambio distinguimos, de forma bastante clara, solo dos régimenes. En el primero el exponente con el que decae $P(s)$ es $\sim-2.4$, algo inferior al predicho por la teoría para un modelo FJC con volumen excluido, de nuevo debido a la longitud de persistencia de las partículas LADh. En el segundo, que representa un rango muy grande de valores de $s$, observamos que el exponente es $\sim-0.9$, muy similar al que esperaríamos en un ``glóbulo colapsado'', por lo que concluimos otra vez que este es, de los modelos teórico que hemos visto, el que mejor describe la cromatina.
+
+Como anticipábamos en ambos observables (pero especialmente en $P(s)$) se ve que el cromosoma X, debido a que en proporción tiene muchas más partículas LNDe, se comporta de forma distinta a los demás y adopta configuraciones más extendidas por lo que $d(s)$ es mayor y $P(s)$ es menor en este cromosoma.
 
 \begin{figure}
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/cm.pdf}
-    \caption{\dots}
+    \caption{Mapa de contactos en la configuración convencional.}
     \label{fig:cm_c}
 \end{figure}
 
-En el mapa de contactos también se recoge información muy interesante. Vemos primero de todo la clarísima separación en territorios cromáticos que, a pesar de la longitud de la simulación sobrevive y sigue muy marcada. Esto está en concordancia con los experimentos porque, a pesar de que la configuración de equilibrio se ha demostrado teoricamente que no tiene territorios cromáticos, el tiempo que se espera que haga falta para que los polímeros se difundan (empezando por sus extremos) y se mezclen es de siglos y evidentemente los ciclos celulares son mucho más cortos. Es decir que esta es una característica que no necesita ningún mecanismo que la mantenga de forma activa sino que sobrevive por la simple lentitud de la dinámica de un polímero de tal magnitud.
-
-Los mapas de contactos también nos muestran de forma cristalina la separación de fase dentro de cada cromosoma. Una ventaja de haber utilizado la secuencia del c elegans es que esta tiene en todos los autosomas (todos los cromosomas menos el sexual, el X) la heterochromatina se concentra en los extremos de forma que se en el mapa de contactos se genera una cuadrícula 3x3 en las que las esquinas, que corresponden a interacciones LADh-LADh son las más intensas, como es lógico, pero además el cuadrado central, que representa interacciones LNDe-LNDe, es menos intenso que los primeros pero más que los demás, que represntan interacciones cruzadas. Esto es una consecuencia clara de la separación de fases que lleva a las partículas LNDe a interactuar consigo mismas con mayor frecuencia a pesar de no haber introducido una interacción atractiva entre las mismas.
+Finalmente en la figura \ref{fig:cm_c} mostramos el mapa de contactos que también nos aporta información muy interesante. Vemos primero de todo la clarísima separación de los distintos territorios cromáticos que, a pesar de la longitud de la simulación, sigue siendo muy marcada. Esto está en concordancia con los experimentos y con diversos estudios teóricos. A pesar de que la configuración de equilibrio se ha demostrado teóricamente que no tiene territorios cromáticos, el tiempo de relajación del sistema, es decir el tiempo que se espera que haga falta para que los cromosomas se mezclen es de años \cite{Rosa2008} y por supuesto los ciclos celulares son mucho más cortos. Es decir que esta es una característica que no necesita ningún mecanismo que la mantenga de forma activa sino que sobrevive simplemente gracias a la lentitud de la dinámica de los polímeros de estas magnitudes. El mapas de contactos también nos muestran de forma cristalina la separación de fase dentro de cada cromosoma. Una ventaja de haber utilizado la secuencia del c elegans es que en todos los autosomas de esta especie la heterochromatina se concentra en los extremos de forma que en el mapa de contactos de cada cromosoma se genera una especie de cuadrícula $3\times3$ en la que las esquinas, que corresponden a interacciones LADh-LADh, son las más intensas como es lógico, pero además el cuadrado central, que representa interacciones LNDe-LNDe, es menos intenso que las esquinas pero más que el resto de regiones, que representan interacciones cruzadas. Esto es una consecuencia clara de la separación de fases, que lleva a las partículas LNDe a interactuar consigo mismas con mayor frecuencia a pesar de no que exista una interacción atractiva entre las mismas.
 
 \section{Configuración invertida}
 
@@ -101,7 +93,7 @@ En sd en está ocasión obtenemos exactamente lo mismo pero el cromosoma X está
     \label{fig:cm_i}
 \end{figure}
 
-El mapa de contactos, además de reproducir la misma separación de fases que antes, vemos claramente que hay más contactos entre cromosomas distintos, es decir, se están difuminando los territorios cromáticos. Es decir la lámina ayuda a mantenerlos! Y esta es otra razón por la que probablemente la configuración convencional es mucho más común.
+El mapa de contactos, además de reproducir la misma separación de fases que antes, vemos claramente que hay más contactos entre cromosomas distintos, es decir, se están difuminando los territorios cromáticos. Es decir la lámina ayuda a mantenerlos como ya habían observado otros estudios computacionales \cite{Kinney2018} Y esta es otra razón por la que probablemente la configuración convencional es mucho más común.
 
 \section{Longitud de decaimiento}
 
