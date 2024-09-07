@@ -11,7 +11,7 @@ Además de los observables ya presentados en el capítulo \ref{cap:introduction}
 
 Para nuestra primera simulación daremos a los parámetros libres valores razonables en condiciones normales. Los núcleos de C. elegans tienen un radio de aproximadamente $1$ $\mu$m \cite{Ikegami2010}, lo que significa que la densidad de cromatina promedio dentro del núcleo es $\sim 0.2$. Resulta díficil estimar la cantidad de sitios de unión a la lámina que debería haber ya que está es una descripción muy mesoscópica de la lámina pero como lo habitual es que los LADs puedan adherirse a cualquier parte de la lámina haremos que estos ocupen una fracción elevada de la superficie del núcleo. En concreto haremos que esta fracción sea $0.4$ (por lo que $N'=5848$) ya que valores superiores son díficiles de alcanzar colocando estos sitios de forma aleatoria y es más que suficiente para que estén repartidos de forma homogénea por toda la superficie.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Conventional-QS.png}
     \caption{Visualización de una configuración convencional de nuestro modelo de la cromatina.}
@@ -22,7 +22,7 @@ De esta forma obtenemos configuraciones como la que se puede ver en la figura \r
 
 Vemos claramente que en esta ocasión las partículas LADh se colocan en el exterior del núcleo, cercanas a la lámina, y las LNDe ocupan el resto del núcleo de forma bastante homogénea. Esta es la configuración que se observa experimentalmente en la grandísima mayoría de células \cite{Camara2023} por lo que la llamaremos la configuración convencional.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/rcd.pdf}
     \caption{Densidad de la cromatina en función de la distancia al centro del núcleo en la configuración convencional.}
@@ -31,14 +31,14 @@ Vemos claramente que en esta ocasión las partículas LADh se colocan en el exte
 
 En la figura \ref{fig:rcd_c} se representa la densidad de la cromatina (tanto la de ambos tipos de partícula por separado como la total) y podemos ver esta separación de fases también de forma muy clara. Podemos apreciar también que, como resultado de las interacciones atractivas de las partículas LADh consigo mismas y con la lámina, la densidad de cromatina (en concreto de partículas LADh) cerca de la lámina es mucho mayor que en el resto del núcleo. Esta es una propiedad que también se observa experimentalmente y que ayuda a reprimir la transcripción de estas partes del genoma pues dificulta la difusión de los factores de transcripción dentro de estas regiones.
 
-\begin{figure}
+\begin{figure}[p]
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/sd.pdf}
     \caption{Distancia (espacial) promedio entre dos monómeros en función de su separación a lo largo de la cadena en la configuración convencional.}
     \label{fig:sd_c}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[p]
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/cp.pdf}
     \caption{Probabilidad de que dos monómeros estén en contacto en función de su separación a lo largo de la cadena en la configuración convencional.}
@@ -53,7 +53,7 @@ En la figura \ref{fig:cp_c} en cambio distinguimos, de forma bastante clara, sol
 
 Como anticipábamos en ambos observables (pero especialmente en $P(s)$) se ve que el cromosoma X, debido a que en proporción tiene muchas más partículas LNDe, se comporta de forma distinta a los demás y adopta configuraciones más extendidas por lo que $d(s)$ es mayor y $P(s)$ es menor en este cromosoma.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.400-0.000-0.000/cm.pdf}
     \caption{Mapa de contactos en la configuración convencional.}
@@ -68,7 +68,7 @@ El mapa de contactos también nos muestra de forma cristalina la separación de 
 
 Con la siguiente simulación reproduciremos otro tipo de configuración que también se observa en algunas células \cite{Camara2023} y analizaremos la función de la lámina (o mejor dicho de las interacciones con la misma) en la organización de la cromatina pues vamos a eliminar los sitios de unión a la lámina sin variar el radio del núcleo.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Inverted-QS.png}
     \caption{Visualización de una configuración invertida de nuestro modelo de la cromatina.}
@@ -79,7 +79,7 @@ Vemos en la figura \ref{fig:vmd_QS_image_i} que de esta forma se obtienen config
 
 A pesar de lo que otros autores habían propuesto \cite{Finan2010} cuando se introducen los valores reales de longitud de persistencia en proporciones y densidades realistas las fuerzas entrópicas que favorecen que la heterochromatina se coloque en el exterior no vencen a la atracción que tiene consigo misma y se condensa alejándose de la lámina y ocupando una posición más bien central.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.000-0.000-0.000/rcd.pdf}
     \caption{\dots}
@@ -90,7 +90,7 @@ Este resultado se observa también en la rcd donde sin embargo también vemos qu
 
 En sd en está ocasión obtenemos exactamente lo mismo pero el cromosoma X está un poco más separado probablemente por la sencilla razón de que, como ahora veremos, todos los cromosomas tiene algo más de movilidad. cp también es igual. Por ello no mostramos ninguno de los dos.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics{../Plots/Simulations/30386-0.200-0.000-0.000-0.000/cm.pdf}
     \caption{\dots}

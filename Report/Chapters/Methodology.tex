@@ -53,7 +53,7 @@ Aunque hay muchas herramientas para el desarrollo de \textit{software} GPGPU el 
 
 Como anticipamos en el capítulo \ref{cap:introduction} la interacción de volumen excluido será la más costosa computacionalmente y por ello creemos conveniente mostrar el algoritmo que se ha empleado para el cálculo de las fuerzas debidas a la misma. Por simplicidad puede ser tentador implementar esta interacción de forma \textit{naive} calculando las distancias entre todas las parejas de partículas, pero este método es $\mathcal{O}(N^2)$ y hay algoritmos, como el que vamos a ver, cualitativamente mejores. En concreto el que describiremos a continuación se ha adaptado de \cite{Green2010}, donde se dan indicaciones muy útiles para su implementación en CUDA.
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \begin{tikzpicture}[scale=2]
         \draw[color1,fill=color1,fill opacity=0.25] (1.7,1.2) circle (0.5) node [opacity=1] {0};
@@ -78,7 +78,7 @@ Sin embargo para poder hacer esto debemos tener una lista de las partículas que
 
 Todo este proceso se repetirá con cada paso de tiempo y su parte más costosa computacionalmente será la ordenación de la lista A que sin embargo es $\mathcal{O}(N)$ y por lo tanto es mucho más veloz que la implementación \textit{naive} para los valores de $N$ elevados que vamos a utilizar. En la figura \ref{fig:performance} se ve como efectivamente el tiempo de ejecución del programa completo es proporcional a $N$ (más una constante debido a otros factores que impiden tiempos menores con valores de $N$ bajos).
 
-\begin{figure}
+\begin{figure}[t]
     \centering
     \includegraphics{../Plots/performance.pdf}
     \caption{Tiempo de ejecución de un paso de tiempo de la simulación en función del número de partículas en dos GPUs distintas.}
