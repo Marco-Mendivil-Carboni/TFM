@@ -97,7 +97,7 @@ with open(cmfilepath) as cmfile:
 
 # Make analysis plots
 
-plotsdir = Path("Plots") / simdir
+plotsdir = Path("Plots") / simdir.parts[1]
 plotsdir.mkdir(parents=True, exist_ok=True)
 
 fig, ax = plt.subplots(figsize=(14.00 * cm, 8.00 * cm))

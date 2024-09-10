@@ -62,10 +62,10 @@ class simparam:
 
 def simname(sp: simparam) -> str:
     simname = "{:05.0f}".format(sp.N)
-    simname += "-{:05.3f}".format(sp.cvf)
-    simname += "-{:05.3f}".format(sp.laf)
-    simname += "-{:05.3f}".format(sp.brv)
-    simname += "-{:05.3f}".format(sp.ora)
+    simname += "-{:03.1f}".format(sp.cvf)
+    simname += "-{:03.1f}".format(sp.laf)
+    simname += "-{:03.1f}".format(sp.brv)
+    simname += "-{:03.1f}".format(sp.ora)
     return simname
 
 
@@ -80,7 +80,7 @@ def writeparam(simdir: Path, sp: simparam) -> None:
             parfile.write("nucleus_radius {:09.6f}\n".format(sp.R_n))
         if sp.R_o != sp.R_o_def:
             parfile.write("opening_radius {:09.6f}\n".format(sp.R_o))
-        if sp.R_o != sp.R_b_def:
+        if sp.R_b != sp.R_b_def:
             parfile.write("bleb_radius {:09.6f}\n".format(sp.R_b))
         if sp.n_l != sp.n_l_def:
             parfile.write("number_of_lbs {:05.0f}\n".format(sp.n_l))
@@ -134,7 +134,3 @@ def makesim(sp: simparam) -> None:
 makesim(simparam(cvf=0.200, laf=0.400))
 
 makesim(simparam(cvf=0.200, laf=0.000))
-
-makesim(simparam(cvf=0.100, laf=0.400))
-
-makesim(simparam(cvf=0.300, laf=0.400))
