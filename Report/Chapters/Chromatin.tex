@@ -5,7 +5,7 @@
 
 Como ya mencionamos en la introducción la cromatina es el complejo de ADN y proteínas que se encuentra en el núcleo de las células eucariotas. Esta unión se forma con el principal objetivo de concentrar el material genético para que pueda caber dentro del núcleo celular, pero organizar las largas moléculas de ADN en estructuras más densas también ayuda a prevenir que se enreden las distintas hebras, a evitar que se dañe el ADN y a regular tanto la expresión génica como la replicación del ADN.
 
-\begin{figure}[t]
+\begin{figure}[b]
     \centering
     \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Chromatin-Structure.png}
     \caption{Diagrama esquemático de la estructura de la cromatina a distintas escalas \cite{Felsenfeld2003}.}
@@ -32,7 +32,14 @@ Los LADs son regiones de la cromatina que interactúan (con mayor frecuencia) co
 
 La cromatina tiene otras regiones distinguibles como los centrómeros, los telómeros y las NORs (Regiones Organizadoras Nucleolares) que no estudiaremos en detalle ni incorporaremos al modelo ya que constituyen fracciones más pequeñas del genoma que las regiones previamente descritas. Por ejemplo, el nucleolo tiene un radio medio de 0.9 $\mu$m y el núcleo de 2.7 $\mu$m \cite{Milo2009} por lo que las NORs ocupan menos del 4\% del volumen del núcleo a pesar de su función biológica crucial.
 
-Antes de pasar a la descripción del modelo polímerico debemos introducir la técnica Hi-C, que será relevante en el capítulo \ref{cap:results}. Este es uno de los métodos experimentales más utilizados para estudiar la organización tridimensional del genoma en el núcleo celular. Esta técnica permite capturar las interacciones físicas entre las diferentes regiones del ADN (es decir, los contactos), revelando cómo se pliega y organiza dentro del espacio nuclear. En Hi-C, el ADN se fija con formaldehído para preservar las interacciones, se fragmenta y se marcan los extremos de los fragmentos cercanos, que luego se ligan para formar moléculas híbridas representativas de las interacciones espaciales. Estas moléculas se secuencian, y los datos obtenidos se analizan para construir mapas de contactos que muestran la frecuencia con la que interaccionan diferentes partes del genoma.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Hi-C-example.png}
+    \caption{Imágen Hi-C experimental del genoma de la Drosophila \cite{Tolokh2023}.}
+    \label{fig:Hi-C-example}
+\end{figure}
+
+Antes de pasar a la descripción del modelo polímerico debemos introducir la técnica Hi-C, que será relevante en el capítulo \ref{cap:results}. Este es uno de los métodos experimentales más utilizados para estudiar la organización tridimensional del genoma en el núcleo celular. Esta técnica permite capturar las interacciones físicas entre las diferentes regiones del ADN (es decir, los contactos), revelando cómo se pliega y organiza dentro del espacio nuclear. En Hi-C, el ADN se fija con formaldehído para preservar las interacciones, se fragmenta y se marcan los extremos de los fragmentos cercanos, que luego se ligan para formar moléculas híbridas representativas de las interacciones espaciales. Estas moléculas se secuencian, y los datos obtenidos se analizan para construir mapas de contactos (ver figura \ref{fig:Hi-C-example}) que muestran la frecuencia con la que interaccionan diferentes partes del genoma.
 
 \section{Modelo polimérico}
 
@@ -55,7 +62,7 @@ Como podemos asociar los LADs con la heterocromatina y los dominios no asociados
     \item LNDe (B): Dominios No asociados a la Lámina eucromáticos
 \end{enumerate}
 
-A pesar de lo que se pueda pensar en un principio la secuencia exacta de partículas utilizadas en este tipo de modelos no cambia significativamente los resultados \cite{Bajpai2021}, siempre y cuando las propiedades de las secuencias sean similares. No obstante, basaremos la secuencia de nuestro modelo en datos experimentales. Utilizaremos los LADs del genoma del C. elegans \cite{Ho2014,C.elegans1998} para determinar las partículas LADh de nuestro modelo. Hay múltiples buenas razones para usar la secuencia de este organismo en particular: es un organismo modelo, su genoma es especialmente corto y sus cromosomas no tienen heterocromatina constitutiva pericentromérica, la cual incentiva el uso de modelos más complejos con tres tipos de partículas \cite{Falk2019}. En la figura \ref{fig:sequence} se aprecia que efectivamente en este genoma hay una correlación entre las regiones heterocromáticas (que se deducen de la presencia de la modificación H3K9me3) y los LADs, que se concentran en los extremos de cada cromosoma (la cual es una característica peculiar de este organismo pero no alterará los resultados como veremos más adelante). También se ve como las partículas de nuestro modelo son suficientemente pequeñas como para reproducir con gran precisión cada uno de los LADs, que suelen tener tamaños mucho mayores de 6 kb. Por otro lado, dado que las células del nematodo C. elegans (como la mayoría de células eucariotas) son diploides, dentro del núcleo colocaremos dos copias de cada uno de estos cromosomas, lo que hace un total de 12 cromosomas, y los observables que calcularemos estarán promediados sobre cada una de estas dos copias.
+A pesar de lo que se pueda pensar en un principio la secuencia exacta de partículas utilizadas en este tipo de modelos no cambia significativamente los resultados \cite{Bajpai2021}, siempre y cuando las propiedades de las secuencias (como por ejemplo la longitud promedio de los dominios) sean similares. No obstante, basaremos la secuencia de nuestro modelo en datos experimentales. Utilizaremos los LADs del genoma del C. elegans \cite{Ho2014,C.elegans1998} para determinar las partículas LADh de nuestro modelo. Hay múltiples buenas razones para usar la secuencia de este organismo en particular: es un organismo modelo, su genoma es especialmente corto y sus cromosomas no tienen heterocromatina constitutiva pericentromérica, la cual incentiva el uso de modelos más complejos con tres tipos de partículas \cite{Falk2019}. En la figura \ref{fig:sequence} se aprecia que efectivamente en este genoma hay una correlación entre las regiones heterocromáticas (que se deducen de la presencia de la modificación H3K9me3) y los LADs, que se concentran en los extremos de cada cromosoma (la cual es una característica peculiar de este organismo pero no alterará los resultados como veremos más adelante). También se ve como las partículas de nuestro modelo son suficientemente pequeñas como para reproducir con gran precisión cada uno de los LADs, que suelen tener tamaños mucho mayores de 6 kb. Por otro lado, dado que las células del nematodo C. elegans (como la mayoría de células eucariotas) son diploides, dentro del núcleo colocaremos dos copias de cada uno de estos cromosomas, lo que hace un total de 12 cromosomas, y los observables que calcularemos estarán promediados sobre cada una de estas dos copias.
 
 Por otra parte, la heterocromatina tiene una longitud de persistencia de $\sim200$ nm \cite{Bystricky2004} lo que en nuestro modelo se traduce en $k_b=6$. Sin embargo, como la heterocromatina sólo representa $\sim$ el $8\%$ de toda la secuencia y pertenece en la mayoría de los casos a algún LAD (que representan casi la mitad de la secuencia) promediaremos la longitud de persistencia dentro de los LADs y haremos que las partículas LADh tengan $k_b=1$. Mientras que la eucromatina prácticamente no tiene longitud de persistencia a esta escala por lo que las partículas LNDe tendrán $k_b=0$.
 
@@ -71,7 +78,7 @@ Con todo esto en mente tenemos un modelo muy idealizado pero relativamente compl
     \item El número de sitios de unión a la lámina ($N'$).
 \end{enumerate}
 
-\begin{table}
+\begin{table}[t]
     \centering
     \begin{tabular}{c c c}
         \toprule

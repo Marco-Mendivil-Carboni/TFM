@@ -3,7 +3,7 @@
 
 Para estudiar el modelo de cromatina que hemos presentado en el capítulo \ref{cap:chromatin} realizaremos simulaciones en diversas condiciones variando el radio del núcleo y el número de sitios de unión a la lámina pero antes de mostrar los resultados de las mismas debemos explicar las condiciones iniciales que hemos utilizado y presentar los observables que nos ayudarán a caracterizar la configuración de la cromatina.
 
-La condición inicial no altera los resultados de una simulación de dinámica molecular si se alcanza el equilibrio pero pronto veremos que el núcleo celular no se encuentra en el equilibrio por lo que será muy importante que las condiciones iniciales tengan sentido en el contexto de nuestro problema. En concreto consisitirán en doce caminatas aleatorias autoexcluyentes (una por cada cromosoma) dentro de doce subdivisiones iguales de la esfera del núcleo. De esta forma pretendemos introducir en nuestras simulaciones la separación de la cromatina en territorios cromáticos que se observa experimentalmente y que es consecuencia simplemente de que el estado de la cromatina durante la interfase proviene de la decondensación de los cromosomas en el estado mitótico, que están claramente separados. Esto también hará que debamos repetir cada simulación varias veces para poder promediar sobre las distintas condiciones iniciales, de la misma forma que los datos experimentales suelen obtenerse como el promedio sobre distintas células. Sin embargo veremos que la mayoría de observables no cambian excesivamente con la condición inicial por lo que repetir $8$ veces cada simulación será suficiente. Por otro lado prolongaremos cada simulación hasta que represente $1.2$ s de tiempo real, lo que equivaldrá a más de $3\cdot10^7$ iteraciones del método de Runge-Kutta.
+La condición inicial no altera los resultados de una simulación de dinámica molecular si se alcanza el equilibrio. Sin embargo, pronto veremos que el núcleo celular no se encuentra en el equilibrio por lo que será muy importante que las condiciones iniciales tengan sentido en el contexto de nuestro problema. En concreto consisitirán en doce caminatas aleatorias autoexcluyentes (una por cada cromosoma) dentro de doce subdivisiones iguales de la esfera del núcleo. De esta forma pretendemos introducir en nuestras simulaciones la separación de la cromatina en territorios cromáticos que se observa experimentalmente y que es consecuencia simplemente de que el estado de la cromatina durante la interfase proviene de la decondensación de los cromosomas en el estado mitótico, que están claramente separados. Esto también hará que debamos repetir cada simulación varias veces para poder promediar sobre las distintas condiciones iniciales, de la misma forma que los datos experimentales suelen obtenerse como el promedio sobre distintas células. Sin embargo veremos que la mayoría de observables no cambian excesivamente con la condición inicial por lo que repetir $8$ veces cada simulación será suficiente. Por otro lado prolongaremos cada simulación hasta que represente $1.2$ s de tiempo real, lo que equivaldrá a más de $3\cdot10^7$ iteraciones del método de Runge-Kutta.
 
 Además de los observables ya presentados en el capítulo \ref{cap:introduction}, $d(s)$ y $P(s)$, calcularemos $\rho(r)$, la densidad de cromatina en función de la distancia al centro del núcleo, y $P(i,j)$, el mapa de contactos (como el que se obtiene experimentalmente mediante la técnica Hi-C). Para calcular $\rho(r)$ subdividiremos el núcleo en $64$ bines (coronas esféricas) del mismo volumen y hallaremos la fracción de ese volumen que está ocupada por partículas de cromatina. Para calcular el mapa de contactos detectaremos los contactos entre partículas de la misma forma que para calcular $P(s)$ pero almacenaremos por separado los contactos de cada pareja de partículas en lugar de promediar sobre todas las parejas de partículas con la misma separación a lo largo de la cadena.
 
@@ -14,7 +14,7 @@ Para nuestra primera simulación daremos a los parámetros libres valores razona
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Conventional-QS.png}
-    \caption{Visualización de una configuración convencional de nuestro modelo de la cromatina.}
+    \caption{Visualización de un corte ecuatorial de la configuración convencional de nuestro modelo de la cromatina.}
     \label{fig:vmd_QS_image_c}
 \end{figure}
 
@@ -25,7 +25,7 @@ Vemos claramente que en esta ocasión las partículas LADh se colocan en el exte
 \begin{figure}[t]
     \centering
     \includegraphics{../Plots/30386-0.2-0.4-0.0-0.0/rcd.pdf}
-    \caption{Densidad de la cromatina en función de la distancia al centro del núcleo en la configuración convencional. En este figura y las siguientes indicaremos el intervalo de confianza de nuestros resultados mediante una región sombreada.}
+    \caption{Densidad de la cromatina en función de la distancia al centro del núcleo en la configuración convencional. En este figura indicamos el intervalo de confianza de los resultados mediante una región sombreada.}
     \label{fig:rcd_c}
 \end{figure}
 
@@ -68,18 +68,25 @@ El mapa de contactos también nos muestra de forma cristalina la separación de 
 
 Con la siguiente simulación reproduciremos otro tipo de configuración que también se observa en algunas células\footnote{Las células del C. elegans en concreto no adoptan esta configuración pero consideramos que nuestro modelo es suficientemente general como para describir también la organización de otros genomas.} y analizaremos la función de la lámina (o mejor dicho de las interacciones con la misma) en la organización de la cromatina pues vamos a eliminar los sitios de unión a la lámina sin variar el radio del núcleo.
 
-\begin{figure}[p]
+\begin{figure}[t]
     \centering
     \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Inverted-QS.png}
-    \caption{Visualización de una configuración invertida de nuestro modelo de la cromatina.}
+    \caption{Visualización de un corte ecuatorial de la configuración invertida de nuestro modelo de la cromatina.}
     \label{fig:vmd_QS_image_i}
 \end{figure}
 
 \begin{figure}[p]
     \centering
     \includegraphics{../Plots/30386-0.2-0.0-0.0-0.0/rcd.pdf}
-    \caption{Densidad de la cromatina en función de la distancia al centro del núcleo en la configuración invertida.}
+    \caption{Densidad de la cromatina en función de la distancia al centro del núcleo en la configuración invertida. En este figura indicamos el intervalo de confianza de los resultados mediante una región sombreada.}
     \label{fig:rcd_i}
+\end{figure}
+
+\begin{figure}[p]
+    \centering
+    \includegraphics{../Plots/30386-0.2-0.0-0.0-0.0/cm.pdf}
+    \caption{Mapa de contactos en la configuración invertida.}
+    \label{fig:cm_i}
 \end{figure}
 
 Vemos en la figura \ref{fig:vmd_QS_image_i} que de esta forma se obtienen configuraciones que denominaremos invertidas pues las partículas LNDe y LADh se intercambian posiciones. Esta peculiar configuración se observa en las células de los bastones de los animales nocturnos pues la aglomeración de la heterocromatina en un único dominio con una posición central alejada de la lámina reduce la dispersión de la luz que lo atraviesa, mejorando la visión nocturna de estos animales \cite{Camara2023}.
@@ -87,13 +94,6 @@ Vemos en la figura \ref{fig:vmd_QS_image_i} que de esta forma se obtienen config
 En la figura \ref{fig:rcd_i}, donde representamos $\rho(r)$, también observamos que se han invertido las posiciones típicas de ambos tipos de partículas. Sin embargo, también vemos que hay mucho más ruido y las barras de error son mucho mayores, es decir, que las configuraciones obtenidas varían mucho más con las condiciones iniciales y fluctuan mucho más en el tiempo. Esto significa que la lámina ayuda a estabilizar la organización de la cromatina. Esta estabilidad es probablemente una de las múltiples razones por las que en la gran mayoría de células la cromatina interacciona con la lámina y adopta la configuración convencional. También debemos resaltar que en esta gráfica parecería que las partículas LADh, aunque están claramente separadas de la lámina (a la cual se acercan preferentemente las partículas LNDe), no ocupan el centro exacto del núcleo. Sin embargo, la gran incertidumbre en los valores de $\rho(r)$ cerca del centro nos indica que falta estadística y lo más esperable es que, prolongando las simulaciones de forma que este único dominio de partículas LADh tenga más tiempo de difundirse, vieramos que la densidad de este tipo de partículas desciende monótonamente con $r$.
 
 Estos resultados nos indican que la lámina es indispensable para que la cromatina se organice de la forma convencional. Existen fuerzas entrópicas que favorecen que la heterocromatina se coloque cerca de la pared del núcleo \cite{Finan2010}, pero cuando se tiene en cuenta la atracción que tiene la heterocromatina consigo misma y se utilizan valores realistas de su longitud de persistencia, la proporción de ambos tipos de cromatina y el radio del núcleo, estas no son suficientemente fuertes y como hemos visto se obtienen configuraciones invertidas.
-
-\begin{figure}[t]
-    \centering
-    \includegraphics{../Plots/30386-0.2-0.0-0.0-0.0/cm.pdf}
-    \caption{Mapa de contactos en la configuración invertida.}
-    \label{fig:cm_i}
-\end{figure}
 
 Por otro lado los observables $d(s)$ y $P(s)$ apenas cambian con respecto a la configuración convencional, por lo que no mostraremos las gráficas de estos dos observables en esta ocasión. La única diferencia que se puede apreciar es que el cromosoma X está algo más extendido, es decir, que en comparación $d(s)$ es algo mayor y $P(s)$ es algo menor, probablemente por la sencilla razón de que como veremos a continuación todos los cromosomas tienen algo más de movilidad.
 
