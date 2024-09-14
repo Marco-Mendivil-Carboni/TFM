@@ -18,6 +18,7 @@
 \usepackage{pdfpc}
 
 \usetheme{CambridgeUS}
+
 \usecolortheme{seahorse}
 
 \definecolor{color1}{HTML}{d81e2c}
@@ -56,27 +57,35 @@
 
 \frame{\titlepage}
 
-\pdfpcnote{Resumen del contenido del trabajo}
-
 \begin{frame}{Índice}
     \tableofcontents
 \end{frame}
-
-\pdfpcnote{...}
 
 \section{Introducción}
 
 \subsection{Motivación y objetivos}
 
-\pdfpcnote{...}
-
 \begin{frame}
-    \dots
+    \begin{block}{Motivación}
+        \begin{itemize}
+            \item La cromatina, el complejo de \alert{ADN y proteínas} que constituye el material génetico del núcleo celular, es un ejemplo paradigmático de \alert{sistema complejo}.
+            \item Este sistema tiene un \alert{interés biológico} inmenso.
+        \end{itemize}
+    \end{block}
+    \begin{block}{Objetivos}
+        Desarrollo de un \alert{modelo} de la cromatina que nos permita, mediante simulaciones numéricas, reproducir las \alert{distribuciones espaciales} de la misma que se observan experimentalmente. Para ello:
+        \begin{itemize}
+            \item Estudiaremos las propiedades más importantes de la cromatina y diseñaremos un modelo de la misma.
+            \item Detallaremos los aspectos más importantes de la metodología.
+            \item Mostraremos finalmente los resultados de las simulaciones.
+            \item Valoraremos si hemos cumplido con el objetivo.
+        \end{itemize}
+    \end{block}
 \end{frame}
 
 \subsection{La física de polímeros}
 
-\begin{frame}
+\begin{frame}{Modelos ideales}
     \begin{figure}
         \centering
         \begin{tikzpicture}[scale=1.5]
@@ -102,6 +111,54 @@
             \draw[black,semithick,fill] (+3.8,+1.6) circle (1pt) node[anchor=south]{$O$};
         \end{tikzpicture}
     \end{figure}
+    \begin{block}{Distancia (espacial) promedio}
+        \begin{equation}
+            d(s)\propto s^{1/2}
+        \end{equation}
+    \end{block}
+    \begin{block}{Probabilidad de contacto}
+        \begin{equation}
+            P(s)\propto s^{-3/2}
+        \end{equation}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Elasticidad}
+        \begin{equation}
+            V_e=\sum_{i=1}^{N-1}\frac{1}{2}k_e(l_i-l_0)^2
+        \end{equation}
+    \end{block}
+    \begin{block}{Flexibilidad}
+        \begin{equation}
+            V_b=\sum_{i=1}^{N-2} k_b (1-\cos(\theta_i))
+        \end{equation}
+    \end{block}
+    \begin{block}{Longitud de persistencia}
+        \begin{equation}
+            l_P=-\frac{l_0}{\ln(\coth(\beta k_b)-1/(\beta k_b))}\approx\beta k_bl_0
+        \end{equation}
+    \end{block}
+    Para $s\ll l_P/l_0$ $d(s)\propto s^{1}$ y $P(s)\propto s^{-3}$.
+\end{frame}
+
+\begin{frame}{Modelos reales}
+    \begin{block}{Potencial de Wang-Frenkel}
+        \begin{equation}
+            V_{WF}=\sum_{i=0}^{N-1}\sum_{j=i+1}^{N-1}\varepsilon\left(\left(\frac{\sigma}{d_{ij}}\right)^{2}-1\right)\left(\left(\frac{2\sigma}{d_{ij}}\right)^{2}-1\right)^{2}
+        \end{equation}
+    \end{block}
+    \begin{block}{Interacción puramente repulsivas}
+        \begin{equation}
+            d(s)\propto s^{\nu}  \quad \text{y} \quad P(s)\propto s^{-\nu(3+\theta)}
+        \end{equation}
+        donde $\nu\simeq0.588$ y $\theta\simeq0.71$ luego $\nu(3+\theta)\simeq2.2$.
+    \end{block}
+    \begin{block}{Interacción atractiva}
+        \begin{equation}
+            d(s)\propto s^{1/3}  \quad \text{y} \quad P(s)\propto s^{-1}.
+        \end{equation}
+    \end{block}
 \end{frame}
 
 \section{La cromatina}
@@ -109,6 +166,7 @@
 \subsection{Propiedades biofísicas}
 
 \begin{frame}
+    La unión del ADN con las proteínas se forma con el principal objetivo de \alert{concentrar} el material genético para que pueda caber dentro del núcleo celular.
     \begin{figure}
         \centering
         \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Chromatin-Structure.png}
@@ -129,6 +187,10 @@
         \centering
         \includegraphics[scale=0.75]{../Plots/sequence.pdf}
     \end{figure}
+    \begin{enumerate}
+        \item LADh (A): Dominios Asociados a la Lámina heterocromáticos
+        \item LNDe (B): Dominios No asociados a la Lámina eucromáticos
+    \end{enumerate}
 \end{frame}
 
 \begin{frame}
@@ -256,14 +318,14 @@
 \begin{frame}
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/decay-length.png}
+        \includegraphics[width=1.00\textwidth]{../Multimedia/Images/decay-length.png}
     \end{figure}
 \end{frame}
 
 \begin{frame}
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/bleb.png}
+        \includegraphics[width=0.75\textwidth]{../Multimedia/Images/bleb.png}
     \end{figure}
 \end{frame}
 
