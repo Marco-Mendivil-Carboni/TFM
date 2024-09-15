@@ -16,7 +16,6 @@
 \usepackage{booktabs}
 
 \usetheme{CambridgeUS}
-
 \usecolortheme{seahorse}
 
 \definecolor{color1}{HTML}{d81e2c}
@@ -272,13 +271,43 @@
 \subsection{Dinámica Molecular}
 
 \begin{frame}
-    \dots
+    \begin{block}{Ecuación de Langevin}
+        \begin{equation}
+            m_i\frac{d^2\bar{r}_i}{dt^2}=-\xi_i\frac{d\bar{r}_i}{dt}-\bar{\nabla}_iV\left(\{\bar{r}_j\}\right)+\bar{\zeta}_i(t)
+        \end{equation}
+        donde
+        \begin{equation}
+            \langle \zeta_i^\alpha(t) \rangle=0 \quad \text{y} \quad \langle \zeta_i^\alpha(t)\zeta_j^\beta(t') \rangle=2\xi_ik_BT\delta_{ij}\delta_{\alpha\beta}\delta(t-t')
+        \end{equation}
+        y $\xi=3\pi\eta d=0.28$ pg/$\mu$s
+    \end{block}
+    \begin{block}{Dinámica Browniana}
+        $\text{Re}=\rho v_ul_u/\eta=1.7\cdot 10^{-5}$ luego
+        \begin{equation}
+            \xi_i\frac{d\bar{r}_i}{dt}=-\bar{\nabla}_iV\left(\{\bar{r}_j\}\right)+\bar{\zeta}_i(t)
+        \end{equation}
+    \end{block}
+    \note[item]{En este trabajo realizaremos concretamente simulaciones de dinámica molecular, que son aquellas en las que se resuelven numéricamente las ecuaciones del movimiento clásicas.}
+    \note[item]{En la ecuación $m_i$ es la masa de la partícula $i$, $\xi_i$ es su coeficiente cinético y $\bar{\zeta}_i(t)$ es la fuerza aleatoria sobre ella.}
+    \note[item]{Pero además la cromatina está inmersa en un solvente, el agua, que tiene efectos importantes sobre el comportamiento del soluto. La forma más sencilla de incorporar sus efectos es la dinámica de Langevin, que consiste simplemente en añadir a las ecuaciones del movimiento de la dinámica molecular una fuerza de fricción proporcional a la velocidad y una fuerza aleatoria que representa el efecto de estas colisiones.}
+    \note[item]{Para estimar el valor de $\xi$ nos valdremos de la fórmula de Stokes, donde $\eta$ es la viscosidad del agua y $d$ el diámetro de la partícula (en nuestro caso $\sigma$). Esto significa que estamos en el régimen de bajo número de Reynolds y en la dinámica dominan los efectos disipativos frente a los inerciales.}
 \end{frame}
 
 \subsection{Programación en GPUs}
 
 \begin{frame}
-    \dots
+    \begin{itemize}
+        \item Las \alert{GPUs} son procesadores diseñados para la generación de gráficos 3D pero dadas sus características también son muy apropiadas para propósitos científicos como la realización de \alert{simulaciones}.
+        \item La característica de las GPUs (además de su precio) que las hace tan atractivas para estas aplicaciones es su gran \alert{paralelismo}.
+        \item Aunque hay muchas herramientas para el desarrollo de este \textit{software} el estándar es \alert{CUDA} (\textit{Compute Unified Device Architecture}): una plataforma de computación en paralelo creada por NVIDIA que permite ejecutar en GPUs de esta empresa programas escritos utilizando CUDA C, una variación del \alert{lenguaje C}.
+    \end{itemize}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/NVIDIA.png}
+    \end{figure}
+    \note[item]{Este simulaciones tendrán una gran cantidad de partículas ($30386$) y por lo tanto serán muy costosas computacionalmente, lo cual hasta hace poco había impedido estudiar el núcleo celular completo mediante simulaciones numéricas. Por esta razón es necesario aprovechar al máximo la potencia de cálculo del \textit{hardware} del que disponemos.}
+    \note[item]{Las simulaciones de dinámica molecular se pueden beneficiar en gran medida del paralelismo ya que, en cada iteración, para hallar las nuevas coordenadas de una cierta partícula no necesitamos las nuevas coordenadas del resto, solo las viejas.}
+    \note[item]{Con un programa paralelo de simulación en una GPU podemos actualizar a la vez las coordenadas de una gran cantidad de partículas (aunque quizás no todas) ahorrando un tiempo de cálculo considerable.}
 \end{frame}
 
 \subsection{Cálculo del volumen excluido}
@@ -298,24 +327,39 @@
             \draw[latex-latex,color1,semithick,dashed] (0.5,0.0) -- (0.5,1.0) node[midway,right] {$2\sigma$};
         \end{tikzpicture}
     \end{figure}
+    \begin{enumerate}
+        \item A = [(0,5), (1,10), (2,10), (3,8), (4,10), (5,8)]
+        \item A = [(0,5), (3,8), (5,8), (1,10), (2,10), (4,10)]
+        \item B = [(0,0), (0,0), (0,0), (0,0), (0,0), (0,1), (1,1), (1,1), (1,3), (3,3), (3,6), (6,6), (6,6), (6,6), (6,6), (6,6)]
+    \end{enumerate}
+    \note[item]{Como la interacción de volumen excluido será la más costosa computacionalmente creemos conveniente mostrar el algoritmo que se ha empleado para el cálculo de las fuerzas debidas a la misma.}
+    \note[item]{La idea clave detrás del algoritmo que vamos a utilizar es que se puede acelerar mucho la búsqueda de las partículas vecinas subdividiendo el espacio de simulación. En concreto utilizaremos una malla uniforme, es decir, subdividiremos el espacio de simulación en celdas del mismo tamaño.}
+    \note[item]{Utilizaremos una malla en la que el tamaño de las celdas es $2\sigma$, el radio de corte del potencial de Wang-Frenkel atractivo, de forma que para calcular las fuerzas sobre una partícula solo deberemos calcular la distancia con las partículas que se encuentran en las 27 celdas vecinas, en lugar de todas las partículas de la simulación.}
+    \note[item]{Para ilustrar el proceso con el que generaremos la lista de las partículas que hay en cada celda consideremos el caso sencillo en que se representa en la figura. Empezaremos por crear una lista A de tuplas que contengan los índices de cada partícula y los índices de la celda en la que se encuentran. A continuación ordenaremos esta lista en función del índice de la celda. Finalmente recorreremos esta lista y almacenaremos en otra lista B el principio y final de cada celda en la lista A ordenada.}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Rendimiento}
     \begin{figure}
         \centering
         \includegraphics[scale=0.75]{../Plots/performance.pdf}
     \end{figure}
+    \note[item]{Todo este proceso se repetirá con cada paso de tiempo y su parte más costosa computacionalmente será la ordenación de la lista A que sin embargo es $\mathcal{O}(N)$ y por lo tanto es mucho más veloz que la implementación \textit{naive} (que sería $\mathcal{O}(N^2)$)para los valores de $N$ elevados que vamos a utilizar. En la figura se ve como efectivamente el tiempo de ejecución del programa completo es proporcional a $N$ (más una constante debido a otros factores que impiden tiempos menores con valores de $N$ bajos).}
 \end{frame}
 
 \section{Resultados: organización espacial}
 
 \subsection{Configuración convencional}
 
-\begin{frame}
+\begin{frame}{Visualización de un corte ecuatorial}
     \begin{figure}
         \centering
         \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Conventional-QS.png}
     \end{figure}
+    Hemos asignado un color distinto a cada tipo de partícula: el rojo a las LADh, el azul a las LNDe y el gris a los sitios de unión a la lámina.
+    \note[item]{Para estudiar el modelo de cromatina que hemos desarrollado realizaremos simulaciones en diversas condiciones variando el radio del núcleo y el número de sitios de unión a la lámina.}
+    \note[item]{Además de los observables ya presentados anteriormente, $d(s)$ y $P(s)$, calcularemos $\rho(r)$, la densidad de cromatina en función de la distancia al centro del núcleo, y $P(i,j)$, el mapa de contactos (como el que se obtiene experimentalmente mediante la técnica Hi-C).}
+    \note[item]{Para nuestra primera simulación daremos a los parámetros libres valores razonables en condiciones normales. Los núcleos de C. elegans tienen un radio de aproximadamente $1$ $\mu$m luego la densidad de cromatina promedio dentro del núcleo es $\sim 0.2$. Como lo habitual es que los LADs puedan adherirse a cualquier parte de la lámina haremos que estos ocupen una fracción lo más elevada posible de la superficie del núcleo.}
+    \note[item]{De esta forma obtenemos configuraciones como la que se puede ver en esta figura. Vemos claramente que en esta ocasión las partículas LADh se colocan en el exterior del núcleo, cercanas a la lámina, y las LNDe ocupan el resto del núcleo de forma bastante homogénea. Esta es la configuración que se observa experimentalmente en la grandísima mayoría de células por lo que la llamaremos la configuración ``convencional''.}
 \end{frame}
 
 \begin{frame}
