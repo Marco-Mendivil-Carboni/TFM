@@ -80,6 +80,9 @@
             \item Valoraremos si hemos cumplido con el objetivo.
         \end{itemize}
     \end{block}
+    \note[item]{En el último siglo se ha tendido a diseccionar los sistemas biológicos en sus partes constituyentes más simples para facilitar su entendimiento, de forma similar a como se ha hecho en física. Esta estrategia reduccionista ha sido muy exitosa: ha impulsado el desarrollo de la biología molecular y sus resultados, como el descubrimiento de la estructura del ADN, han sido fundamentales para alcanzar la comprensión actual de los mecanismos de la vida.}
+    \note[item]{Pero ahora son cada vez más patentes las limitaciones de esta forma de estudiar los seres vivos y, de nuevo como en la física, se está empezando a poner el foco en la complejidad de estos sistemas para intentar comprender sus propiedades emergentes.}
+    \note[item]{Este sistema tiene un interés biológico inmenso pues la organización de la cromatina dentro del núcleo influye en muchos procesos biológicos, como la transcripción del ADN o la división celular.}
 \end{frame}
 
 \subsection{La física de polímeros}
@@ -120,6 +123,11 @@
             P(s)\propto s^{-3/2}
         \end{equation}
     \end{block}
+    \note[item]{Como veremos en detalle en el siguiente capítulo la cromatina a nivel biofísico es, ante todo, un polímero y por ello es indispensable hacer una breve introducción a la física de estas macromoléculas antes de adentrarnos en su modelización.}
+    \note[item]{Aquí consideraremos que un polímero es sencillamente una colección de $N$ ``partículas'' con posiciones $\{\bar{r}_i\}$, unidas sucesivamente, en un medio a temperatura $T$.}
+    \note[item]{A pesar de su sencillez, su elevado número de grados de libertad y las ligaduras entre los mismos hace que el espacio de configuraciones de un polímero sea muy extenso y complejo.}
+    \note[item]{Obligatoriamente tenemos que empezar por los llamados modelos ``ideales'', que son aquellos en los que no se tienen en cuenta las interacciones entre monómeros muy separados a lo largo de la cadena (¡aunque estén cerca en el espacio!) y el primero de ellos es el \textit{freely-jointed chain} (FJC). En este modelo no hay interacción alguna entre los monómeros de la cadena, que están unidos por enlaces $\bar{b}_i=\bar{r}_{i+1}-\bar{r}_i$ de longitud fija $l_0$.}
+    \note[item]{Aunque visualmente se puedan analizar de forma cualitativa, para caracterizar los distintos modelos cuantitativamente deberemos introducir algunos observables.}
 \end{frame}
 
 \begin{frame}
@@ -139,6 +147,9 @@
         \end{equation}
     \end{block}
     Para $s\ll l_P/l_0$ $d(s)\propto s^{1}$ y $P(s)\propto s^{-3}$.
+    \note[item]{Sin embargo, considerar que los enlaces son completamente rígidos es muy idealizado e introduce ligaduras en el modelo que complican su simulación. Por ello es mucho más conveniente y común considerar que los enlaces son extensibles uniendo los monómeros mediante un potencial suave, normalmente un potencial armónico.}
+    \note[item]{Además, las configuraciones de este modelo FJC extensibl en condiciones normales son análogas a las de un modelo FJC con enlaces rígidos de longitud $\langle l \rangle=l_0(1+2/(1+\beta k_e l_0^2))$ (donde $\beta=1/k_BT$ y $k_B$ es la constante de Boltzmann) por lo que, especialmente si $k_e$ es elevada, supone una modificación muy pequeña.}
+    \note[item]{El siguiente es el modelo de Kratky-Porod o \textit{worm-like chain} discreto (WLC), una evolución del anterior con la que podemos describir polímeros semi-flexibles donde existe una correlación entre las direcciones de enlaces consecutivos.}
 \end{frame}
 
 \begin{frame}{Modelos reales}
@@ -158,6 +169,10 @@
             d(s)\propto s^{1/3}  \quad \text{y} \quad P(s)\propto s^{-1}.
         \end{equation}
     \end{block}
+    \note[item]{Los modelos que sí que pertenecen a otra clase y tienen leyes de escala con exponentes distintos son los que tienen en cuenta las interacciones entre monómeros muy alejados a lo largo de la cadena. Estas interacciones evidentemente existen en la realidad y son esenciales para describir el comportamiento de muchos polímeros reales, incluyendo por supuesto la cromatina.}
+    \note[item]{En particular, siempre existirá al menos una fuerza repulsiva que impida que dos monómeros cualesquiera se superpongan, la llamada interacción de volumen excluido. Para introducirla a nuestro modelo añadiremos, de la multitud de potenciales posibles, un potencial de Wang-Frenkel solo repulsivo.}
+    \note[item]{También pueden existir interacciones atractivas entre los monómeros, que de hecho serán muy importantes en la cromatina. Podemos añadir muy fácilmente interacciones de este tipo aumentando el radio de corte del potencial de Wang-Frenkel de modo que tenga la forma de la ecuación anterior para $d_{ij}\leq2\sigma$ y sea $0$ de otro modo.}
+    \note[item]{En este caso obtendremos (si $\varepsilon$ es suficientemente grande en comparación con $k_BT$) configuraciones que se llaman de ``glóbulo colapsado'' en las que el polímero ocupa el mínimo espacio posible.}
 \end{frame}
 
 \section{La cromatina}
@@ -174,49 +189,82 @@
         \centering
         \includegraphics[width=0.4\textwidth]{../Multimedia/Images/Chromatin-Structure.png}
     \end{figure}
+    \note[item]{En cada nucleosoma se enrollan $\sim150$ pares de bases y entre un nucleosoma y otro hay $\sim50$ pares de bases de ADN \textit{linker} (al cual se asocia la histona H1 que ayuda a estabilizar la estructura) por lo que se suele considerar que hay un nucleosoma cada $\sim200$ pares de bases.}
+    \note[item]{Aunque la geometría exacta de esta estructura está a debate hay unos 11 nucleosomas por cada 11 nm de la fibra, que tiene más exactamente 33 nm de ancho. Pero no toda la cromatina se encuentra en este estado tan compacto, la gran mayoría no tiene una estructura rígida por encima de la escala del nucleosoma.}
 \end{frame}
 
-\begin{frame}
-    \dots
-    \note{\dots}
+\begin{frame}{La heterogeneidad de la cromatina}
+    \begin{itemize}
+        \item Este diferente nivel de compactación nos permite distinguir dos tipos de cromatina: la \alert{heterocromatina}, más compacta, y la \alert{eucromatina}, menos compacta.
+        \item Este distinto nivel de compactación también se relaciona con una \alert{distinta actividad transcripcional}.
+        \item También se pueden distinguir dos tipos de heterocromatina: la \alert{constitutiva} y la \alert{facultativa}.
+        \item Los \alert{TADs} son regiones del genoma que interaccionan preferentemente consigo mismas, formando dominios estructurales dentro de la cromatina que se mantienen relativamente independientes de otras regiones.
+        \item Los \alert{LADs} son regiones de la cromatina que interactúan (con mayor frecuencia) con la \alert{lámina} nuclear, una red de proteínas ubicada en la parte interior de la envoltura nuclear en la que está confinada la cromatina.
+    \end{itemize}
+    \note[item]{A menudo las histonas sufren además diversas modificaciones postraduccionales (es decir, cambios químicos ocurridos después de su síntesis por los ribosomas). Estas modificaciones se relacionan con varias propiedades de la cromatina, como por ejemplo la tri-metilación de la novena lisina de la histona H3 que se asocia con frecuencia con la heterocromatina.}
+    \note[item]{La eucromatina, que es menos compacta, es más accesible a los factores de transcripción y a otras proteínas que regulan la expresión génica, lo que facilita la transcripción del ADN a ARN.}
+    \note[item]{La primera está formada por las regiones de heterocromatina comunes a todas las células de una especie dada.}
+    \note[item]{Pero la cromatina se puede clasificar de muchas otras formas. Se pueden identificar regiones de la cromatina que juegan roles específicos en la regulación de la estructura del genoma y la expresión génica y dos de las más importantes son los TADs (Dominios de Asociación Topológica) y los LADs (Dominios Asociados a la Lámina).}
+    \note[item]{Estas regiones suelen estar asociadas con la heterocromatina y por lo tanto se caracterizan por ser transcripcionalmente inactivas.}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Mapas de contactos Hi-C experimentales}
     \begin{figure}
         \centering
         \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Hi-C-example.png}
     \end{figure}
+    \note[item]{Antes de pasar a la descripción del modelo polímerico debemos introducir la técnica Hi-C, que será relevante más adelante. Este es uno de los métodos experimentales más utilizados para estudiar la organización tridimensional del genoma en el núcleo celular. Esta técnica permite capturar las interacciones físicas entre las diferentes regiones del ADN (es decir, los contactos), revelando cómo se pliega y organiza dentro del espacio nuclear. En Hi-C, el ADN se fija con formaldehído para preservar las interacciones, se fragmenta y se marcan los extremos de los fragmentos cercanos, que luego se ligan para formar moléculas híbridas representativas de las interacciones espaciales. Estas moléculas se secuencian, y los datos obtenidos se analizan para construir mapas de contactos que muestran la frecuencia con la que interaccionan diferentes partes del genoma.}
 \end{frame}
 
 \subsection{Modelo polimérico}
 
 \begin{frame}
+    \begin{block}{Tipos de partículas}
+        \begin{enumerate}
+            \item LADh (A): Dominios Asociados a la Lámina heterocromáticos
+            \item LNDe (B): Dominios No asociados a la Lámina eucromáticos
+        \end{enumerate}
+    \end{block}
     \begin{figure}
         \centering
         \includegraphics[scale=0.75]{../Plots/sequence.pdf}
     \end{figure}
-    \begin{enumerate}
-        \item LADh (A): Dominios Asociados a la Lámina heterocromáticos
-        \item LNDe (B): Dominios No asociados a la Lámina eucromáticos
-    \end{enumerate}
+    \note[item]{Queda claro por tanto que la cromatina es, en una primera aproximación, un conjunto de polímeros (uno por cromosoma) de gran tamaño confinados dentro de un núcleo aproximadamente esférico. Además tendremos que considerar que hay distintos tipos de monómeros con propiedades locales diferentes.}
+    \note[item]{Para empezar consideraremos que cada una de nuestras partículas contiene 33 nucleosomas y un diámetro de 33 nm. Aunque en el estado eucromático los nucleosomas no están organizados ocupan un volumen similar, especialmente dentro de cada TAD.}
+    \note[item]{Como podemos asociar los LADs con la heterocromatina, por simplicidad, usaremos sólo dos tipos de partículas.}
+    \note[item]{La secuencia exacta de partículas utilizadas en este tipo de modelos no cambia significativamente los resultados. No obstante, basaremos la secuencia de nuestro modelo en datos experimentales. Utilizaremos los LADs del genoma del C. elegans para determinar las partículas LADh de nuestro modelo.}
+    \note[item]{En la figura se aprecia que efectivamente hay una correlación entre las regiones heterocromáticas y los LADs. También se ve que en el modelo se reproducen con precisión todos los LADs.}
+    \note[item]{Dado que las células del nematodo C. elegans son diploides, dentro del núcleo colocaremos dos copias de cada cromosoma.}
 \end{frame}
 
-\begin{frame}
-    \begin{table}
-        \centering
-        \begin{tabular}{c c c}
-            \toprule
-            parámetro       & valor (SI)         & valor (UR)          \\
-            \midrule
-            $l_0$           & $33$ nm            & $1$ $l_u$           \\
-            $k_e$           & $0.48$ pN/nm       & $128$ $e_u$/$l_u^2$ \\
-            $k_b^A$         & $4.11$ pN$\cdot$nm & $1$ $e_u$           \\
-            $\sigma$        & $33$ nm            & $1$ $l_u$           \\
-            $\epsilon^{AA}$ & $2.06$ pN$\cdot$nm & $0.5$ $e_u$         \\
-            $\epsilon'$     & $32.9$ pN$\cdot$nm & $8$ $e_u$           \\
-            \bottomrule
-        \end{tabular}
-    \end{table}
+\begin{frame}{Parámetros del modelo}
+    \begin{block}{Parámetros fijos}
+        \begin{table}
+            \centering
+            \begin{tabular}{c c c}
+                \toprule
+                parámetro       & valor (SI)         & valor (UR)          \\
+                \midrule
+                $l_0$           & $33$ nm            & $1$ $l_u$           \\
+                $k_e$           & $0.48$ pN/nm       & $128$ $e_u$/$l_u^2$ \\
+                $k_b^A$         & $4.11$ pN$\cdot$nm & $1$ $e_u$           \\
+                $\sigma$        & $33$ nm            & $1$ $l_u$           \\
+                $\epsilon^{AA}$ & $2.06$ pN$\cdot$nm & $0.5$ $e_u$         \\
+                $\epsilon'$     & $32.9$ pN$\cdot$nm & $8$ $e_u$           \\
+                \bottomrule
+            \end{tabular}
+        \end{table}
+    \end{block}
+    \begin{block}{Parámetros modificables}
+        \begin{enumerate}
+            \item El radio del núcleo ($R_n$).
+            \item El número de sitios de unión a la lámina ($N'$).
+        \end{enumerate}
+    \end{block}
+    \note[item]{La heterocromatina tiene una longitud de persistencia de $\sim200$ nm lo que en nuestro modelo se traduce en $k_b=6$. Sin embargo, como la heterocromatina sólo representa $\sim$ el $8\%$ de toda la secuencia y pertenece en la mayoría de los casos a algún LAD haremos que las partículas LADh tengan $k_b=1$.}
+    \note[item]{Las regiones inactivas tienen una mayor autoafinidad, entre otros motivos, por la atracción por depleción. Afortunadamente podemos hacer una estimación de las fuerzas de interacción entre nuestros dos tipos de partículas gracias a trabajos computacionales anteriores. Consideraremos que las partículas LNDe son puramente repulsivas y las LADh tienen una interacción atractiva de $0.5k_BT$.}
+    \note[item]{El valor exacto de la constante elástica no es realmente relevante siempre que sea lo suficientemente alto como para evitar que la distancia entre las partículas enlazadas fluctúe demasiado.}
+    \note[item]{Para modelar la atracción de los LADs a la lamina, de forma similar a otros estudios, añadiremos pozos de potencial en posiciones aleatorias de la misma que representan los lugares de la lámina a los que un LAD puede unirse a través de las llamadas proteínas de unión a la lámina. Basándonos en trabajos anteriores haremos que estos pozos tengan una profundidad de $8k_BT$.}
 \end{frame}
 
 \section{Metodología}
