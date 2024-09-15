@@ -15,8 +15,6 @@
 
 \usepackage{booktabs}
 
-\usepackage{pdfpc}
-
 \usetheme{CambridgeUS}
 
 \usecolortheme{seahorse}
@@ -28,8 +26,6 @@
 
 \usetikzlibrary{calc}
 
-\pdfpcsetup{duration=30}
-
 \AtBeginSection[]
 {
     \begin{frame}{Índice}
@@ -37,6 +33,9 @@
     \end{frame}
 }
 
+\setbeameroption{show notes on second screen}
+
+\setbeamertemplate{note page}{\vskip 0.5em \insertnote}
 \setbeamertemplate{sections/subsections in toc}[square]
 \setbeamertemplate{items}[square]
 
@@ -166,11 +165,20 @@
 \subsection{Propiedades biofísicas}
 
 \begin{frame}
-    La unión del ADN con las proteínas se forma con el principal objetivo de \alert{concentrar} el material genético para que pueda caber dentro del núcleo celular.
+    \begin{itemize}
+        \item La unión del ADN con las proteínas se forma con el principal objetivo de \alert{concentrar} el material genético para que pueda caber dentro del núcleo celular.
+        \item Las proteínas principales de la cromatina son las \alert{histonas}, que forman octámeros alrededor de los que se enrolla el ADN formando los llamados \alert{nucleosomas}.
+        \item A veces estos nucleosomas se ordenan de forma helicoidal formando una estructura conocida como la \alert{fibra de 30 nm}.
+    \end{itemize}
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Chromatin-Structure.png}
+        \includegraphics[width=0.4\textwidth]{../Multimedia/Images/Chromatin-Structure.png}
     \end{figure}
+\end{frame}
+
+\begin{frame}
+    \dots
+    \note{\dots}
 \end{frame}
 
 \begin{frame}
