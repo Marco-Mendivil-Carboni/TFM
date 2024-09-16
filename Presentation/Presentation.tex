@@ -431,18 +431,22 @@
 
 \section{Conclusiones y trabajo futuro}
 
-\begin{frame}
-    \begin{figure}
-        \centering
-        \includegraphics[width=1.00\textwidth]{../Multimedia/Images/decay-length.png}
-    \end{figure}
-\end{frame}
-
-\begin{frame}
+\begin{frame}{\textit{Blebs}}
     \begin{figure}
         \centering
         \includegraphics[width=0.75\textwidth]{../Multimedia/Images/bleb.png}
     \end{figure}
+    \note[item]{Aunque probablemente no hemos aprovechado todas las posibilidades que nos ofrecía este trabajo, hemos cumplido con el objetivo principal que nos marcamos al principio del trabajo. El modelo que hemos desarrollado es minimalista y genérico e incluye las interacciones básicas para una descripción mesoscópica de la estructura de la cromatina en los organismos eucariotas. Nuestras simulaciones han logrado reproducir las características más significativas de la organización de la cromatina, como el comportamiento de $d(s)$ y $P(s)$ propios de un ``glóbulo colapsado''. Además, gracias a $P(i,j)$ hemos podido observar la fuerte segregación en territorios cromáticos y la separación de fases entre las regiones activas del genoma y las reprimidas.}
+    \note[item]{Como consecuencia de este trabajo hemos emprendido algunas líneas de investigación en colaboración con grupos experimentales que están todavía en fase de desarrollo y una de ellas consiste en el estudio de la organización de la cromatina en confinamientos más complejos. En concreto el núcleo a veces tiene deformaciones en forma de vesícula conocidas como \textit{blebs}, que se asocian con varias patologías. Hemos adaptado el programa para poder simular estas geometrías más exóticas y analizar como se modifica la organización de la cromatina en estos casos.}
+\end{frame}
+
+\begin{frame}{Decaimiento de la densidad de cromatina}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1.00\textwidth]{../Multimedia/Images/decay-length.png}
+    \end{figure}
+    \note[item]{Otra línea de investigación está relacionada con los experimentos de nanoindentación mediante pinzas ópticas sobre la superficie de un núcleo que permiten obtener información sobre las propiedades mecánicas de la cromatina en las cercanías de la lámina. Estos experimentos han sido realizados por el grupo del profesor Horacio López Menéndez que nos ha facilitado algunos resultados experimentales no publicados. Estos muestran que la organización de la cromatina depende del radio del núcleo que a su vez depende de la presión osmótica. De esta forma analizan el decaimiento de la densidad de la cromatina en la cercanías de la lámina y encuentran un comportamiento no monótono del decaimiento de la densidad de cromatina cerca de la lámina dependiendo de las condiciones de estrés osmótico (hipotónico, isotónico e hipertónico).}
+    \note[item]{La mejor forma de reproducir estas condiciones de manera computacional no es evidente y está fuera del objetivo de este trabajo, sin embargo hemos realizado algunas simulaciones intentando implementar estas condiciones de forma sencilla y hemos obtenido los resultados de la figura que sugieren una dependencia no monotónica del decaimiento de la densidad de cromatina cerca de la lámina.}
 \end{frame}
 
 \end{document}
