@@ -402,25 +402,31 @@
 
 \subsection{Configuración invertida}
 
-\begin{frame}
+\begin{frame}{Visualización de un corte ecuatorial}
     \begin{figure}
         \centering
         \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Inverted-QS.png}
     \end{figure}
+    \note[item]{Con la siguiente simulación reproduciremos otro tipo de configuración que también se observa en algunas células y analizaremos la función de la lámina en la organización de la cromatina pues vamos a eliminar los sitios de unión a la lámina sin variar el radio del núcleo.}
+    \note[item]{Vemos en la figura que de esta forma se obtienen configuraciones que denominaremos invertidas pues las partículas LNDe y LADh se intercambian posiciones. Esta peculiar configuración se observa en las células de los bastones de los animales nocturnos pues la aglomeración de la heterocromatina en un único dominio con una posición central alejada de la lámina reduce la dispersión de la luz que lo atraviesa, mejorando la visión nocturna de estos animales.}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Densidad radial de cromatina}
     \begin{figure}
         \centering
         \includegraphics[scale=0.75]{../Plots/30386-0.2-0.0-0.0-0.0/rcd.pdf}
     \end{figure}
+    \note[item]{En esta figura también observamos que se han invertido las posiciones típicas de ambos tipos de partículas. Sin embargo, también vemos que hay mucho más ruido y las barras de error son mucho mayores, es decir, que las configuraciones obtenidas varían mucho más con las condiciones iniciales y fluctuan mucho más en el tiempo. Esto significa que la lámina ayuda a estabilizar la organización de la cromatina. Esta estabilidad es probablemente una de las múltiples razones por las que en la gran mayoría de células la cromatina interacciona con la lámina y adopta la configuración convencional. También debemos resaltar que en esta gráfica parecería que las partículas LADh no ocupan el centro exacto del núcleo. Sin embargo, la gran incertidumbre en los valores de $\rho(r)$ cerca del centro nos indica que falta estadística y lo más esperable es que, prolongando las simulaciones, vieramos que la densidad de este tipo de partículas desciende monótonamente con $r$.}
+    \note[item]{Estos resultados nos indican que la lámina es indispensable para que la cromatina se organice de la forma convencional. Existen fuerzas entrópicas que favorecen que la heterocromatina se coloque cerca de la pared del núcleo, pero cuando se utilizan valores realistas para los parámetros del modelo, estas no son suficientemente fuertes y se obtienen configuraciones invertidas.}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Mapa de contactos}
     \begin{figure}
         \centering
-        \includegraphics[scale=0.70]{../Plots/30386-0.2-0.0-0.0-0.0/cm.pdf}
+        \includegraphics[scale=0.60]{../Plots/30386-0.2-0.0-0.0-0.0/cm.pdf}
     \end{figure}
+    \note[item]{Por otro lado los observables $d(s)$ y $P(s)$ apenas cambian con respecto a la configuración convencional, por lo que no mostraremos las gráficas de estos dos observables en esta ocasión. La única diferencia que se puede apreciar es que el cromosoma X está algo más extendido, es decir, que en comparación $d(s)$ es algo mayor y $P(s)$ es algo menor, probablemente por la sencilla razón de que como veremos a continuación todos los cromosomas tienen algo más de movilidad.}
+    \note[item]{Finalmente, en el mapa de contactos representado en esta figura vemos los mismos patrones que antes, consecuencia de la separación de fases, pero además vemos claramente que hay muchos más contactos entre cromosomas distintos: los territorios cromáticos son mucho más difusos. Esto nos demuestra que la lámina ayuda a mantener durante más tiempo los territorios cromáticos, como ya habían observado otros estudios computacionales, y este hecho es sin lugar a dudas otra de las razones por las que la configuración convencional es mucho más común.}
 \end{frame}
 
 \section{Conclusiones y trabajo futuro}
