@@ -66,25 +66,28 @@
 
 \subsection{Motivación y objetivos}
 
-\begin{frame}
-    \begin{block}{Motivación}
-        \begin{itemize}
-            \item La cromatina, el complejo de \alert{ADN y proteínas} que constituye el material génetico del núcleo celular, es un ejemplo paradigmático de \alert{sistema complejo}.
-            \item Este sistema tiene un \alert{interés biológico} inmenso.
-        \end{itemize}
-    \end{block}
-    \begin{block}{Objetivos}
-        Desarrollo de un \alert{modelo} de la cromatina que nos permita, mediante simulaciones numéricas, reproducir las \alert{distribuciones espaciales} de la misma que se observan experimentalmente. Para ello:
-        \begin{itemize}
-            \item Estudiaremos las propiedades más importantes de la cromatina y diseñaremos un modelo de la misma.
-            \item Detallaremos los aspectos más importantes de la metodología.
-            \item Mostraremos finalmente los resultados de las simulaciones.
-            \item Valoraremos si hemos cumplido con el objetivo.
-        \end{itemize}
-    \end{block}
+\begin{frame}{Motivación}
+    \begin{itemize}
+        \item La cromatina, el complejo de \alert{ADN y proteínas} que constituye el material génetico del núcleo celular, es un ejemplo paradigmático de \alert{sistema complejo}.
+        \item Este sistema tiene un \alert{interés biológico} inmenso pues la \alert{organización} de la cromatina dentro del núcleo influye en muchos procesos biológicos.
+    \end{itemize}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.6\textwidth]{../Multimedia/Images/Chromatin-Diagram.png}
+    \end{figure}
     \note[item]{En el último siglo se ha tendido a diseccionar los sistemas biológicos en sus partes constituyentes más simples para facilitar su entendimiento, de forma similar a como se ha hecho en física. Esta estrategia reduccionista ha sido muy exitosa: ha impulsado el desarrollo de la biología molecular y sus resultados, como el descubrimiento de la estructura del ADN, han sido fundamentales para alcanzar la comprensión actual de los mecanismos de la vida.}
     \note[item]{Pero ahora son cada vez más patentes las limitaciones de esta forma de estudiar los seres vivos y, de nuevo como en la física, se está empezando a poner el foco en la complejidad de estos sistemas para intentar comprender sus propiedades emergentes.}
     \note[item]{Este sistema tiene un interés biológico inmenso pues la organización de la cromatina dentro del núcleo influye en muchos procesos biológicos, como la transcripción del ADN o la división celular.}
+\end{frame}
+
+\begin{frame}{Objetivos}
+    Desarrollo de un \alert{modelo} de la cromatina que nos permita, mediante simulaciones numéricas, reproducir las \alert{distribuciones espaciales} de la misma dentro del núcleo que se observan experimentalmente. Para ello:
+    \begin{itemize}
+        \item Estudiaremos las propiedades más importantes de la cromatina y diseñaremos un modelo de la misma.
+        \item Detallaremos los aspectos más importantes de la metodología.
+        \item Mostraremos finalmente los resultados de las simulaciones.
+        \item Valoraremos si hemos cumplido con el objetivo.
+    \end{itemize}
 \end{frame}
 
 \subsection{La física de polímeros}
@@ -92,7 +95,7 @@
 \begin{frame}{Modelos ideales}
     \begin{figure}
         \centering
-        \begin{tikzpicture}[scale=1.5]
+        \begin{tikzpicture}[scale=1.25]
             \draw[black,semithick] (+0.0,+0.0) -- (+0.9,+0.1);
             \draw[black,semithick] (+0.9,+0.1) -- (+1.2,+0.9);
             \draw[black,semithick] (+1.2,+0.9) -- (+1.9,+1.2);
@@ -119,6 +122,7 @@
         \begin{equation}
             d(s)\propto s^{1/2}
         \end{equation}
+        donde $s=|i-j|$
     \end{block}
     \begin{block}{Probabilidad de contacto}
         \begin{equation}
@@ -145,10 +149,13 @@
     \end{block}
     \begin{block}{Longitud de persistencia}
         \begin{equation}
-            l_P=-\frac{l_0}{\ln(\coth(\beta k_b)-1/(\beta k_b))}\approx\beta k_bl_0
+            \langle (\bar{b}_i/l_0)\cdot(\bar{b}_j/l_0) \rangle=e^{-|i-j|l_0/l_P} \quad \Rightarrow \quad l_P\approx\beta k_bl_0
+        \end{equation}
+        Para $s\ll l_P/l_0$,
+        \begin{equation}
+            d(s)\propto s^{1} \quad \text{y} \quad P(s)\propto s^{-3}
         \end{equation}
     \end{block}
-    Para $s\ll l_P/l_0$ $d(s)\propto s^{1}$ y $P(s)\propto s^{-3}$.
     \note[item]{Sin embargo, considerar que los enlaces son completamente rígidos es muy idealizado e introduce ligaduras en el modelo que complican su simulación. Por ello es mucho más conveniente y común considerar que los enlaces son extensibles uniendo los monómeros mediante un potencial suave, normalmente un potencial armónico.}
     \note[item]{Además, las configuraciones de este modelo FJC extensibl en condiciones normales son análogas a las de un modelo FJC con enlaces rígidos de longitud $\langle l \rangle=l_0(1+2/(1+\beta k_e l_0^2))$ (donde $\beta=1/k_BT$ y $k_B$ es la constante de Boltzmann) por lo que, especialmente si $k_e$ es elevada, supone una modificación muy pequeña.}
     \note[item]{El siguiente es el modelo de Kratky-Porod o \textit{worm-like chain} discreto (WLC), una evolución del anterior con la que podemos describir polímeros semi-flexibles donde existe una correlación entre las direcciones de enlaces consecutivos.}
@@ -196,18 +203,15 @@
 \end{frame}
 
 \begin{frame}{La heterogeneidad de la cromatina}
-    \begin{itemize}
-        \item Este diferente nivel de compactación nos permite distinguir dos tipos de cromatina: la \alert{heterocromatina}, más compacta, y la \alert{eucromatina}, menos compacta.
-        \item Este distinto nivel de compactación también se relaciona con una \alert{distinta actividad transcripcional}.
-        \item También se pueden distinguir dos tipos de heterocromatina: la \alert{constitutiva} y la \alert{facultativa}.
-        \item Los \alert{TADs} son regiones del genoma que interaccionan preferentemente consigo mismas, formando dominios estructurales dentro de la cromatina que se mantienen relativamente independientes de otras regiones.
-        \item Los \alert{LADs} son regiones de la cromatina que interactúan (con mayor frecuencia) con la \alert{lámina} nuclear, una red de proteínas ubicada en la parte interior de la envoltura nuclear en la que está confinada la cromatina.
-    \end{itemize}
-    \note[item]{A menudo las histonas sufren además diversas modificaciones postraduccionales (es decir, cambios químicos ocurridos después de su síntesis por los ribosomas). Estas modificaciones se relacionan con varias propiedades de la cromatina, como por ejemplo la tri-metilación de la novena lisina de la histona H3 que se asocia con frecuencia con la heterocromatina.}
-    \note[item]{La eucromatina, que es menos compacta, es más accesible a los factores de transcripción y a otras proteínas que regulan la expresión génica, lo que facilita la transcripción del ADN a ARN.}
-    \note[item]{La primera está formada por las regiones de heterocromatina comunes a todas las células de una especie dada.}
-    \note[item]{Pero la cromatina se puede clasificar de muchas otras formas. Se pueden identificar regiones de la cromatina que juegan roles específicos en la regulación de la estructura del genoma y la expresión génica y dos de las más importantes son los TADs (Dominios de Asociación Topológica) y los LADs (Dominios Asociados a la Lámina).}
-    \note[item]{Estas regiones suelen estar asociadas con la heterocromatina y por lo tanto se caracterizan por ser transcripcionalmente inactivas.}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1.0\textwidth]{../Multimedia/Images/Chromatin-Types-and-Domains.png}
+    \end{figure}
+    \note[item]{Este diferente nivel de compactación nos permite distinguir dos tipos de cromatina: la heterocromatina, más compacta, y la eucromatina, menos compacta, que además están relacionados con diversas modificaciones postraduccionales de las histonas.}
+    \note[item]{Este distinto nivel de compactación también se relaciona con una distinta actividad transcripcional. La eucromatina, que es menos compacta, es más accesible a los factores de transcripción y a otras proteínas que regulan la expresión génica, lo que facilita la transcripción del ADN a ARN.}
+    \note[item]{Pero la cromatina se puede clasificar de muchas otras formas. Se pueden identificar regiones de la cromatina que juegan roles específicos en la regulación de la estructura del genoma y la expresión génica.}
+    \note[item]{Los TADs son regiones del genoma que interaccionan preferentemente consigo mismas, formando dominios estructurales dentro de la cromatina que se mantienen relativamente independientes de otras regiones.}
+    \note[item]{Los LADs son regiones de la cromatina que interactúan (con mayor frecuencia) con la lámina nuclear, una red de proteínas ubicada en la parte interior de la envoltura nuclear en la que está confinada la cromatina.}
 \end{frame}
 
 \begin{frame}{Mapas de contactos Hi-C experimentales}
@@ -271,82 +275,16 @@
 
 \section{Metodología}
 
-\subsection{Dinámica Molecular}
-
-\begin{frame}
-    \begin{block}{Ecuación de Langevin}
-        \begin{equation}
-            m_i\frac{d^2\bar{r}_i}{dt^2}=-\xi_i\frac{d\bar{r}_i}{dt}-\bar{\nabla}_iV\left(\{\bar{r}_j\}\right)+\bar{\zeta}_i(t)
-        \end{equation}
-        donde
-        \begin{equation}
-            \langle \zeta_i^\alpha(t) \rangle=0 \quad \text{y} \quad \langle \zeta_i^\alpha(t)\zeta_j^\beta(t') \rangle=2\xi_ik_BT\delta_{ij}\delta_{\alpha\beta}\delta(t-t')
-        \end{equation}
-        y $\xi=3\pi\eta d=0.28$ pg/$\mu$s
-    \end{block}
-    \begin{block}{Dinámica Browniana}
-        $\text{Re}=\rho v_ul_u/\eta=1.7\cdot 10^{-5}$ luego
-        \begin{equation}
-            \xi_i\frac{d\bar{r}_i}{dt}=-\bar{\nabla}_iV\left(\{\bar{r}_j\}\right)+\bar{\zeta}_i(t)
-        \end{equation}
-    \end{block}
-    \note[item]{En este trabajo realizaremos concretamente simulaciones de dinámica molecular, que son aquellas en las que se resuelven numéricamente las ecuaciones del movimiento clásicas.}
-    \note[item]{En la ecuación $m_i$ es la masa de la partícula $i$, $\xi_i$ es su coeficiente cinético y $\bar{\zeta}_i(t)$ es la fuerza aleatoria sobre ella.}
-    \note[item]{Pero además la cromatina está inmersa en un solvente, el agua, que tiene efectos importantes sobre el comportamiento del soluto. La forma más sencilla de incorporar sus efectos es la dinámica de Langevin, que consiste simplemente en añadir a las ecuaciones del movimiento de la dinámica molecular una fuerza de fricción proporcional a la velocidad y una fuerza aleatoria que representa el efecto de estas colisiones.}
-    \note[item]{Para estimar el valor de $\xi$ nos valdremos de la fórmula de Stokes, donde $\eta$ es la viscosidad del agua y $d$ el diámetro de la partícula (en nuestro caso $\sigma$). Esto significa que estamos en el régimen de bajo número de Reynolds y en la dinámica dominan los efectos disipativos frente a los inerciales.}
-\end{frame}
-
-\subsection{Programación en GPUs}
-
 \begin{frame}
     \begin{itemize}
-        \item Las \alert{GPUs} son procesadores diseñados para la generación de gráficos 3D pero dadas sus características también son muy apropiadas para propósitos científicos como la realización de \alert{simulaciones}.
-        \item La característica de las GPUs (además de su precio) que las hace tan atractivas para estas aplicaciones es su gran \alert{paralelismo}.
-        \item Aunque hay muchas herramientas para el desarrollo de este \textit{software} el estándar es \alert{CUDA} (\textit{Compute Unified Device Architecture}): una plataforma de computación en paralelo creada por NVIDIA que permite ejecutar en GPUs de esta empresa programas escritos utilizando CUDA C, una variación del \alert{lenguaje C}.
+        \item En este trabajo realizaremos simulaciones de \alert{dinámica molecular} y más concretamente de \alert{dinámica browniana}, en la que se tiene en cuenta los efectos del medio, el agua, y se desprecian los efectos inerciales frente a los disipativos.
+        \item Para poder simular el número de partículas necesario haremos uso de \alert{GPUs}, por lo que el programa que hemos desarrollado está escrito en \alert{CUDA}.
+        \item El algoritmo que hemos implementado para el cálculo del \alert{volumen excluido} es $\mathcal{O}(N)$ en lugar de $\mathcal{O}(N^2)$ como la implementación \textit{naive}.
     \end{itemize}
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/NVIDIA.png}
+        \includegraphics[scale=0.5]{../Plots/performance.pdf}
     \end{figure}
-    \note[item]{Este simulaciones tendrán una gran cantidad de partículas ($30386$) y por lo tanto serán muy costosas computacionalmente, lo cual hasta hace poco había impedido estudiar el núcleo celular completo mediante simulaciones numéricas. Por esta razón es necesario aprovechar al máximo la potencia de cálculo del \textit{hardware} del que disponemos.}
-    \note[item]{Las simulaciones de dinámica molecular se pueden beneficiar en gran medida del paralelismo ya que, en cada iteración, para hallar las nuevas coordenadas de una cierta partícula no necesitamos las nuevas coordenadas del resto, solo las viejas.}
-    \note[item]{Con un programa paralelo de simulación en una GPU podemos actualizar a la vez las coordenadas de una gran cantidad de partículas (aunque quizás no todas) ahorrando un tiempo de cálculo considerable.}
-\end{frame}
-
-\subsection{Cálculo del volumen excluido}
-
-\begin{frame}
-    \begin{figure}
-        \centering
-        \begin{tikzpicture}[scale=1.5]
-            \draw[color1,fill=color1,fill opacity=0.25] (1.7,1.2) circle (0.5) node[opacity=1] {0};
-            \draw[color1,fill=color1,fill opacity=0.25] (2.9,2.1) circle (0.5) node[opacity=1] {1};
-            \draw[color1,fill=color1,fill opacity=0.25] (2.1,2.4) circle (0.5) node[opacity=1] {2};
-            \draw[color1,fill=color1,fill opacity=0.25] (0.9,2.1) circle (0.5) node[opacity=1] {3};
-            \draw[color1,fill=color1,fill opacity=0.25] (2.8,2.8) circle (0.5) node[opacity=1] {4};
-            \draw[color1,fill=color1,fill opacity=0.25] (0.6,2.8) circle (0.5) node[opacity=1] {5};
-            \foreach \i in {0,...,4} {\draw[black] (\i,0) -- (\i,4); \draw[black] (0,\i) -- (4,\i);}
-            \foreach \i in {0,...,3} {\foreach \j [evaluate=\num using int(\i+4*\j)] in {0,...,3} {\node[above right] at (\i,\j) {\num};}}
-            \draw[latex-latex,color1,semithick,dashed] (0.5,0.0) -- (0.5,1.0) node[midway,right] {$2\sigma$};
-        \end{tikzpicture}
-    \end{figure}
-    \begin{enumerate}
-        \item A = [(0,5), (1,10), (2,10), (3,8), (4,10), (5,8)]
-        \item A = [(0,5), (3,8), (5,8), (1,10), (2,10), (4,10)]
-        \item B = [(0,0), (0,0), (0,0), (0,0), (0,0), (0,1), (1,1), (1,1), (1,3), (3,3), (3,6), (6,6), (6,6), (6,6), (6,6), (6,6)]
-    \end{enumerate}
-    \note[item]{Como la interacción de volumen excluido será la más costosa computacionalmente creemos conveniente mostrar el algoritmo que se ha empleado para el cálculo de las fuerzas debidas a la misma.}
-    \note[item]{La idea clave detrás del algoritmo que vamos a utilizar es que se puede acelerar mucho la búsqueda de las partículas vecinas subdividiendo el espacio de simulación. En concreto utilizaremos una malla uniforme, es decir, subdividiremos el espacio de simulación en celdas del mismo tamaño.}
-    \note[item]{Utilizaremos una malla en la que el tamaño de las celdas es $2\sigma$, el radio de corte del potencial de Wang-Frenkel atractivo, de forma que para calcular las fuerzas sobre una partícula solo deberemos calcular la distancia con las partículas que se encuentran en las 27 celdas vecinas, en lugar de todas las partículas de la simulación.}
-    \note[item]{Para ilustrar el proceso con el que generaremos la lista de las partículas que hay en cada celda consideremos el caso sencillo en que se representa en la figura. Empezaremos por crear una lista A de tuplas que contengan los índices de cada partícula y los índices de la celda en la que se encuentran. A continuación ordenaremos esta lista en función del índice de la celda. Finalmente recorreremos esta lista y almacenaremos en otra lista B el principio y final de cada celda en la lista A ordenada.}
-\end{frame}
-
-\begin{frame}{Rendimiento}
-    \begin{figure}
-        \centering
-        \includegraphics[scale=0.75]{../Plots/performance.pdf}
-    \end{figure}
-    \note[item]{Todo este proceso se repetirá con cada paso de tiempo y su parte más costosa computacionalmente será la ordenación de la lista A que sin embargo es $\mathcal{O}(N)$ y por lo tanto es mucho más veloz que la implementación \textit{naive} (que sería $\mathcal{O}(N^2)$)para los valores de $N$ elevados que vamos a utilizar. En la figura se ve como efectivamente el tiempo de ejecución del programa completo es proporcional a $N$ (más una constante debido a otros factores que impiden tiempos menores con valores de $N$ bajos).}
 \end{frame}
 
 \section{Resultados: organización espacial}
@@ -354,9 +292,10 @@
 \subsection{Configuración convencional}
 
 \begin{frame}{Visualización de un corte ecuatorial}
+    $N=30386$, $R_n\approx1\mu$m y $N'=5848$
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Conventional-QS.png}
+        \includegraphics[width=0.40\textwidth]{../Multimedia/Images/Conventional-QS.png}
     \end{figure}
     Hemos asignado un color distinto a cada tipo de partícula: el rojo a las LADh, el azul a las LNDe y el gris a los sitios de unión a la lámina.
     \note[item]{Para estudiar el modelo de cromatina que hemos desarrollado realizaremos simulaciones en diversas condiciones variando el radio del núcleo y el número de sitios de unión a la lámina.}
@@ -403,9 +342,10 @@
 \subsection{Configuración invertida}
 
 \begin{frame}{Visualización de un corte ecuatorial}
+    $N=30386$, $R_n\approx1\mu$m y $N'=0$
     \begin{figure}
         \centering
-        \includegraphics[width=0.5\textwidth]{../Multimedia/Images/Inverted-QS.png}
+        \includegraphics[width=0.40\textwidth]{../Multimedia/Images/Inverted-QS.png}
     \end{figure}
     \note[item]{Con la siguiente simulación reproduciremos otro tipo de configuración que también se observa en algunas células y analizaremos la función de la lámina en la organización de la cromatina pues vamos a eliminar los sitios de unión a la lámina sin variar el radio del núcleo.}
     \note[item]{Vemos en la figura que de esta forma se obtienen configuraciones que denominaremos invertidas pues las partículas LNDe y LADh se intercambian posiciones. Esta peculiar configuración se observa en las células de los bastones de los animales nocturnos pues la aglomeración de la heterocromatina en un único dominio con una posición central alejada de la lámina reduce la dispersión de la luz que lo atraviesa, mejorando la visión nocturna de estos animales.}
@@ -431,22 +371,30 @@
 
 \section{Conclusiones y trabajo futuro}
 
-\begin{frame}{\textit{Blebs}}
-    \begin{figure}
-        \centering
-        \includegraphics[width=0.75\textwidth]{../Multimedia/Images/bleb.png}
-    \end{figure}
+\begin{frame}{Conclusiones}
+    \begin{itemize}
+        \item Hemos cumplido con el \alert{objetivo principal} que nos marcamos al principio del trabajo.
+        \item El modelo que hemos desarrollado incluye las \alert{interacciones básicas} para una descripción \alert{mesoscópica} de la estructura de la cromatina en los organismos eucariotas.
+        \item Nuestras simulaciones han logrado reproducir las características más significativas de la organización de la cromatina:
+              \begin{enumerate}
+                  \item El comportamiento de $d(s)$ y $P(s)$
+                  \item Los territorios cromáticos
+                  \item La separación de fases
+              \end{enumerate}
+    \end{itemize}
     \note[item]{Aunque probablemente no hemos aprovechado todas las posibilidades que nos ofrecía este trabajo, hemos cumplido con el objetivo principal que nos marcamos al principio del trabajo. El modelo que hemos desarrollado es minimalista y genérico e incluye las interacciones básicas para una descripción mesoscópica de la estructura de la cromatina en los organismos eucariotas. Nuestras simulaciones han logrado reproducir las características más significativas de la organización de la cromatina, como el comportamiento de $d(s)$ y $P(s)$ propios de un ``glóbulo colapsado''. Además, gracias a $P(i,j)$ hemos podido observar la fuerte segregación en territorios cromáticos y la separación de fases entre las regiones activas del genoma y las reprimidas.}
-    \note[item]{Como consecuencia de este trabajo hemos emprendido algunas líneas de investigación en colaboración con grupos experimentales que están todavía en fase de desarrollo y una de ellas consiste en el estudio de la organización de la cromatina en confinamientos más complejos. En concreto el núcleo a veces tiene deformaciones en forma de vesícula conocidas como \textit{blebs}, que se asocian con varias patologías. Hemos adaptado el programa para poder simular estas geometrías más exóticas y analizar como se modifica la organización de la cromatina en estos casos.}
 \end{frame}
 
-\begin{frame}{Decaimiento de la densidad de cromatina}
+\begin{frame}{Trabajo futuro}
     \begin{figure}
         \centering
-        \includegraphics[width=1.00\textwidth]{../Multimedia/Images/decay-length.png}
+        \includegraphics[height=0.40\textheight]{../Multimedia/Images/decay-length.png}
     \end{figure}
-    \note[item]{Otra línea de investigación está relacionada con los experimentos de nanoindentación mediante pinzas ópticas sobre la superficie de un núcleo que permiten obtener información sobre las propiedades mecánicas de la cromatina en las cercanías de la lámina. Estos experimentos han sido realizados por el grupo del profesor Horacio López Menéndez que nos ha facilitado algunos resultados experimentales no publicados. Estos muestran que la organización de la cromatina depende del radio del núcleo que a su vez depende de la presión osmótica. De esta forma analizan el decaimiento de la densidad de la cromatina en la cercanías de la lámina y encuentran un comportamiento no monótono del decaimiento de la densidad de cromatina cerca de la lámina dependiendo de las condiciones de estrés osmótico (hipotónico, isotónico e hipertónico).}
-    \note[item]{La mejor forma de reproducir estas condiciones de manera computacional no es evidente y está fuera del objetivo de este trabajo, sin embargo hemos realizado algunas simulaciones intentando implementar estas condiciones de forma sencilla y hemos obtenido los resultados de la figura que sugieren una dependencia no monotónica del decaimiento de la densidad de cromatina cerca de la lámina.}
+    \begin{figure}
+        \centering
+        \includegraphics[height=0.40\textheight]{../Multimedia/Images/bleb.png}
+    \end{figure}
+    \note[item]{Como consecuencia de este trabajo hemos emprendido algunas líneas de investigación en colaboración con grupos experimentales que están todavía en fase de desarrollo y por ello no hemos mostrado junto al resto de resultados.}
 \end{frame}
 
 \end{document}
