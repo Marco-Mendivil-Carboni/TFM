@@ -92,7 +92,7 @@
 
 \subsection{La física de polímeros}
 
-\begin{frame}{Modelos ideales}
+\begin{frame}{Modelos ideales (FJC)}
     \begin{figure}
         \centering
         \begin{tikzpicture}[scale=1.25]
@@ -142,7 +142,7 @@
             V_e=\sum_{i=1}^{N-1}\frac{1}{2}k_e(l_i-l_0)^2
         \end{equation}
     \end{block}
-    \begin{block}{Flexibilidad}
+    \begin{block}{Flexibilidad (WLC)}
         \begin{equation}
             V_b=\sum_{i=1}^{N-2} k_b (1-\cos(\theta_i))
         \end{equation}
@@ -167,13 +167,13 @@
             V_{WF}=\sum_{i=0}^{N-1}\sum_{j=i+1}^{N-1}\varepsilon\left(\left(\frac{\sigma}{d_{ij}}\right)^{2}-1\right)\left(\left(\frac{2\sigma}{d_{ij}}\right)^{2}-1\right)^{2}
         \end{equation}
     \end{block}
-    \begin{block}{Interacción puramente repulsivas}
+    \begin{block}{Interacción puramente repulsivas (volumen excluido)}
         \begin{equation}
             d(s)\propto s^{\nu}  \quad \text{y} \quad P(s)\propto s^{-\nu(3+\theta)}
         \end{equation}
         donde $\nu\simeq0.588$ y $\theta\simeq0.71$ luego $\nu(3+\theta)\simeq2.2$.
     \end{block}
-    \begin{block}{Interacción atractiva}
+    \begin{block}{Interacción atractiva (``glóbulo colapsado'')}
         \begin{equation}
             d(s)\propto s^{1/3}  \quad \text{y} \quad P(s)\propto s^{-1}.
         \end{equation}
@@ -243,30 +243,27 @@
     \note[item]{Dado que las células del nematodo C. elegans son diploides, dentro del núcleo colocaremos dos copias de cada cromosoma.}
 \end{frame}
 
-\begin{frame}{Parámetros del modelo}
-    \begin{block}{Parámetros fijos}
-        \begin{table}
-            \centering
-            \begin{tabular}{c c c}
-                \toprule
-                parámetro       & valor (SI)         & valor (UR)          \\
-                \midrule
-                $l_0$           & $33$ nm            & $1$ $l_u$           \\
-                $k_e$           & $0.48$ pN/nm       & $128$ $e_u$/$l_u^2$ \\
-                $k_b^A$         & $4.11$ pN$\cdot$nm & $1$ $e_u$           \\
-                $\sigma$        & $33$ nm            & $1$ $l_u$           \\
-                $\epsilon^{AA}$ & $2.06$ pN$\cdot$nm & $0.5$ $e_u$         \\
-                $\epsilon'$     & $32.9$ pN$\cdot$nm & $8$ $e_u$           \\
-                \bottomrule
-            \end{tabular}
-        \end{table}
-    \end{block}
-    \begin{block}{Parámetros modificables}
-        \begin{enumerate}
-            \item El radio del núcleo ($R_n$).
-            \item El número de sitios de unión a la lámina ($N'$).
-        \end{enumerate}
-    \end{block}
+\begin{frame}{Interacciones y parámetros del modelo}
+    \begin{equation}
+        V = V_e(l_0,k_e)+V_b(k_b)+V_{WF}(\sigma,\epsilon^{AA})+V_{\text{lbs}}(\epsilon')
+    \end{equation}
+    \begin{table}
+        \centering
+        \begin{tabular}{c c c}
+            \toprule
+            parámetro       & valor (SI)         & valor (UR)          \\
+            \midrule
+            $l_0$           & $33$ nm            & $1$ $l_u$           \\
+            $k_e$           & $0.48$ pN/nm       & $128$ $e_u$/$l_u^2$ \\
+            $k_b^A$         & $4.11$ pN$\cdot$nm & $1$ $e_u$           \\
+            $\sigma$        & $33$ nm            & $1$ $l_u$           \\
+            $\epsilon^{AA}$ & $2.06$ pN$\cdot$nm & $0.5$ $e_u$         \\
+            $\epsilon'$     & $32.9$ pN$\cdot$nm & $8$ $e_u$           \\
+            $R_n$           & ?                  & ?                   \\
+            $N'$            & ?                  & ?                   \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
     \note[item]{La heterocromatina tiene una longitud de persistencia de $\sim200$ nm lo que en nuestro modelo se traduce en $k_b=6$. Sin embargo, como la heterocromatina sólo representa $\sim$ el $8\%$ de toda la secuencia y pertenece en la mayoría de los casos a algún LAD haremos que las partículas LADh tengan $k_b=1$.}
     \note[item]{Las regiones inactivas tienen una mayor autoafinidad, entre otros motivos, por la atracción por depleción. Afortunadamente podemos hacer una estimación de las fuerzas de interacción entre nuestros dos tipos de partículas gracias a trabajos computacionales anteriores. Consideraremos que las partículas LNDe son puramente repulsivas y las LADh tienen una interacción atractiva de $0.5k_BT$.}
     \note[item]{El valor exacto de la constante elástica no es realmente relevante siempre que sea lo suficientemente alto como para evitar que la distancia entre las partículas enlazadas fluctúe demasiado.}
